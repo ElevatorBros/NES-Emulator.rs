@@ -1,10 +1,11 @@
-struct 2A03 {
+struct cpu {
     a   : u8,  // Accumulator
     x   : u8,  // Register
     y   : u8,  // Register
     pc  : u16, // Program Counter
     stp : u8,  // Stack Pointer 
     stat: u8,  // Status Register
+    cycl: u8,  // CPU Ticks remaining
 
     bus : &Bus // Reference to main bus
 }
@@ -30,23 +31,20 @@ let addressingModesRefrence: [u8, 0xFF] = []
 
 
 
-impl 2A03 {
-    // Global var
-    let cycle: u8;
-    let operand: u8;
-
+impl cpu {
     // Setup functions
     fn setup(bus: &Bus) {}
 
     // Interface functions
     fn clock() {
         if (cycle == 0) {
-            let opcode:u8 = read(pc++);
+            let opcode:u8 = read(pc);
+            pc += 1;
             
-            setAddressMode(opcode);
-            cycle += execute(opcode);
+            let operand = setAddressMode(opcode);
+            cycle += execute(opcode, operand);
         }
-        cycle--;
+        cycle -= 1;
     }
 
     fn reset() {}
@@ -63,7 +61,11 @@ impl 2A03 {
     }
 
     
-    fn setAddressMode(opcode: u8) {}
-    fn execute(opcode: u8) -> u8 {}
+    fn setAddressMode(opcode: u8) {
+
+    }
+    fn execute(opcode: u8) -> u8 {
+        0u8
+    }
 
 }
