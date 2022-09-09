@@ -1,4 +1,4 @@
-struct 6502 {
+struct 2A03 {
     a   : u8,  // Accumulator
     x   : u8,  // Register
     y   : u8,  // Register
@@ -30,7 +30,7 @@ let addressingModesRefrence: [u8, 0xFF] = []
 
 
 
-impl 6502 {
+impl 2A03 {
     // Global var
     let cycle: u8;
     let operand: u8;
