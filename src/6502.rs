@@ -25,7 +25,8 @@ enum AddressingModes {
     NUL
 }
 
-let addressingModesRefrence: [u8, 0xFF] = []
+let addressingModesLength: [u8, 0xFF] = []
+let addressingModesCycles: [u8, 0xFF] = []
 
 
 
