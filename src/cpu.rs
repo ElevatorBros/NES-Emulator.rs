@@ -85,6 +85,26 @@ let cycleCounts: [u8, 0xFF] = [
     2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
 ]
+=======
+    ACC,
+    IMD,
+    ZPG,
+    ABS,
+    REL,
+    IND,
+    ZIX,
+    ZIY,
+    AIX,
+    AIY,
+    IIX,
+    IIY,
+    NUL
+}
+
+let addressingModesRefrence: [u8, 0xFF] = []
+
+
+>>>>>>> origin/main
 
 
 impl cpu {
