@@ -1,4 +1,4 @@
-struct cpu {
+struct Cpu {
     a   : u8,  // Accumulator
     x   : u8,  // Register
     y   : u8,  // Register
@@ -8,6 +8,17 @@ struct cpu {
     cycl: u8,  // CPU Ticks remaining
 
     bus : &Bus // Reference to main bus
+}
+
+enum Flags {
+    CA = 1,   // Carry
+    ZE = 2,   // Zero
+    ID = 4,   // Interrupt Disable
+    DC = 8,   // Decimal 
+    B1 = 16,  // B flag bit one
+    B2 = 32,  // B flag bit two
+    OV = 64,  // Overflow
+    NG = 128, // Negative
 }
 
 enum AddressingModes {
@@ -23,7 +34,7 @@ enum AddressingModes {
     AIX, // Absolute Indexed X
     AIY, // Absolute Indexed Y
     IIX, // Indexed Indirect X
-    IIY, // Indexed Indirect Y
+    IIY, // Indirect Indexed Y
     NUL, // Invalide Operation
 }
 
@@ -89,12 +100,14 @@ let cycleCounts: [u8, 0xFF] = [
 let addressingModesRefrence: [u8, 0xFF] = []
 
 
-impl cpu {
+impl Cpu {
     // Setup functions
-    fn setup(bus: &Bus) {}
+    pub fn new(bus: &Bus) -> Self {
+        Self {0, 0, 0, 0x8000, 0, 0, 0, bus}
+    }
 
     // Interface functions
-    fn clock() {
+    pub fn clock() {
         if (cycle == 0) {
             let opcode:u8 = read(pc);
             pc += 1;
@@ -105,25 +118,50 @@ impl cpu {
         cycle -= 1;
     }
 
-    fn reset() {}
-    fn irq() {}
-    fn nmi() {}
+    pub fn reset() {}
+    pub fn irq() {}
+    pub fn nmi() {}
 
     // Internal functions
+    fn setFlag(&self, bit: u8, value: bool) {
+        if (value) {
+            self.stat |= bit;
+        } else {
+            self.stat &= (0xFF - bit);
+        }
+    }
 
     fn read(addr: u16) -> u8 {
-        return bus.read();
+        return bus.read(addr);
     }
     fn write(addr: u16, value: u8) {
         bus.write(addr, value);
     }
 
     
-    fn setAddressMode(opcode: u8) {
-
+    fn setAddressMode(&self, opcode: u8) {
+        match addressingModes[opcode] {
+            IMD => {
+               return read(pc);
+               pc += 1;
+            }
+        }
     }
-    fn execute(opcode: u8) -> u8 {
-        0u8
+
+    fn execute(&self) -> u8 {
+        let opcode = read(pc);
+        self.pc += 1;
+        let opcodeCycles = cycleCounts[opcode];
+
+        match opcode {
+            0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator)
+                self.a = self.operand;
+                setFlag(ZE, (self.a == 0x00));
+                setFlag(NG, (self.a & 0x80)); 
+            }
+        }
+
+        return  opcodeCycles;
     }
 
 }
