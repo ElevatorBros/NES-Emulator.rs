@@ -59,27 +59,27 @@ let addressingModesFull6502: [u8, 0xFF] = [
    
 ]*/
 
-let addressingModes: [u8, 0xFF] = [
-   IMP, IIX, NUL, NUL, NUL, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, NUL, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   ABS, IIX, NUL, NUL, ZPG, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   IMP, IIX, NUL, NUL, NUL, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   IMP, IIX, NUL, NUL, NUL, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, IND, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   NUL, IIX, NUL, NUL, ZPG, ZPG, ZPG, NUL, IMP, NUL, IMP, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, ZIX, ZIX, ZIY, NUL, IMP, AIY, IMP, NUL, NUL, AIX, NUL, NUL,
-   IMD, IIX, IMD, NUL, ZPG, ZPG, ZPG, NUL, IMP, IMD, IMP, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, ZIX, ZIX, ZIY, NUL, IMP, AIY, IMP, NUL, AIX, AIX, AIY, NUL,
-   IMD, IIX, NUL, NUL, ZPG, ZPG, ZPG, NUL, IMP, IMD, IMP, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   IMD, IIX, NUL, NUL, ZPG, ZPG, ZPG, NUL, IMP, IMD, IMP, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   
-]
+const ADDRESSING_MODE_LOOKUP: [u8; 0xFF] = [
+   AddressingModes::IMP, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::ACC, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
+   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
+   AddressingModes::ABS, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::ACC, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
+   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
+   AddressingModes::IMP, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::ACC, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
+   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
+   AddressingModes::IMP, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::ACC, AddressingModes::NUL, AddressingModes::IND, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
+   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
+   AddressingModes::NUL, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
+   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::ZIY, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::NUL, AddressingModes::NUL,
+   AddressingModes::IMD, AddressingModes::IIX, AddressingModes::IMD, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
+   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::ZIY, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::AIY, AddressingModes::NUL,
+   AddressingModes::IMD, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
+   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
+   AddressingModes::IMD, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
+   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
+];
 
-let cycleCounts: [u8, 0xFF] = [
+
+const CYCLE_COUNTS: [u8; 0xFF] = [
     7, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0,
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 6, 0,
     6, 5, 0, 0, 3, 3, 5, 0, 5, 2, 2, 0, 4, 4, 6, 0,
@@ -95,27 +95,29 @@ let cycleCounts: [u8, 0xFF] = [
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
     2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-]
+];
 
-let addressingModesRefrence: [u8, 0xFF] = []
+// const addressingModesRefrence: [u8, 0xFF] = []
 
 
 impl Cpu {
     // Setup functions
     pub fn new(bus: &Bus) -> Self {
-        Self {0, 0, 0, 0x8000, 0, 0, 0, bus}
+        Self { 
+            0, 0, 0, 0x8000, 0, 0, 0, bus
+        }
     }
 
     // Interface functions
-    pub fn clock() {
-        if (cycle == 0) {
-            let opcode:u8 = read(pc);
-            pc += 1;
+    pub fn clock(&self) {
+        if self.cycle == 0 {
+            let opcode:u8 = self.read(self.pc);
+            self.pc += 1;
             
-            let operand = setAddressMode(opcode);
-            cycle += execute(opcode, operand);
+            let operand = self.set_address_mode(opcode);
+            self.cycl += self.execute(opcode, operand);
         }
-        cycle -= 1;
+        self.cycle -= 1;
     }
 
     pub fn reset() {}
@@ -123,41 +125,41 @@ impl Cpu {
     pub fn nmi() {}
 
     // Internal functions
-    fn setFlag(&self, bit: u8, value: bool) {
-        if (value) {
+    fn set_flag(&self, bit: u8, value: bool) {
+        if value {
             self.stat |= bit;
         } else {
-            self.stat &= (0xFF - bit);
+            self.stat &= 0xFF - bit;
         }
     }
 
-    fn read(addr: u16) -> u8 {
-        return bus.read(addr);
+    fn read(&self, addr: u16) -> u8 {
+        return self.bus.read(addr);
     }
-    fn write(addr: u16, value: u8) {
-        bus.write(addr, value);
+    fn write(&self, addr: u16, value: u8) {
+        self.bus.write(addr, value);
     }
 
     
-    fn setAddressMode(&self, opcode: u8) {
-        match addressingModes[opcode] {
+    fn set_address_mode(&self, opcode: u8) {
+        match ADDRESSING_MODE_LOOKUP[opcode] {
             IMD => {
-               return read(pc);
-               pc += 1;
+               return self.read(self.pc);
+               self.pc += 1;
             }
         }
     }
 
-    fn execute(&self) -> u8 {
-        let opcode = read(pc);
+    fn execute(&self, opcode: u8, operand: u8) -> u8 {
+        let opcode = self.read(self.pc);
         self.pc += 1;
-        let opcodeCycles = cycleCounts[opcode];
+        let opcode_cycles = CYCLE_COUNTS[opcode];
 
         match opcode {
             0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator)
-                self.a = self.operand;
-                setFlag(ZE, (self.a == 0x00));
-                setFlag(NG, (self.a & 0x80)); 
+                self.a = operand;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, self.a & 0x80); 
             }
         }
 

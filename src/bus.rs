@@ -19,6 +19,7 @@ impl Bus {
             if (addr >= 0x8000) {
                 addr -= 0x8000;
                 return self.cart.ROM[addr];
+            }
         }
     }
 
@@ -30,6 +31,7 @@ impl Bus {
             if (addr >= 0x8000) {
                 addr -= 0x8000;
                 self.cart.ROM[addr] = value;
+            }
         }
     }
 }

@@ -1,3 +1,9 @@
+pub mod ram;
+pub mod cartrige;
+pub mod bus;
+pub mod cpu;
+
+
 fn main() {
     let mainRam = Ram::new();
     let mainCart = Cart::new();
