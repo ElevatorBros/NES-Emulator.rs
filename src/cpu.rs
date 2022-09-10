@@ -11,13 +11,13 @@ struct Cpu {
 }
 
 enum Flags {
-    CA = 0b00000001,   // Carry
-    ZE = 0b00000010,   // Zero
-    ID = 0b00000100,   // Interrupt Disable
-    DC = 0b00001000,   // Decimal 
-    B1 = 0b00010000,  // B flag bit one
-    B2 = 0b00100000,  // B flag bit two
-    OV = 0b01000000,  // Overflow
+    CA = 0b00000001, // Carry
+    ZE = 0b00000010, // Zero
+    ID = 0b00000100, // Interrupt Disable
+    DC = 0b00001000, // Decimal 
+    B1 = 0b00010000, // B flag bit one
+    B2 = 0b00100000, // B flag bit two
+    OV = 0b01000000, // Overflow
     NG = 0b10000000, // Negative
 }
 
@@ -104,20 +104,27 @@ impl Cpu {
     // Setup functions
     pub fn new(bus: &Bus) -> Self {
         Self { 
-            0, 0, 0, 0x8000, 0, 0, 0, bus
+            a: 0u8,
+            x: 0u8,
+            y: 0u8,
+            pc: 0x8000,
+            stp: 0u8,
+            stat: 0u8,
+            cycl: 0u8,
+            bus: bus
         }
     }
 
     // Interface functions
     pub fn clock(&self) {
-        if self.cycle == 0 {
+        if self.cycl == 0 {
             let opcode:u8 = self.read(self.pc);
             self.pc += 1;
             
             let operand = self.set_address_mode(opcode);
             self.cycl += self.execute(opcode, operand);
         }
-        self.cycle -= 1;
+        self.cycl -= 1;
     }
 
     pub fn reset() {}
@@ -133,14 +140,15 @@ impl Cpu {
         }
     }
 
+    // Reads an address in memory
     fn read(&self, addr: u16) -> u8 {
         return self.bus.read(addr);
     }
+    // Writes a value to memory
     fn write(&self, addr: u16, value: u8) {
         self.bus.write(addr, value);
     }
 
-    
     fn set_address_mode(&self, opcode: u8) {
         match ADDRESSING_MODE_LOOKUP[opcode] {
             IMD => {
@@ -150,6 +158,7 @@ impl Cpu {
         }
     }
 
+    // Given an opcode, finds the amount of consecutive bits in memory to read, 
     fn execute(&self, opcode: u8, operand: u8) -> u8 {
         let opcode = self.read(self.pc);
         self.pc += 1;
@@ -163,7 +172,7 @@ impl Cpu {
             }
         }
 
-        return  opcodeCycles;
+        return opcode_cycles;
     }
 
 }
