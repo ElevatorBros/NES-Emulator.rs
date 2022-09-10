@@ -11,14 +11,14 @@ struct Cpu {
 }
 
 enum Flags {
-    CA = 1,   // Carry
-    ZE = 2,   // Zero
-    ID = 4,   // Interrupt Disable
-    DC = 8,   // Decimal 
-    B1 = 16,  // B flag bit one
-    B2 = 32,  // B flag bit two
-    OV = 64,  // Overflow
-    NG = 128, // Negative
+    CA = 0b00000001,   // Carry
+    ZE = 0b00000010,   // Zero
+    ID = 0b00000100,   // Interrupt Disable
+    DC = 0b00001000,   // Decimal 
+    B1 = 0b00010000,  // B flag bit one
+    B2 = 0b00100000,  // B flag bit two
+    OV = 0b01000000,  // Overflow
+    NG = 0b10000000, // Negative
 }
 
 enum AddressingModes {
