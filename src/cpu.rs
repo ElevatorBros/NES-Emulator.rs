@@ -21,7 +21,7 @@ enum Flags {
     NG = 0b10000000, // Negative
 }
 
-enum AddressingModes {
+enum AddrM {
     IMP, // Implicit
     ACC, // Accumulator
     IMD, // Immediate
@@ -60,22 +60,22 @@ let addressingModesFull6502: [u8, 0xFF] = [
 ]*/
 
 const ADDRESSING_MODE_LOOKUP: [u8; 0xFF] = [
-   AddressingModes::IMP, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::ACC, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
-   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
-   AddressingModes::ABS, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::ACC, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
-   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
-   AddressingModes::IMP, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::ACC, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
-   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
-   AddressingModes::IMP, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::ACC, AddressingModes::NUL, AddressingModes::IND, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
-   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
-   AddressingModes::NUL, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
-   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::ZIY, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::NUL, AddressingModes::NUL,
-   AddressingModes::IMD, AddressingModes::IIX, AddressingModes::IMD, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
-   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::ZIY, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::AIY, AddressingModes::NUL,
-   AddressingModes::IMD, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
-   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
-   AddressingModes::IMD, AddressingModes::IIX, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::ZPG, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::IMD, AddressingModes::IMP, AddressingModes::NUL, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::ABS, AddressingModes::NUL,
-   AddressingModes::REL, AddressingModes::IIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::ZIX, AddressingModes::ZIX, AddressingModes::NUL, AddressingModes::IMP, AddressingModes::AIY, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::NUL, AddressingModes::AIX, AddressingModes::AIX, AddressingModes::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::ABS, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::NUL, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::NUL,
+   AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIY, AddrM::NUL,
+   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
 ];
 
 
