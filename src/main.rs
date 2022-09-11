@@ -1,20 +1,25 @@
-pub mod ram;
-pub mod cartrige;
-pub mod bus;
-pub mod cpu;
+//pub mod ram;
+//pub mod cartrige;
+//pub mod bus;
+//pub mod cpu;
 
+use NES_Emulator::Ram;
+use NES_Emulator::Cart;
+use NES_Emulator::Bus;
+use NES_Emulator::Cpu;
 
 fn main() {
-    let mainRam = Ram::new();
-    let mainCart = Cart::new();
+    let mut mainRam = Ram::new();
+    let mut mainCart = Cart::new();
     mainCart.ROM[0x00] = 0xA9;
     mainCart.ROM[0x01] = 0x07;
 
-    let mainBus = Bus::new(&mainRam, &mainCart);
+    let mut mainBus = Bus::new(&mut mainRam, &mainCart);
 
-    let mainCpu = Cpu::new(&mainBus);
+    let mut mainCpu = Cpu::new(&mut mainBus);
 
     for i in 0..10 {
+        println!("{}", i);
         mainCpu.clock();
     }
 }
