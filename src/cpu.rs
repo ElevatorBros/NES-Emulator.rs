@@ -97,7 +97,7 @@ static CYCLE_COUNTS: [u8; 0x100] = [
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
     2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 0, 4, 7, 0,
 ];
 
 // const addressingModesRefrence: [u8, 0xFF] = []
@@ -124,7 +124,8 @@ impl<'a> Cpu<'a> {
             let opcode:u8 = self.read(self.pc);
             self.pc += 1;
             
-            let operand:u8 = self.set_address_mode(opcode);
+            let (operand, cycle_addition) = self.set_address_mode(opcode);
+            self.cycl += cycle_addition;
             self.cycl += self.execute(opcode, operand);
         }
         self.cycl -= 1;
@@ -135,11 +136,22 @@ impl<'a> Cpu<'a> {
     pub fn nmi() {}
 
     // Internal functions
-    fn set_flag(&mut self, bit: u8, value: bool) {
+    fn set_flag(&mut self, flag: Flags, value: bool) {
+        let bit: u8 = flag as u8;
         if value {
             self.stat |= bit;
         } else {
             self.stat &= 0xFF - bit;
+        }
+    }
+
+    fn get_flag(&self, flag: Flags) -> u8 {
+        let bit: u8 = flag as u8;
+        let value: u8 = self.stat & bit;
+        if value == 0 {
+            return 0;
+        } else {
+            return 1;
         }
     }
 
@@ -152,17 +164,33 @@ impl<'a> Cpu<'a> {
         self.bus.write(addr, value);
     }
 
-    fn set_address_mode(&mut self, opcode: u8) -> u8 {
+    fn set_address_mode(&mut self, opcode: u8) -> (u8, u8) {
+        let mut operand;
+        let mut cycle_addition = 0;
         match ADDRESSING_MODE_LOOKUP[opcode as usize] {
+            AddrM::ACC => {
+               operand = self.a;
+            }
+            AddrM::ABS => {
+                let low: u16 = self.read(self.pc) as u16;
+                self.pc += 1;
+
+                let high: u16 = self.read(self.pc) as u16;
+                self.pc += 1;
+                
+                let addr: u16 = (high << 8) + low;
+                operand = self.read(addr);
+            }
             AddrM::IMD => {
                let res: u8 = self.read(self.pc);
                self.pc += 1;
-               return res;
+               operand = res;
             }
             _ => {
-                return 0;
+                return (0,0);
             }
         }
+        return (operand, cycle_addition);
     }
 
     // Given an opcode, finds the amount of consecutive bits in memory to read, 
@@ -170,10 +198,23 @@ impl<'a> Cpu<'a> {
         let opcode_cycles = CYCLE_COUNTS[opcode as usize];
 
         match opcode {
+            0x69|0x65|0x75|0x6D|0x7D|0x79|0x61|0x71 => { // ADC (Add With Carry)
+                let tmp:u16 = self.a as u16 + operand as u16 + self.get_flag(Flags::CA) as u16;
+                
+                // Overflow flag, I probably messed this up 
+                self.set_flag(Flags::OV, (((self.a ^ operand) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
+                
+                self.a = tmp as u8;
+
+                self.set_flag(Flags::CA, tmp > 0xFF);
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+
+            }
             0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator)
                 self.a = operand;
-                self.set_flag(Flags::ZE as u8, self.a == 0x00);
-                self.set_flag(Flags::NG as u8, (self.a & 0x80) != 0); 
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
             _ => {
                 return 0;
