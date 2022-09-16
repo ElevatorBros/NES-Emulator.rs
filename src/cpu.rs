@@ -181,7 +181,7 @@ impl<'a> Cpu<'a> {
                 let addr: u16 = (high << 8) + low;
                 operand = self.read(addr);
             }
-            AddrM::IMD => {
+            AddrM::IMD|AddrM::REL => {
                let res: u8 = self.read(self.pc);
                self.pc += 1;
                operand = res;
