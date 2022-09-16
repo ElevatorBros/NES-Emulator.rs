@@ -216,6 +216,12 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
+            0x29|0x25|0x35|0x2D|0x39|0x21|0x31 => { // AND (Logical AND)
+                self.a &= operand;
+
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+            }
             _ => {
                 return 0;
             }
