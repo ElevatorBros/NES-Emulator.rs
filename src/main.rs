@@ -20,8 +20,7 @@ fn main() {
 
     let mut mainCpu = Cpu::new(&mut mainBus);
 
-    for i in 0..10 {
-        println!("{}", i);
+    for i in 0..20 {
         mainCpu.clock();
     }
 }

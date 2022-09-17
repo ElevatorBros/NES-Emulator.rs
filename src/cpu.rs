@@ -241,15 +241,15 @@ impl<'a> Cpu<'a> {
             0x90 => { // BCC (Branch if Carry Clear)
                 // TODO: Ensure this works
                 if self.get_flag(Flags::CA) == 0 {
-                    let tmp = self.read(self.pc) as i8 as u16;
+                    let tmp = operand as i8 as u16;
                     self.pc = self.pc.wrapping_add(tmp);
-                    self.pc += 1
                 }
             }
             0xB0 => { // BCS (Branch if Carry set)
                 // TODO: Ensure this works
                 if self.get_flag(Flags::CA) != 0 {
-                    self.pc += self.read(self.pc) as u16;
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp);
                 }
             }
             _ => {
