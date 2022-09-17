@@ -13,6 +13,8 @@ fn main() {
     let mut mainCart = Cart::new();
     mainCart.ROM[0x00] = 0xA9;
     mainCart.ROM[0x01] = 0x07;
+    mainCart.ROM[0x02] = 0x90;
+    mainCart.ROM[0x03] = 0xFC;
 
     let mut mainBus = Bus::new(&mut mainRam, &mainCart);
 
