@@ -103,6 +103,21 @@ static CYCLE_COUNTS: [u8; 0x100] = [
 // const addressingModesRefrence: [u8, 0xFF] = []
 
 
+impl<'a> std::fmt::Debug for Cpu<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Cpu")
+          .field("a", &self.a)
+          .field("x", &self.x)
+          .field("y", &self.y)
+          .field("pc", &self.pc)
+          .field("stp", &self.stp)
+          .field("stat", &self.stat)
+          .field("cycl", &self.cycl)
+          .finish()
+    }
+}
+
+
 impl<'a> Cpu<'a> {
     // Setup functions
     pub fn new(bus: &'a mut Bus<'a>) -> Self {
