@@ -1,4 +1,5 @@
 use crate::Bus;
+use crate::print_asm;
 
 pub struct Cpu<'a> {
     a   : u8,  // Accumulator
@@ -23,7 +24,7 @@ enum Flags {
     NG = 0b10000000, // Negative
 }
 
-enum AddrM {
+pub enum AddrM {
     IMP, // Implicit
     ACC, // Accumulator
     IMD, // Immediate
@@ -61,7 +62,7 @@ let addressingModesFull6502: [u8, 0xFF] = [
    
 ]*/
 
-static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
+pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
    AddrM::ABS, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
@@ -136,6 +137,7 @@ impl<'a> Cpu<'a> {
     // Interface functions
     pub fn clock(&mut self) {
         if self.cycl == 0 {
+            print_asm(self.bus, self.pc);
             let opcode:u8 = self.read(self.pc);
             self.pc += 1;
             
@@ -174,6 +176,10 @@ impl<'a> Cpu<'a> {
     fn read(&self, addr: u16) -> u8 {
         return self.bus.read(addr);
     }
+
+    fn read_word_little(&self, addr: u16) -> u16 {
+        return self.bus.read_word_little(addr);
+    }
     // Writes a value to memory
     fn write(&mut self, addr: u16, value: u8) {
         self.bus.write(addr, value);
@@ -187,14 +193,16 @@ impl<'a> Cpu<'a> {
                operand = self.a;
             }
             AddrM::ABS => {
-                let low: u16 = self.read(self.pc) as u16;
-                self.pc += 1;
+                //let low: u16 = self.read(self.pc) as u16;
+                //self.pc += 1;
 
-                let high: u16 = self.read(self.pc) as u16;
-                self.pc += 1;
+                //let high: u16 = self.read(self.pc) as u16;
+                //self.pc += 1;
                 
-                let addr: u16 = (high << 8) + low;
-                operand = self.read(addr);
+                //let addr: u16 = (high << 8) + low;
+                //operand = self.read(addr);
+                operand = self.read(self.read_word_little(self.pc));
+                self.pc += 2;
             }
             AddrM::IMD|AddrM::REL => {
                let res: u8 = self.read(self.pc);
