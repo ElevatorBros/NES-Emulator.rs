@@ -103,6 +103,21 @@ static CYCLE_COUNTS: [u8; 0x100] = [
 // const addressingModesRefrence: [u8, 0xFF] = []
 
 
+impl<'a> std::fmt::Debug for Cpu<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Cpu")
+          .field("a", &self.a)
+          .field("x", &self.x)
+          .field("y", &self.y)
+          .field("pc", &self.pc)
+          .field("stp", &self.stp)
+          .field("stat", &self.stat)
+          .field("cycl", &self.cycl)
+          .finish()
+    }
+}
+
+
 impl<'a> Cpu<'a> {
     // Setup functions
     pub fn new(bus: &'a mut Bus<'a>) -> Self {
@@ -129,6 +144,7 @@ impl<'a> Cpu<'a> {
             self.cycl += self.execute(opcode, operand);
         }
         self.cycl -= 1;
+        println!("{:?}", self)
     }
 
     pub fn reset() {}
@@ -221,6 +237,20 @@ impl<'a> Cpu<'a> {
 
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+            }
+            0x90 => { // BCC (Branch if Carry Clear)
+                // TODO: Ensure this works
+                if self.get_flag(Flags::CA) == 0 {
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp);
+                }
+            }
+            0xB0 => { // BCS (Branch if Carry set)
+                // TODO: Ensure this works
+                if self.get_flag(Flags::CA) != 0 {
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp);
+                }
             }
             _ => {
                 return 0;
