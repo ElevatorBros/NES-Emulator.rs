@@ -27,6 +27,14 @@ impl<'a> Bus<'a> {
             }
         }
     }
+    
+    pub fn read_word_little(&self, addr: u16) -> u16 {
+        let low: u16 = self.read(addr) as u16;
+
+        let high: u16 = self.read(addr + 1) as u16;
+        
+        return (high << 8) + low;
+    }
 
     pub fn write(&mut self, mut addr: u16, value: u8) {
         if addr < 0x2000 { // Internal RAM
