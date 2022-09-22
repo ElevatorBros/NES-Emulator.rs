@@ -141,9 +141,9 @@ impl<'a> Cpu<'a> {
             let opcode:u8 = self.read(self.pc);
             self.pc += 1;
             
-            let (operand, cycle_addition) = self.set_address_mode(opcode);
+            let (operand, raw_operand, second_raw_operand, cycle_addition) = self.set_address_mode(opcode);
             self.cycl += cycle_addition;
-            self.cycl += self.execute(opcode, operand);
+            self.cycl += self.execute(opcode, operand, raw_operand, second_raw_operand);
         }
         self.cycl -= 1;
     }
@@ -185,39 +185,36 @@ impl<'a> Cpu<'a> {
         self.bus.write(addr, value);
     }
 
-    fn set_address_mode(&mut self, opcode: u8) -> (u8, u8) {
-        let mut operand;
-        let mut cycle_addition = 0;
+    fn set_address_mode(&mut self, opcode: u8) -> (u8, u8, u8, u8) {
+        let mut operand: u8 = 0;
+        let mut raw_operand: u8 = 0;
+        let mut second_raw_operand: u8 = 0;
+        let mut cycle_addition: u8 = 0;
         match ADDRESSING_MODE_LOOKUP[opcode as usize] {
             AddrM::ACC => {
                operand = self.a;
             }
             AddrM::ABS => {
-                //let low: u16 = self.read(self.pc) as u16;
-                //self.pc += 1;
+                raw_operand = self.read(self.pc);
+                second_raw_operand = self.read(self.pc+1);
 
-                //let high: u16 = self.read(self.pc) as u16;
-                //self.pc += 1;
-                
-                //let addr: u16 = (high << 8) + low;
-                //operand = self.read(addr);
                 operand = self.read(self.read_word_little(self.pc));
                 self.pc += 2;
             }
             AddrM::IMD|AddrM::REL => {
-               let res: u8 = self.read(self.pc);
+               let raw_operand = self.read(self.pc);
                self.pc += 1;
-               operand = res;
+               operand = raw_operand;
             }
             _ => {
-                return (0,0);
+                return (0,0,0,0);
             }
         }
-        return (operand, cycle_addition);
+        return (operand, raw_operand, second_raw_operand, cycle_addition);
     }
 
     // Given an opcode, finds the amount of consecutive bits in memory to read, 
-    fn execute(&mut self, opcode: u8, operand: u8) -> u8 {
+    fn execute(&mut self, opcode: u8, operand: u8, raw_operand: u8, second_raw_operand: u8) -> u8 {
         let opcode_cycles = CYCLE_COUNTS[opcode as usize];
 
         match opcode {
@@ -236,7 +233,7 @@ impl<'a> Cpu<'a> {
             }
             0x29|0x25|0x35|0x2D|0x39|0x21|0x31 => { // AND (Logical AND)
                 self.a &= operand;
-
+            
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
@@ -252,12 +249,54 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
+            0x38 => { // SEC (Set Carry)
+                self.set_flag(Flags::CA, true);
+            }
+            0xFD => { // SED (Set Decimal)
+                self.set_flag(Flags::DC, true);
+            }
+            0x78 => { // SEI (Set Interrupt)
+                self.set_flag(Flags::ID, true);
+            }
+            0x85|0x95|0x8D|0x9D|0x99|0x81|0x91 => { // STA (Store A)
+                self.write(raw_operand as u16 + ((second_raw_operand as u16) << 8), self.a)
+            }
+            0x44|0x96|0x8E => { // STX (Store X)
+                self.write(raw_operand as u16 + ((second_raw_operand as u16) << 8), self.x)
+            }
+            0x84|0x94|0x8C => { // STY (Store Y)
+                self.write(raw_operand as u16 + ((second_raw_operand as u16) << 8), self.y)
+            }
+            0xAA => { // TAX (Transfer A to X)
+                self.x = self.a;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0xA8 => { // TAY (Transfer A to Y)
+                self.y = self.a;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0x8A => { // TXA (Transfer X to A)
+                self.a = self.x;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0x9A => { // TXS (Transfer X to stack pointer)
+                self.stp = self.x;
+            }
+            0xBA => { // TSX (Transfer stack pointer to X)
+                self.stp = self.x;
+            }
+            0x98 => { // TYA (Transfer Y to A)
+                self.a = self.y;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
             _ => {
                 return 0;
             }
         }
-
         return opcode_cycles;
     }
-
 }
