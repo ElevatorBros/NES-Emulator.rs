@@ -237,6 +237,17 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
+            0x90 => { // BCC (Branch if Carry Clear)
+                if self.get_flag(Flags::CA) == 0 {
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp);
+                }
+            }
+            0xB0 => { // BCS (Branch if Carry set)
+                if self.get_flag(Flags::CA) != 0 {
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp);
+                }
             0x0A|0x06|0x16|0x0E|0x1E => { // ASL (Shift Left One Bit)
                 self.a = self.a << 1;
 
@@ -249,6 +260,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
+<<<<<<< HEAD
             0x38 => { // SEC (Set Carry)
                 self.set_flag(Flags::CA, true);
             }
@@ -292,6 +304,29 @@ impl<'a> Cpu<'a> {
                 self.a = self.y;
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+=======
+            0x24|0x2C => { // BIT (Bit test)
+                // if zero flag is clear
+                self.set_flag(Flags::ZE, self.a & operand == 0); 
+                self.set_flag(Flags::OV, operand & 0x70 != 0);
+                self.set_flag(Flags::NG, operand & 0x80 != 0);
+            }
+            0x30 => { // BMI (Branch if Minus)
+                if self.get_flag(Flags::NG) != 0 {
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp);
+                }
+            }
+            0xD0 => { // BNE (Branch if Not Equal)
+                // If zero flag is clear
+                if self.get_flag(Flags::ZE) == 0 {
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp);
+                }
+            }
+            0x00 => { // BRK  (Force Interrupt)
+                // Set Break Command bit to 1
+>>>>>>> origin/main
             }
             _ => {
                 return 0;
