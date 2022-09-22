@@ -248,6 +248,7 @@ impl<'a> Cpu<'a> {
                     let tmp = operand as i8 as u16;
                     self.pc = self.pc.wrapping_add(tmp);
                 }
+            }
             0x0A|0x06|0x16|0x0E|0x1E => { // ASL (Shift Left One Bit)
                 self.a = self.a << 1;
 
@@ -260,7 +261,6 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
-<<<<<<< HEAD
             0x38 => { // SEC (Set Carry)
                 self.set_flag(Flags::CA, true);
             }
@@ -304,7 +304,7 @@ impl<'a> Cpu<'a> {
                 self.a = self.y;
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
-=======
+            }
             0x24|0x2C => { // BIT (Bit test)
                 // if zero flag is clear
                 self.set_flag(Flags::ZE, self.a & operand == 0); 
@@ -326,7 +326,6 @@ impl<'a> Cpu<'a> {
             }
             0x00 => { // BRK  (Force Interrupt)
                 // Set Break Command bit to 1
->>>>>>> origin/main
             }
             _ => {
                 return 0;
