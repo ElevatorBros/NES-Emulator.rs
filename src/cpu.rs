@@ -327,6 +327,21 @@ impl<'a> Cpu<'a> {
             0x00 => { // BRK  (Force Interrupt)
                 // Set Break Command bit to 1
             }
+            0x50 => { // BVC (Branch if Overflow Clear)
+                if self.get_flag(Flags::OV) == 0 {
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp);
+                }
+            }
+            0x70 => { // BVS (Branch if Overflowe set)
+                if self.get_flag(Flags::OV) != 0 {
+                    let tmp = operand as i8 as u16;
+                    self.pc = self.pc.wrapping_add(tmp)
+                }
+            }
+            0x18 => { // CLC (Clear Carry Flag)
+                self.set_flag(Flags::CA, true)
+            }
             _ => {
                 return 0;
             }
