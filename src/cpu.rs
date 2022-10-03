@@ -141,9 +141,9 @@ impl<'a> Cpu<'a> {
             let opcode:u8 = self.read(self.pc);
             self.pc += 1;
             
-            let (operand, raw_operand, second_raw_operand, cycle_addition) = self.set_address_mode(opcode);
+            let (operand, real_address, cycle_addition) = self.set_address_mode(opcode);
             self.cycl += cycle_addition;
-            self.cycl += self.execute(opcode, operand, raw_operand, second_raw_operand);
+            self.cycl += self.execute(opcode, operand, real_address);
         }
         self.cycl -= 1;
     }
@@ -185,36 +185,36 @@ impl<'a> Cpu<'a> {
         self.bus.write(addr, value);
     }
 
-    fn set_address_mode(&mut self, opcode: u8) -> (u8, u8, u8, u8) {
+    fn set_address_mode(&mut self, opcode: u8) -> (u8, u16, u8) {
         let mut operand: u8 = 0;
-        let mut raw_operand: u8 = 0;
-        let mut second_raw_operand: u8 = 0;
+        let mut real_address: u16 = 0;
         let mut cycle_addition: u8 = 0;
         match ADDRESSING_MODE_LOOKUP[opcode as usize] {
             AddrM::ACC => {
                operand = self.a;
             }
             AddrM::ABS => {
-                raw_operand = self.read(self.pc);
-                second_raw_operand = self.read(self.pc+1);
+                let low_byte: u8 = self.read(self.pc);
+                let high_byte: u8= self.read(self.pc+1);
+                real_address = ((high_byte as u16) << 8) + low_byte as u16;
 
                 operand = self.read(self.read_word_little(self.pc));
                 self.pc += 2;
             }
             AddrM::IMD|AddrM::REL => {
-               let raw_operand = self.read(self.pc);
+               operand = self.read(self.pc);
+               real_address = self.pc;
                self.pc += 1;
-               operand = raw_operand;
             }
             _ => {
-                return (0,0,0,0);
+                return (0,0,0);
             }
         }
-        return (operand, raw_operand, second_raw_operand, cycle_addition);
+        return (operand, real_address, cycle_addition);
     }
 
     // Given an opcode, finds the amount of consecutive bits in memory to read, 
-    fn execute(&mut self, opcode: u8, operand: u8, raw_operand: u8, second_raw_operand: u8) -> u8 {
+    fn execute(&mut self, opcode: u8, operand: u8, real_address: u16) -> u8 {
         let opcode_cycles = CYCLE_COUNTS[opcode as usize];
 
         match opcode {
@@ -261,23 +261,90 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
+
+
+
+            0x28 => { // PLP (Pull Processer Status)
+                self.stp += 1;
+                self.stat = self.read(0x0100 + self.stp as u16);
+            }
+
+            0x26|0x36|0x2E|0x3E => { // ROL (Rotate Left)
+                let low_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (operand & 0x80) != 0);
+
+                let tmp: u8 = (operand << 1) + low_bit;
+                self.write(real_address, tmp);
+            }
+            0x2A => { // ROL for accumulator 
+                let low_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.a & 0x80) != 0);
+
+                self.a = (operand << 1) + low_bit;
+            }
+
+            0x66|0x76|0x6E|0x7E => { // ROR (Rotate Right)
+                let high_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (operand & 0x01) != 0);
+
+                let tmp: u8 = (operand >> 1) + high_bit << 7;
+                self.write(real_address, tmp);
+            }
+            0x6A => { // ROR for accumulator 
+                let high_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.a & 0x01) != 0);
+
+                self.a = (operand >> 1) + high_bit << 7;
+            }
+
+            0x40 => { // RTI (Return from interrupt)
+                self.stp += 1;
+                self.stat = self.read(0x0100 + self.stp as u16);
+                self.stp += 1;
+
+                let stack_one = self.read(0x0100 + self.stp as u16);
+                self.stp += 1;
+                let stack_two = self.read(0x0100 + self.stp as u16);
+
+                self.pc = ((stack_two as u16) << 8) + stack_one as u16;
+            }
+            0x60 => { // RTS (Return from subroutine)
+                self.stp += 1;
+                let stack_one = self.read(0x0100 + self.stp as u16);
+                self.stp += 1;
+                let stack_two = self.read(0x0100 + self.stp as u16);
+                
+                self.pc = ((stack_two as u16) << 8) + stack_one as u16 + 1;
+            }
+            0xE9|0xE5|0xF5|0xED|0xFD|0xF9|0xE1|0xF1 => { // SBC (Subtract with carry)
+                let tmp:u16 = self.a as u16 - operand as u16 - self.get_flag(Flags::CA) as u16;
+                
+                // Overflow flag, I probably messed this up 
+                self.set_flag(Flags::OV, (((self.a ^ operand) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
+                
+                self.a = tmp as u8;
+            
+                self.set_flag(Flags::CA, tmp > 0xFF);
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
             0x38 => { // SEC (Set Carry)
                 self.set_flag(Flags::CA, true);
             }
-            0xFD => { // SED (Set Decimal)
+            0xF8 => { // SED (Set Decimal)
                 self.set_flag(Flags::DC, true);
             }
             0x78 => { // SEI (Set Interrupt)
                 self.set_flag(Flags::ID, true);
             }
             0x85|0x95|0x8D|0x9D|0x99|0x81|0x91 => { // STA (Store A)
-                self.write(raw_operand as u16 + ((second_raw_operand as u16) << 8), self.a)
+                self.write(real_address, self.a);
             }
             0x44|0x96|0x8E => { // STX (Store X)
-                self.write(raw_operand as u16 + ((second_raw_operand as u16) << 8), self.x)
+                self.write(real_address, self.x);
             }
             0x84|0x94|0x8C => { // STY (Store Y)
-                self.write(raw_operand as u16 + ((second_raw_operand as u16) << 8), self.y)
+                self.write(real_address, self.y);
             }
             0xAA => { // TAX (Transfer A to X)
                 self.x = self.a;
