@@ -250,9 +250,10 @@ impl<'a> Cpu<'a> {
                 }
             }
             0x0A|0x06|0x16|0x0E|0x1E => { // ASL (Shift Left One Bit)
+                self.set_flag(Flags::CA, (self.a & 0x80) != 0);
+                
                 self.a = self.a << 1;
 
-                self.set_flag(Flags::CA, (self.a & 0x80) != 0);
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
@@ -261,8 +262,48 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
+            
+            0x4A => { // LSR (Logical Shift Right) for Accumulator
+                self.set_flag(Flags::CA, (self.a & 0x80) != 0);
+                
+                self.a = self.a >> 1;
 
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+               
+            }
+            0x46|0x56|0x4E|0x5E => { // LSR (Logical Shift Right) for Memory
+                let mut operand = self.read(real_address);
 
+                self.set_flag(Flags::CA, (operand & 0x80) != 0);
+                
+                operand = operand >> 1;
+
+                self.set_flag(Flags::ZE, operand == 0x00);
+                self.set_flag(Flags::NG, (operand & 0x80) != 0);
+                
+                self.write(real_address, operand);
+            }
+
+            0x09|0x05|0x15|0x0D|0x1D|0x19|0x01|0x11 => { // ORA (Or Memory with Accumulator)
+                self.a |= self.read(real_address);
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+
+            0xea => { // NOP (No Operation)
+                
+            }
+
+            0x48 => { // PHA (Push Accumulator)
+                self.stp -= 1;
+                self.write(0x100 + self.stp as u16, self.a);
+            }
+
+            0x08 => { // PHP (Push Processer Status)
+                self.stp -= 1;
+                self.write(0x100 + self.stp as u16, self.stat);
+            }
 
             0x28 => { // PLP (Pull Processer Status)
                 self.stp += 1;
