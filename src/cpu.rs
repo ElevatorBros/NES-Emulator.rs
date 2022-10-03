@@ -239,13 +239,13 @@ impl<'a> Cpu<'a> {
             }
             0x90 => { // BCC (Branch if Carry Clear)
                 if self.get_flag(Flags::CA) == 0 {
-                    let tmp = self.read(real_address) as i8 as u16;
+                    let tmp = self.read(real_address);
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
             0xB0 => { // BCS (Branch if Carry set)
                 if self.get_flag(Flags::CA) != 0 {
-                    let tmp = self.read(real_address) as i8 as u16;
+                    let tmp = self.read(real_address);
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
@@ -380,14 +380,14 @@ impl<'a> Cpu<'a> {
             }
             0x30 => { // BMI (Branch if Minus)
                 if self.get_flag(Flags::NG) != 0 {
-                    let tmp = self.read(real_address) as i8 as u16;
+                    let tmp = self.read(real_address);
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
             0xD0 => { // BNE (Branch if Not Equal)
                 // If zero flag is clear
                 if self.get_flag(Flags::ZE) == 0 {
-                    let tmp = self.read(real_address) as i8 as u16;
+                    let tmp = self.read(real_address);
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
@@ -396,13 +396,13 @@ impl<'a> Cpu<'a> {
             }
             0x50 => { // BVC (Branch if Overflow Clear)
                 if self.get_flag(Flags::OV) == 0 {
-                    let tmp = self.read(real_address) as i8 as u16;
+                    let tmp = self.read(real_address);
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
             0x70 => { // BVS (Branch if Overflowe set)
                 if self.get_flag(Flags::OV) != 0 {
-                    let tmp = self.read(real_address) as i8 as u16;
+                    let tmp = self.read(real_address);
                     self.pc = self.pc.wrapping_add(tmp)
                 }
             }
