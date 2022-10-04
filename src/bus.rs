@@ -38,7 +38,7 @@ impl<'a> Bus<'a> {
 
     pub fn write(&mut self, mut addr: u16, value: u8) {
         if addr < 0x2000 { // Internal RAM
-            addr = addr % 0x800;
+            addr = addr % 0x0800;
             self.ram.setMemory(addr, value);
         } /* else { // Cartridge space 
             if addr >= 0x8000 {

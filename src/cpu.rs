@@ -185,32 +185,84 @@ impl<'a> Cpu<'a> {
         self.bus.write(addr, value);
     }
 
-    fn set_address_mode(&mut self, opcode: u8) -> (u8, u16, u8) {
-        let mut operand: u8 = 0;
+    fn set_address_mode(&mut self, opcode: u8) -> (u16, u8) {
         let mut real_address: u16 = 0;
         let mut cycle_addition: u8 = 0;
         match ADDRESSING_MODE_LOOKUP[opcode as usize] {
-            AddrM::ACC => {
-               operand = self.a;
-            }
             AddrM::ABS => {
                 let low_byte: u8 = self.read(self.pc);
-                let high_byte: u8= self.read(self.pc+1);
+                let high_byte: u8 = self.read(self.pc+1);
                 real_address = ((high_byte as u16) << 8) + low_byte as u16;
 
-                operand = self.read(self.read_word_little(self.pc));
                 self.pc += 2;
             }
-            AddrM::IMD|AddrM::REL => {
-               operand = self.read(self.pc);
+            AddrM::AIX => {
+                let low_byte: u8 = self.read(self.pc);
+                let high_byte: u8 = self.read(self.pc+1);
+                real_address = ((high_byte as u16) << 8) + low_byte as u16;
+
+                real_address += self.x as u16;
+
+                self.pc += 2;
+            }
+            AddrM::AIY => {
+                let low_byte: u8 = self.read(self.pc);
+                let high_byte: u8 = self.read(self.pc+1);
+                real_address = ((high_byte as u16) << 8) + low_byte as u16;
+
+                real_address += self.y as u16;
+
+                self.pc += 2;
+            }
+            AddrM::IMD => {
                real_address = self.pc;
                self.pc += 1;
             }
-            _ => {
-                return (0,0,0);
+            AddrM::IND => {
+                let low_byte: u8 = self.read(self.pc);
+                let high_byte: u8 = self.read(self.pc+1);
+                let effective_address: u16 = ((high_byte as u16) << 8) + low_byte as u16;
+
+                real_address = self.read_word_little(effective_address);
+
+                self.pc += 2;
+            }
+            AddrM::IIX => {
+                let low_byte: u8 = self.read(self.pc);
+                let effective_address: u16 = low_byte as u16 + self.x as u16;
+                real_address = self.read_word_little(effective_address);
+
+                self.pc += 1;
+            }
+            AddrM::IIY => {
+                let effective_address: u16 = self.read(self.pc) as u16;
+                real_address = self.read_word_little(effective_address) + self.y as u16;
+
+                self.pc += 1;
+            }
+            AddrM::REL => {
+               real_address = self.pc;
+               self.pc += 2;
+            }
+            AddrM::ZPG => {
+                real_address = self.read(self.pc) as u16;
+                self.pc += 1;
+            }
+            AddrM::ZIX => {
+                real_address = self.read(self.pc) as u16 + self.x as u16;
+                real_address &= 0xFF;
+                self.pc += 1;
+            }
+            AddrM::ZIY => {
+                real_address = self.read(self.pc) as u16 + self.y as u16;
+                real_address &= 0xFF;
+                self.pc += 1;
+            }
+            _ => { // ACC / IMP 
+                return (0,0);
             }
         }
-        return (operand, real_address, cycle_addition);
+        return (real_address, cycle_addition);
     }
 
     // Given an opcode, finds the amount of consecutive bits in memory to read, 
@@ -249,7 +301,8 @@ impl<'a> Cpu<'a> {
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
-            0x0A|0x06|0x16|0x0E|0x1E => { // ASL (Shift Left One Bit)
+
+            0x0A => { // ASL (Shift Left One Bit) Accumulator
                 self.set_flag(Flags::CA, (self.a & 0x80) != 0);
                 
                 self.a = self.a << 1;
@@ -257,6 +310,18 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
+            0x06|0x16|0x0E|0x1E => { // ASL (Shift Left One Bit) 
+                let mut operand = self.read(real_address);
+                self.set_flag(Flags::CA, (operand & 0x80) != 0);
+
+                operand = operand << 1;
+
+                self.set_flag(Flags::ZE, operand == 0x00);
+                self.set_flag(Flags::NG, (operand & 0x80) != 0);
+
+                self.write(real_address, operand);
+            }
+
             0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator)
                 self.a = self.read(real_address);
                 self.set_flag(Flags::ZE, self.a == 0x00);
@@ -291,7 +356,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
 
-            0xea => { // NOP (No Operation)
+            0xEA => { // NOP (No Operation)
                 
             }
 
@@ -419,6 +484,13 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::OV, self.read(real_address) & 0x70 != 0);
                 self.set_flag(Flags::NG, self.read(real_address) & 0x80 != 0);
             }
+            0x10 => { // BPL (Branch on Plus)
+                if self.get_flag(Flags::NG) == 0 {
+                    let tmp = self.read(real_address) as i8; // Maybe don't need i8, look into
+                    self.pc = (self.pc as i32 + tmp as i32) as u16;
+                }
+            }
+
             0x30 => { // BMI (Branch if Minus)
                 if self.get_flag(Flags::NG) != 0 {
                     let tmp = self.read(real_address) as i8; // Maybe don't need i8, look into
