@@ -444,11 +444,98 @@ impl<'a> Cpu<'a> {
             0x70 => { // BVS (Branch if Overflowe set)
                 if self.get_flag(Flags::OV) != 0 {
                     let tmp = self.read(real_address);
-                    self.pc = self.pc.wrapping_add(tmp)
+                    self.pc = self.pc.wrapping_add(tmp);
                 }
             }
             0x18 => { // CLC (Clear Carry Flag)
-                self.set_flag(Flags::CA, true)
+                self.set_flag(Flags::CA, false);
+            }
+            0xD8 => { // CLD (Clear Decimal Mode)
+                self.set_flag(Flags::DC, false);
+            }
+            0x58 => { // CLI (Clear Interrupt Disable)
+                self.set_flag(Flags::ID, false);
+            }
+            0xB8 => { // CLV (Clear Overflow Flag)
+                self.set_flag(Flags::OV, false);
+            }
+            0xC9|0xC5|0xD5|0xCD|0xDD|0xD9|0xC1|0xD1 => { // CMP (Compare)
+                let m = self.read(real_address);
+                self.set_flag(Flags::CA, self.a >= m);
+                self.set_flag(Flags::ZE, self.a == m);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+            }
+            0xE0|0xE4|0xEC => { // CPX (Compare X register)
+                let m = self.read(real_address);
+                self.set_flag(Flags::CA, self.x >= m);
+                self.set_flag(Flags::ZE, self.x == m);
+                self.set_flag(Flags::NG, (self.x & 0x80) != 0);
+            }
+            0xC0|0xC4|0xCC => { // CPY (Compare Y register)
+                let m = self.read(real_address);
+                self.set_flag(Flags::CA, self.y >= m);
+                self.set_flag(Flags::ZE, self.y == m);
+                self.set_flag(Flags::NG, (self.x & 0x80) != 0);
+            }
+            0xC6|0xD6|0xCE|0xDE => { // DEC (Decrement Memory)
+                let m = self.read(real_address);
+                let res = m - 1;
+
+                // TODO: Check this over. I'm not sure if this is correct
+                self.write(real_address, res);
+
+                self.set_flag(Flags::ZE, res == 0);
+                self.set_flag(Flags::NG, (res & 0x80) != 0);
+            }
+            0xCA => { // DEX (Decrement X Register)
+                self.x -= 1;
+
+                // TODO: Not sure if we check this before or after (probably after) 
+                self.set_flag(Flags::ZE, self.x == 0);
+                self.set_flag(Flags::NG, (self.x & 0x80) != 0);
+            }
+            0x88 => { // DEY (Decrement Y Register)
+                self.y -= 1;
+            
+                self.set_flag(Flags::ZE, self.y == 0);
+                self.set_flag(Flags::NG, (self.y & 0x80) != 0);
+            }
+            0x49|0x45|0x55|0x4D|0x5D|0x59|0x41|0x51 => { // EOR (Exclusive OR)
+                let m = self.read(real_address);
+                // TODO: Check with josh to see if this is correct
+                self.a ^= m;
+                self.set_flag(Flags::ZE, self.a == 0);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+            }
+            0xE6|0xF6|0xEE|0xFE => { // INC (Increment Memory)
+                let m = self.read(real_address);
+                let res = m + 1;
+
+                // TODO: Check this over. I'm not sure if this is correct
+                self.write(real_address, res);
+
+                self.set_flag(Flags::ZE, res == 0);
+                self.set_flag(Flags::NG, (res & 0x80) != 0);
+            }
+            0xE8 => { // INX (Increment X Register)
+                self.x += 1;
+
+                self.set_flag(Flags::ZE, self.x == 0);
+                self.set_flag(Flags::NG, (self.x & 0x80) != 0);
+            }
+            0xC8 => { // INY (Increment Y Register)
+                self.y += 1;
+
+                self.set_flag(Flags::ZE, self.y == 0);
+                self.set_flag(Flags::NG, (self.y & 0x80) != 0);
+            }
+            0x4C|0x6C => { // JMP (Jump)
+                // TODO: This function needs work
+                //  "An original 6502 has does not correctly fetch the target address if the indirect vector falls on a page boundary (e.g. $xxFF where xx is any value from $00 to $FF). In this case fetches the LSB from $xxFF as expected but takes the MSB from $xx00. This is fixed in some later chips like the 65SC02 so for compatibility always ensure the indirect vector is not at the end of the page."
+                // -- https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP
+
+                let operand = self.read(real_address);
+                self.pc = operand as u16;
             }
             _ => {
                 return 0;
