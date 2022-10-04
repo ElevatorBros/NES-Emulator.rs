@@ -143,7 +143,7 @@ impl<'a> Cpu<'a> {
             
             let (operand, real_address, cycle_addition) = self.set_address_mode(opcode);
             self.cycl += cycle_addition;
-            self.cycl += self.execute(opcode, operand, real_address);
+            self.cycl += self.execute(opcode, real_address);
         }
         self.cycl -= 1;
     }
@@ -421,8 +421,8 @@ impl<'a> Cpu<'a> {
             }
             0x30 => { // BMI (Branch if Minus)
                 if self.get_flag(Flags::NG) != 0 {
-                    let tmp = self.read(real_address);
-                    self.pc = self.pc.wrapping_add(tmp);
+                    let tmp = self.read(real_address) as i8; // Maybe don't need i8, look into
+                    self.pc = (self.pc as i32 + tmp as i32) as u16;
                 }
             }
             0xD0 => { // BNE (Branch if Not Equal)
