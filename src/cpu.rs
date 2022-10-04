@@ -537,6 +537,22 @@ impl<'a> Cpu<'a> {
                 let operand = self.read(real_address);
                 self.pc = operand as u16;
             }
+            0x20 => { // JSR (Jump to subroutine)
+                self.pc -= 1;
+                self.write(self.stp as u16 + 0x0100, (self.pc >> 8) as u8);
+                self.write(self.stp as u16 + 0x0100, (self.pc) as u8);
+                self.pc = real_address;
+            }
+            0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator)
+                self.a = self.read(real_address);
+                self.set_flag(Flags::ZE, self.a == 0);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+            }
+            0xA0|0xA4|0xB4|0xAC|0xBC => { // LDY (Load Y Register)
+                self.y = self.read(real_address);
+                self.set_flag(Flags::ZE, self.y == 0);
+                self.set_flag(Flags::NG, (self.y & 0x80) != 0);
+            }
             _ => {
                 return 0;
             }
