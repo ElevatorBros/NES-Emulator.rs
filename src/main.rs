@@ -11,6 +11,7 @@ use NES_Emulator::Cpu;
 fn main() {
     let mut mainRam = Ram::new();
     let mut mainCart = Cart::new();
+
     mainCart.ROM[0x00] = 0xA9;
     mainCart.ROM[0x01] = 0x07;
     mainCart.ROM[0x02] = 0x90;
@@ -20,7 +21,7 @@ fn main() {
 
     let mut mainCpu = Cpu::new(&mut mainBus);
 
-    for i in 0..20 {
+    for i in 0..255 {
         mainCpu.clock();
     }
 }

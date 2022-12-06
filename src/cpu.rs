@@ -1,6 +1,11 @@
 use crate::Bus;
 use crate::print_asm;
 
+
+const NMI_VEC: u16 = 0xfffa;
+const RESET_VEC: u16 = 0xfffc;
+const BRK_VEC: u16 = 0xfffe;
+
 pub struct Cpu<'a> {
     a   : u8,  // Accumulator
     x   : u8,  // Register
@@ -138,10 +143,12 @@ impl<'a> Cpu<'a> {
     pub fn clock(&mut self) {
         if self.cycl == 0 {
             print_asm(self.bus, self.pc);
+            println!("PC:0x{:02x},A:0x{:02x},X:0x{:02x},Y:0x{:02x},STAT:0b{:b},STP:0x{:02x},CYCL:{}", self.pc, self.a, self.x, self.y, self.stat, self.stp, self.cycl);
+            
             let opcode:u8 = self.read(self.pc);
             self.pc += 1;
             
-            let (operand, real_address, cycle_addition) = self.set_address_mode(opcode);
+            let (real_address, cycle_addition) = self.set_address_mode(opcode);
             self.cycl += cycle_addition;
             self.cycl += self.execute(opcode, real_address);
         }
@@ -291,13 +298,13 @@ impl<'a> Cpu<'a> {
             }
             0x90 => { // BCC (Branch if Carry Clear)
                 if self.get_flag(Flags::CA) == 0 {
-                    let tmp = self.read(real_address);
+                    let tmp = self.read(real_address) as u16;
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
             0xB0 => { // BCS (Branch if Carry set)
                 if self.get_flag(Flags::CA) != 0 {
-                    let tmp = self.read(real_address);
+                    let tmp = self.read(real_address) as u16;
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
@@ -500,22 +507,32 @@ impl<'a> Cpu<'a> {
             0xD0 => { // BNE (Branch if Not Equal)
                 // If zero flag is clear
                 if self.get_flag(Flags::ZE) == 0 {
-                    let tmp = self.read(real_address);
+                    let tmp = self.read(real_address) as u16;
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
             0x00 => { // BRK  (Force Interrupt)
-                // Set Break Command bit to 1
+                self.write(0x0100 + self.stp as u16, (self.pc >> 8) as u8);
+                self.stp -= 1;
+                
+                self.write(0x0100 + self.stp as u16, self.pc as u8);
+                self.stp -= 1;
+
+
+                self.write(0x0100 + self.stp as u16, self.stat);
+                self.stp -= 1;
+                self.set_flag(Flags::ID, true);
+                self.pc = BRK_VEC;
             }
             0x50 => { // BVC (Branch if Overflow Clear)
                 if self.get_flag(Flags::OV) == 0 {
-                    let tmp = self.read(real_address);
+                    let tmp = self.read(real_address) as u16;
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
             0x70 => { // BVS (Branch if Overflowe set)
                 if self.get_flag(Flags::OV) != 0 {
-                    let tmp = self.read(real_address);
+                    let tmp = self.read(real_address) as u16;
                     self.pc = self.pc.wrapping_add(tmp);
                 }
             }
