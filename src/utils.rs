@@ -2,7 +2,10 @@ use crate::AddrM;
 use crate::ADDRESSING_MODE_LOOKUP;
 use crate::Bus;
 
+// Vim folding 
+// vim:foldmethod=marker
 
+//: ASM_LOOKUP {{{
 static ASM_LOOKUP : [&str; 0x100] = [
     "BRK", "ORA", "NUL", "NUL", "NUL", "ORA", "ASL", "NUL", "PHP", "ORA", "ASL", "NUL", "NUL", "ORA", "ASL", "NUL",
     "BPL", "ORA", "NUL", "NUL", "NUL", "ORA", "ASL", "NUL", "CLC", "ORA", "NUL", "NUL", "NUL", "ORA", "ASL", "NUL",
@@ -21,8 +24,9 @@ static ASM_LOOKUP : [&str; 0x100] = [
     "CPX", "SBC", "NUL", "NUL", "CPX", "SBC", "INC", "NUL", "INX", "SBC", "NOP", "NUL", "CPX", "SBC", "INC", "NUL",
     "BEQ", "SBC", "NUL", "NUL", "NUL", "SBC", "INC", "NUL", "SED", "SBC", "NUL", "NUL", "NUL", "SBC", "INC", "NUL",
 ];
+//: }}}
 
-
+//: print_asm {{{
 pub fn print_asm(bus: &Bus, pc: u16) {
     let opcode: u8 = bus.read(pc);
     print!("{}", ASM_LOOKUP[opcode as usize]);
@@ -70,3 +74,4 @@ pub fn print_asm(bus: &Bus, pc: u16) {
     }
     print!("\n");
 }
+//: }}}

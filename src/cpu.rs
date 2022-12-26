@@ -2,10 +2,14 @@ use crate::Bus;
 use crate::print_asm;
 
 
+// Vim folding 
+// vim:foldmethod=marker
+
 const NMI_VEC: u16 = 0xfffa;
 const RESET_VEC: u16 = 0xfffc;
 const BRK_VEC: u16 = 0xfffe;
 
+//: Cpu {{{
 pub struct Cpu<'a> {
     a   : u8,  // Accumulator
     x   : u8,  // Register
@@ -17,7 +21,9 @@ pub struct Cpu<'a> {
 
     bus : &'a mut Bus<'a> // Reference to main bus
 }
+//: }}}
 
+//: Flags {{{
 enum Flags {
     CA = 0b00000001, // Carry
     ZE = 0b00000010, // Zero
@@ -28,7 +34,9 @@ enum Flags {
     OV = 0b01000000, // Overflow
     NG = 0b10000000, // Negative
 }
+//: }}}
 
+//: AddrM {{{
 pub enum AddrM {
     IMP, // Implicit
     ACC, // Accumulator
@@ -45,7 +53,9 @@ pub enum AddrM {
     IIY, // Indirect Indexed Y
     NUL, // Invalid Operation
 }
+//: }}}
 
+//: addressingModesFull6502 {{{
 /*
 let addressingModesFull6502: [u8, 0xFF] = [
    IMP, IIX, NUL, NUL, NUL, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, NUL, ABS, ABS, NUL,
@@ -66,7 +76,9 @@ let addressingModesFull6502: [u8, 0xFF] = [
    REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
    
 ]*/
+//: }}}
 
+//: ADDRESSING_MODE_LOOKUP {{{
 pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
@@ -85,8 +97,9 @@ pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
    AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
 ];
+//: }}}
 
-
+//: CYCLE_COUNTS {{{
 static CYCLE_COUNTS: [u8; 0x100] = [
     7, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0,
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 6, 0,
@@ -105,10 +118,11 @@ static CYCLE_COUNTS: [u8; 0x100] = [
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 0, 4, 7, 0,
 ];
+//: }}}
 
 // const addressingModesRefrence: [u8, 0xFF] = []
 
-
+//: CPU_DEBUG {{{
 impl<'a> std::fmt::Debug for Cpu<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Cpu")
@@ -122,8 +136,9 @@ impl<'a> std::fmt::Debug for Cpu<'a> {
           .finish()
     }
 }
+//: }}}
 
-
+//: CPU {{{
 impl<'a> Cpu<'a> {
     // Setup functions
     pub fn new(bus: &'a mut Bus<'a>) -> Self {
@@ -192,6 +207,7 @@ impl<'a> Cpu<'a> {
         self.bus.write(addr, value);
     }
 
+    //: set_address_mode {{{
     fn set_address_mode(&mut self, opcode: u8) -> (u16, u8) {
         let mut real_address: u16 = 0;
         let mut cycle_addition: u8 = 0;
@@ -271,7 +287,9 @@ impl<'a> Cpu<'a> {
         }
         return (real_address, cycle_addition);
     }
+    //: }}}
 
+    //: execute {{{
     // Given an opcode, finds the amount of consecutive bits in memory to read, 
     fn execute(&mut self, opcode: u8, real_address: u16) -> u8 {
         let opcode_cycles = CYCLE_COUNTS[opcode as usize];
@@ -632,4 +650,6 @@ impl<'a> Cpu<'a> {
         }
         return opcode_cycles;
     }
+    ///: }}}
 }
+//: }}}

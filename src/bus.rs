@@ -1,12 +1,15 @@
 use crate::Ram;
 use crate::Cart;
 
+// Vim folding 
+// vim:foldmethod=marker
+
 pub struct Bus<'a> {
     ram: &'a mut Ram, // 2KB Internal RAM
     cart: &'a Cart, 
 }
 
-
+//: Bus {{{
 impl<'a> Bus<'a> {
     // Setup Functions
     pub fn new(ram: &'a mut Ram, cart: &'a Cart) -> Self {
@@ -48,3 +51,4 @@ impl<'a> Bus<'a> {
         } */
     }
 }
+//: }}}
