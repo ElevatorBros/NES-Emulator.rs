@@ -1,9 +1,8 @@
+// Vim folding 
+// vim:foldmethod=marker
 use crate::Bus;
 use crate::print_asm;
 
-
-// Vim folding 
-// vim:foldmethod=marker
 
 const NMI_VEC: u16 = 0xfffa;
 const RESET_VEC: u16 = 0xfffc;

@@ -1,8 +1,8 @@
+// Vim folding 
+// vim:foldmethod=marker
 use crate::Ram;
 use crate::Cart;
 
-// Vim folding 
-// vim:foldmethod=marker
 
 pub struct Bus<'a> {
     ram: &'a mut Ram, // 2KB Internal RAM

@@ -1,9 +1,10 @@
+// Vim folding 
+// vim:foldmethod=marker
+
 use crate::AddrM;
 use crate::ADDRESSING_MODE_LOOKUP;
 use crate::Bus;
 
-// Vim folding 
-// vim:foldmethod=marker
 
 //: ASM_LOOKUP {{{
 static ASM_LOOKUP : [&str; 0x100] = [
