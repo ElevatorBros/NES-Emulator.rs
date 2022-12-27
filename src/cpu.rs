@@ -98,24 +98,30 @@ pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
 ];
 //: }}}
 
+
+// PAGE_BOUNDARY_ADDITION
+const PBA: u8 = 0x80;
+// BRANCH_ADDITION
+const BA: u8 = 0x40;
+
 //: CYCLE_COUNTS {{{
-static CYCLE_COUNTS: [u8; 0x100] = [
-    7, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 0, 4, 6, 0,
-    2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 6, 0,
-    6, 5, 0, 0, 3, 3, 5, 0, 5, 2, 2, 0, 4, 4, 6, 0,
-    2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 4, 4, 6, 0,
-    6, 6, 0, 0, 0, 3, 5, 0, 3, 2, 2, 0, 3, 4, 6, 0,
-    2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 6, 0,
-    6, 6, 0, 0, 0, 3, 5, 0, 4, 2, 2, 0, 6, 4, 6, 0,
-    2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 6, 0,
-    0, 6, 0, 0, 3, 3, 3, 0, 2, 0, 2, 0, 4, 4, 4, 0,
-    2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0,
-    2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0,
-    2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
-    2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-    2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0,
-    2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0,
-    2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 2, 0, 0, 4, 7, 0,
+static CYCLE_COUNTS: [u8; 0x100] = [ 
+    7    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 0    , 0    , 4    , 6    , 0    ,
+    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
+    6    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 4    , 2    , 2    , 0    , 4    , 4    , 6    , 0    ,
+    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 4    , 4|PBA, 7    , 0    ,
+    6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 0    , 3    , 4    , 6    , 0    ,
+    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
+    6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 4    , 2    , 2    , 0    , 5    , 4    , 6    , 0    ,
+    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
+    0    , 6    , 0    , 0    , 3    , 3    , 3    , 0    , 2    , 0    , 2    , 0    , 4    , 4    , 4    , 0    ,
+    2|BA , 6    , 2    , 0    , 4    , 4    , 4    , 0    , 2    , 5    , 2    , 0    , 4    , 5    , 4    , 0    ,
+    2    , 6    , 2    , 0    , 4    , 3    , 3    , 0    , 2    , 2    , 2    , 0    , 4    , 4    , 4    , 0    ,
+    2|BA , 5|PBA, 0    , 0    , 3    , 4    , 6    , 0    , 2    , 4|PBA, 2    , 0    , 4|PBA, 4|PBA, 4|PBA, 0    ,
+    2    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 2    , 2    , 2    , 0    , 0    , 4    , 6    , 0    ,
+    2|BA , 5|PBA, 0    , 0    , 3    , 4    , 6    , 0    , 2    , 4|PBA, 2    , 0    , 4    , 4|PBA, 7    , 0    ,
+    2    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 2    , 2    , 2    , 0    , 4    , 4    , 6    , 0    ,
+    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 2    , 0    , 0    , 4|PBA, 7    , 0    ,
 ];
 //: }}}
 
@@ -208,6 +214,9 @@ impl<'a> Cpu<'a> {
 
     //: set_address_mode {{{
     fn set_address_mode(&mut self, opcode: u8) -> (u16, u8) {
+        let opcode_cycles:u8 = CYCLE_COUNTS[opcode as usize] & 0x0F;
+        let check_for_page_boundary:bool = (CYCLE_COUNTS[opcode as usize]& PBA) != 0x00;
+
         let mut real_address: u16 = 0;
         let mut cycle_addition: u8 = 0;
         match ADDRESSING_MODE_LOOKUP[opcode as usize] {
@@ -225,6 +234,10 @@ impl<'a> Cpu<'a> {
 
                 real_address += self.x as u16;
 
+                if check_for_page_boundary && (real_address & 0xFF) < (self.x as u16) { 
+                    cycle_addition += 1;
+                }
+
                 self.pc += 2;
             }
             AddrM::AIY => {
@@ -233,6 +246,10 @@ impl<'a> Cpu<'a> {
                 real_address = ((high_byte as u16) << 8) + low_byte as u16;
 
                 real_address += self.y as u16;
+
+                if check_for_page_boundary && (real_address & 0xFF) < (self.y as u16) { 
+                    cycle_addition += 1;
+                }
 
                 self.pc += 2;
             }
@@ -259,6 +276,10 @@ impl<'a> Cpu<'a> {
             AddrM::IIY => {
                 let effective_address: u16 = self.read(self.pc) as u16;
                 real_address = self.read_word_little(effective_address) + self.y as u16;
+
+                if check_for_page_boundary && (real_address & 0xFF) < (self.y as u16) { 
+                    cycle_addition += 1;
+                }
 
                 self.pc += 1;
             }
@@ -288,11 +309,23 @@ impl<'a> Cpu<'a> {
     }
     //: }}}
 
+    //: execute helpers {{{
+    fn branch(&self, real_address: u16) -> u8 {
+        let old_pc = self.pc; 
+        self.pc = (self.pc as i32 + self.read(real_address) as i32) as u16;
+        
+        if self.pc & 0xFF00 != old_pc & 0xFF00 {
+            return 3; // Page Boundry + Branch Taken
+        } else {
+            return 1; // Branch Taken
+        }
+    } 
+    //: }}}
+
     //: execute {{{
     // Given an opcode, finds the amount of consecutive bits in memory to read, 
     fn execute(&mut self, opcode: u8, real_address: u16) -> u8 {
-        let opcode_cycles = CYCLE_COUNTS[opcode as usize];
-
+        let mut cycle_addition = 0;
         match opcode {
             0x69|0x65|0x75|0x6D|0x7D|0x79|0x61|0x71 => { // ADC (Add With Carry)
                 let tmp:u16 = self.a as u16 + self.read(real_address) as u16 + self.get_flag(Flags::CA) as u16;
@@ -307,25 +340,12 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
 
             }
-            0x29|0x25|0x35|0x2D|0x39|0x21|0x31 => { // AND (Logical AND)
+            0x29|0x25|0x35|0x2D|0x3D|0x39|0x21|0x31 => { // AND (Logical AND)
                 self.a &= self.read(real_address);
             
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
-            0x90 => { // BCC (Branch if Carry Clear)
-                if self.get_flag(Flags::CA) == 0 {
-                    let tmp = self.read(real_address) as u16;
-                    self.pc = self.pc.wrapping_add(tmp);
-                }
-            }
-            0xB0 => { // BCS (Branch if Carry set)
-                if self.get_flag(Flags::CA) != 0 {
-                    let tmp = self.read(real_address) as u16;
-                    self.pc = self.pc.wrapping_add(tmp);
-                }
-            }
-
             0x0A => { // ASL (Shift Left One Bit) Accumulator
                 self.set_flag(Flags::CA, (self.a & 0x80) != 0);
                 
@@ -345,162 +365,20 @@ impl<'a> Cpu<'a> {
 
                 self.write(real_address, operand);
             }
-
-            0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator)
-                self.a = self.read(real_address);
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            0x90 => { // BCC (Branch if Carry Clear)
+                if self.get_flag(Flags::CA) == 0 {
+                    cycle_addition += self.branch(real_address);
+                }
             }
-            
-            0x4A => { // LSR (Logical Shift Right) for Accumulator
-                self.set_flag(Flags::CA, (self.a & 0x80) != 0);
-                
-                self.a = self.a >> 1;
-
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
-               
+            0xB0 => { // BCS (Branch if Carry set)
+                if self.get_flag(Flags::CA) != 0 {
+                    cycle_addition += self.branch(real_address);
+                }
             }
-            0x46|0x56|0x4E|0x5E => { // LSR (Logical Shift Right) for Memory
-                let mut operand = self.read(real_address);
-
-                self.set_flag(Flags::CA, (operand & 0x80) != 0);
-                
-                operand = operand >> 1;
-
-                self.set_flag(Flags::ZE, operand == 0x00);
-                self.set_flag(Flags::NG, (operand & 0x80) != 0);
-                
-                self.write(real_address, operand);
-            }
-
-            0x09|0x05|0x15|0x0D|0x1D|0x19|0x01|0x11 => { // ORA (Or Memory with Accumulator)
-                self.a |= self.read(real_address);
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
-            }
-
-            0xEA => { // NOP (No Operation)
-                
-            }
-
-            0x48 => { // PHA (Push Accumulator)
-                self.stp -= 1;
-                self.write(0x100 + self.stp as u16, self.a);
-            }
-
-            0x08 => { // PHP (Push Processer Status)
-                self.stp -= 1;
-                self.write(0x100 + self.stp as u16, self.stat);
-            }
-
-            0x28 => { // PLP (Pull Processer Status)
-                self.stp += 1;
-                self.stat = self.read(0x0100 + self.stp as u16);
-            }
-
-            0x26|0x36|0x2E|0x3E => { // ROL (Rotate Left)
-                let low_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.read(real_address) & 0x80) != 0);
-
-                let tmp: u8 = (self.read(real_address) << 1) + low_bit;
-                self.write(real_address, tmp);
-            }
-            0x2A => { // ROL for accumulator 
-                let low_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.a & 0x80) != 0);
-
-                self.a = (self.read(real_address) << 1) + low_bit;
-            }
-
-            0x66|0x76|0x6E|0x7E => { // ROR (Rotate Right)
-                let high_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.read(real_address) & 0x01) != 0);
-
-                let tmp: u8 = (self.read(real_address) >> 1) + high_bit << 7;
-                self.write(real_address, tmp);
-            }
-            0x6A => { // ROR for accumulator 
-                let high_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.a & 0x01) != 0);
-
-                self.a = (self.read(real_address) >> 1) + high_bit << 7;
-            }
-
-            0x40 => { // RTI (Return from interrupt)
-                self.stp += 1;
-                self.stat = self.read(0x0100 + self.stp as u16);
-                self.stp += 1;
-
-                let stack_one = self.read(0x0100 + self.stp as u16);
-                self.stp += 1;
-                let stack_two = self.read(0x0100 + self.stp as u16);
-
-                self.pc = ((stack_two as u16) << 8) + stack_one as u16;
-            }
-            0x60 => { // RTS (Return from subroutine)
-                self.stp += 1;
-                let stack_one = self.read(0x0100 + self.stp as u16);
-                self.stp += 1;
-                let stack_two = self.read(0x0100 + self.stp as u16);
-                
-                self.pc = ((stack_two as u16) << 8) + stack_one as u16 + 1;
-            }
-            0xE9|0xE5|0xF5|0xED|0xFD|0xF9|0xE1|0xF1 => { // SBC (Subtract with carry)
-                let tmp:u16 = self.a as u16 - self.read(real_address) as u16 - self.get_flag(Flags::CA) as u16;
-                
-                // Overflow flag, I probably messed this up 
-                self.set_flag(Flags::OV, (((self.a ^ self.read(real_address)) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
-                
-                self.a = tmp as u8;
-            
-                self.set_flag(Flags::CA, tmp > 0xFF);
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
-            }
-            0x38 => { // SEC (Set Carry)
-                self.set_flag(Flags::CA, true);
-            }
-            0xF8 => { // SED (Set Decimal)
-                self.set_flag(Flags::DC, true);
-            }
-            0x78 => { // SEI (Set Interrupt)
-                self.set_flag(Flags::ID, true);
-            }
-            0x85|0x95|0x8D|0x9D|0x99|0x81|0x91 => { // STA (Store A)
-                self.write(real_address, self.a);
-            }
-            0x44|0x96|0x8E => { // STX (Store X)
-                self.write(real_address, self.x);
-            }
-            0x84|0x94|0x8C => { // STY (Store Y)
-                self.write(real_address, self.y);
-            }
-            0xAA => { // TAX (Transfer A to X)
-                self.x = self.a;
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
-            }
-            0xA8 => { // TAY (Transfer A to Y)
-                self.y = self.a;
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
-            }
-            0x8A => { // TXA (Transfer X to A)
-                self.a = self.x;
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
-            }
-            0x9A => { // TXS (Transfer X to stack pointer)
-                self.stp = self.x;
-            }
-            0xBA => { // TSX (Transfer stack pointer to X)
-                self.stp = self.x;
-            }
-            0x98 => { // TYA (Transfer Y to A)
-                self.a = self.y;
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            0xF0 => { // BEQ (Branch if Equal)
+                if self.get_flag(Flags::ZE) != 0 {
+                    cycle_addition += self.branch(real_address);
+                }
             }
             0x24|0x2C => { // BIT (Bit test)
                 // if zero flag is clear
@@ -508,27 +386,23 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::OV, self.read(real_address) & 0x70 != 0);
                 self.set_flag(Flags::NG, self.read(real_address) & 0x80 != 0);
             }
-            0x10 => { // BPL (Branch on Plus)
-                if self.get_flag(Flags::NG) == 0 {
-                    let tmp = self.read(real_address) as i8; // Maybe don't need i8, look into
-                    self.pc = (self.pc as i32 + tmp as i32) as u16;
-                }
-            }
-
             0x30 => { // BMI (Branch if Minus)
                 if self.get_flag(Flags::NG) != 0 {
-                    let tmp = self.read(real_address) as i8; // Maybe don't need i8, look into
-                    self.pc = (self.pc as i32 + tmp as i32) as u16;
+                    cycle_addition += self.branch(real_address);
                 }
             }
             0xD0 => { // BNE (Branch if Not Equal)
                 // If zero flag is clear
                 if self.get_flag(Flags::ZE) == 0 {
-                    let tmp = self.read(real_address) as u16;
-                    self.pc = self.pc.wrapping_add(tmp);
+                    cycle_addition += self.branch(real_address);
                 }
             }
-            0x00 => { // BRK  (Force Interrupt)
+            0x10 => { // BPL (Branch on Plus)
+                if self.get_flag(Flags::NG) == 0 {
+                    cycle_addition += self.branch(real_address);
+                }
+            }
+            0x00 => { // BRK (Force Interrupt)
                 self.write(0x0100 + self.stp as u16, (self.pc >> 8) as u8);
                 self.stp -= 1;
                 
@@ -543,14 +417,12 @@ impl<'a> Cpu<'a> {
             }
             0x50 => { // BVC (Branch if Overflow Clear)
                 if self.get_flag(Flags::OV) == 0 {
-                    let tmp = self.read(real_address) as u16;
-                    self.pc = self.pc.wrapping_add(tmp);
+                    cycle_addition += self.branch(real_address);
                 }
             }
             0x70 => { // BVS (Branch if Overflowe set)
                 if self.get_flag(Flags::OV) != 0 {
-                    let tmp = self.read(real_address) as u16;
-                    self.pc = self.pc.wrapping_add(tmp);
+                    cycle_addition += self.branch(real_address);
                 }
             }
             0x18 => { // CLC (Clear Carry Flag)
@@ -643,11 +515,192 @@ impl<'a> Cpu<'a> {
                 let operand = self.read(real_address);
                 self.pc = operand as u16;
             }
+            0x20 => { // JSR (Jump to Subroutine)
+                let return_point: u16 = self.pc + 2; // 3 bytes of jsr instruction minus 1 (e.i. 2)
+                self.stp -= 1;
+                self.write(0x100 + self.stp as u16, (return_point >> 8) as u8);
+                self.stp -= 1;
+                self.write(0x100 + self.stp as u16, return_point as u8);
+                
+            }
+            0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator) 
+                self.a = self.read(real_address);
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+
+            0xA2|0xA6|0xB6|0xAE|0xBE => { // LDX (Load X) 
+                self.x = self.read(real_address);
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+
+            0xA0|0xA4|0xB4|0xAC|0xBC => { // LDY (Load Y)
+                self.y = self.read(real_address);
+                self.set_flag(Flags::ZE, self.y == 0x00);
+                self.set_flag(Flags::NG, (self.y & 0x80) != 0); 
+            }
+            
+            0x4A => { // LSR (Logical Shift Right) for Accumulator
+                self.set_flag(Flags::CA, (self.a & 0x80) != 0);
+                
+                self.a = self.a >> 1;
+
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+               
+            }
+            0x46|0x56|0x4E|0x5E => { // LSR (Logical Shift Right) for Memory
+                let mut operand = self.read(real_address);
+
+                self.set_flag(Flags::CA, (operand & 0x80) != 0);
+                
+                operand = operand >> 1;
+
+                self.set_flag(Flags::ZE, operand == 0x00);
+                self.set_flag(Flags::NG, (operand & 0x80) != 0);
+                
+                self.write(real_address, operand);
+            }
+            0xEA => { // NOP (No Operation)
+
+            }
+            0x09|0x05|0x15|0x0D|0x1D|0x19|0x01|0x11 => { // ORA (Or Memory with Accumulator)
+                self.a |= self.read(real_address);
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0x48 => { // PHA (Push Accumulator)
+                self.stp += 1;
+                let stack_one = self.read(0x0100 + self.stp as u16);
+                self.stp += 1;
+                let stack_two = self.read(0x0100 + self.stp as u16);
+                
+                self.pc = ((stack_two as u16) << 8) + stack_one as u16 + 1;
+            }
+            0x08 => { // PHP (Push Processer Status)
+                self.stp -= 1;
+                self.write(0x100 + self.stp as u16, self.stat);
+            }
+            0x68 => { // PLA (Pull Accumulator)
+                self.stp += 1;
+                self.a = self.read(0x100 + self.stp as u16);
+
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0x28 => { // PLP (Pull Processer Status)
+                self.stp += 1;
+                self.stat = self.read(0x0100 + self.stp as u16);
+            }
+            0x26|0x36|0x2E|0x3E => { // ROL (Rotate Left)
+                let low_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.read(real_address) & 0x80) != 0);
+
+                let tmp: u8 = (self.read(real_address) << 1) + low_bit;
+                self.write(real_address, tmp);
+            }
+            0x2A => { // ROL for accumulator 
+                let low_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.a & 0x80) != 0);
+
+                self.a = (self.read(real_address) << 1) + low_bit;
+            }
+
+            0x66|0x76|0x6E|0x7E => { // ROR (Rotate Right)
+                let high_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.read(real_address) & 0x01) != 0);
+
+                let tmp: u8 = (self.read(real_address) >> 1) + high_bit << 7;
+                self.write(real_address, tmp);
+            }
+            0x6A => { // ROR for accumulator 
+                let high_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.a & 0x01) != 0);
+
+                self.a = (self.read(real_address) >> 1) + high_bit << 7;
+            }
+
+            0x40 => { // RTI (Return from interrupt)
+                self.stp += 1;
+                self.stat = self.read(0x0100 + self.stp as u16);
+                self.stp += 1;
+
+                let stack_one = self.read(0x0100 + self.stp as u16);
+                self.stp += 1;
+                let stack_two = self.read(0x0100 + self.stp as u16);
+
+                self.pc = ((stack_two as u16) << 8) + stack_one as u16;
+            }
+            0x60 => { // RTS (Return from subroutine)
+                self.stp += 1;
+                let stack_one = self.read(0x0100 + self.stp as u16);
+                self.stp += 1;
+                let stack_two = self.read(0x0100 + self.stp as u16);
+                
+                self.pc = ((stack_two as u16) << 8) + stack_one as u16 + 1;
+            }
+            0xE9|0xE5|0xF5|0xED|0xFD|0xF9|0xE1|0xF1 => { // SBC (Subtract with carry)
+                let tmp:u16 = self.a as u16 - self.read(real_address) as u16 - self.get_flag(Flags::CA) as u16;
+                
+                // Overflow flag, I probably messed this up 
+                self.set_flag(Flags::OV, (((self.a ^ self.read(real_address)) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
+                
+                self.a = tmp as u8;
+            
+                self.set_flag(Flags::CA, tmp > 0xFF);
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0x38 => { // SEC (Set Carry)
+                self.set_flag(Flags::CA, true);
+            }
+            0xF8 => { // SED (Set Decimal)
+                self.set_flag(Flags::DC, true);
+            }
+            0x78 => { // SEI (Set Interrupt)
+                self.set_flag(Flags::ID, true);
+            }
+            0x85|0x95|0x8D|0x9D|0x99|0x81|0x91 => { // STA (Store A)
+                self.write(real_address, self.a);
+            }
+            0x44|0x96|0x8E => { // STX (Store X)
+                self.write(real_address, self.x);
+            }
+            0x84|0x94|0x8C => { // STY (Store Y)
+                self.write(real_address, self.y);
+            }
+            0xAA => { // TAX (Transfer A to X)
+                self.x = self.a;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0xA8 => { // TAY (Transfer A to Y)
+                self.y = self.a;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0xBA => { // TSX (Transfer stack pointer to X)
+                self.stp = self.x;
+            }
+            0x8A => { // TXA (Transfer X to A)
+                self.a = self.x;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            0x9A => { // TXS (Transfer X to stack pointer)
+                self.stp = self.x;
+            }
+            0x98 => { // TYA (Transfer Y to A)
+                self.a = self.y;
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
             _ => {
-                return 0;
+                return 2; // Treat as nop
             }
         }
-        return opcode_cycles;
+        return cycle_addition;
     }
     ///: }}}
 }
