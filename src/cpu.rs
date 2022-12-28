@@ -1,7 +1,7 @@
 // Vim folding 
 // vim:foldmethod=marker
 use crate::Bus;
-use crate::print_asm;
+use crate::get_asm;
 
 
 const NMI_VEC: u16 = 0xfffa;
@@ -10,15 +10,16 @@ const BRK_VEC: u16 = 0xfffe;
 
 //: Cpu {{{
 pub struct Cpu<'a> {
-    a   : u8,  // Accumulator
-    x   : u8,  // Register
-    y   : u8,  // Register
-    pc  : u16, // Program Counter
-    stp : u8,  // Stack Pointer 
-    stat: u8,  // Status Register
-    cycl: u8,  // CPU Ticks remaining
+    pub a   : u8,  // Accumulator
+    pub x   : u8,  // Register
+    pub y   : u8,  // Register
+    pub pc  : u16, // Program Counter
+    pub stp : u8,  // Stack Pointer 
+    pub stat: u8,  // Status Register
+    pub cycl: u32, // CPU Ticks 
+    pub next: u32, // Tick of next instruction
 
-    bus : &'a mut Bus<'a> // Reference to main bus
+    pub bus : &'a mut Bus<'a> // Reference to main bus
 }
 //: }}}
 
@@ -138,6 +139,7 @@ impl<'a> std::fmt::Debug for Cpu<'a> {
           .field("stp", &self.stp)
           .field("stat", &self.stat)
           .field("cycl", &self.cycl)
+          .field("next", &self.next)
           .finish()
     }
 }
@@ -154,25 +156,49 @@ impl<'a> Cpu<'a> {
             pc: 0x8000,
             stp: 0u8,
             stat: 0u8,
-            cycl: 0u8,
+            cycl: 0u32,
+            next: 0u32,
             bus: bus
         }
     }
 
     // Interface functions
     pub fn clock(&mut self) {
-        if self.cycl == 0 {
-            print_asm(self.bus, self.pc);
-            println!("PC:0x{:02x},A:0x{:02x},X:0x{:02x},Y:0x{:02x},STAT:0b{:b},STP:0x{:02x},CYCL:{}", self.pc, self.a, self.x, self.y, self.stat, self.stp, self.cycl);
+        if self.cycl == self.next {
+            //print_asm(self.bus, self.pc);
+            //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
+            //println!("PC:0x{:04x},A:0x{:02x},X:0x{:02x},Y:0x{:02x},STAT:0b{:b},STP:0x{:02x},CYCL:{}", self.pc, self.a, self.x, self.y, self.stat, self.stp, self.cycl);
+            //print_debug_string(self.bus);
+            //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
+            print!("{:04x}  ", self.pc);
+            match ADDRESSING_MODE_LOOKUP[self.read(self.pc) as usize] {
+                AddrM::ACC|AddrM::IMP => { // One Byte
+                    print!("{:02x}        ", self.read(self.pc));
+                }
+                AddrM::IMD|AddrM::ZPG|AddrM::REL|AddrM::ZIX|AddrM::ZIY|AddrM::IIX|AddrM::IIY => { // Two Bytes 
+                    print!("{:02x} {:02x}     ", self.read(self.pc), self.read(self.pc+1));
+                }
+                AddrM::ABS|AddrM::AIX|AddrM::AIY|AddrM::IND => { // Three Bytes
+                    print!("{:02x} {:02x} {:02x} ", self.read(self.pc), self.read(self.pc+1), self.read(self.pc+2));
+                }
+                AddrM::NUL => {
+                    print!("INVLD: {:02x} ", self.read(self.pc));
+                }
+
+            }
+            println!("{}", get_asm(self.bus, self.pc));
             
             let opcode:u8 = self.read(self.pc);
             self.pc += 1;
-            
-            let (real_address, cycle_addition) = self.set_address_mode(opcode);
-            self.cycl += cycle_addition;
-            self.cycl += self.execute(opcode, real_address);
+           
+
+            let opcode_cycles:u8 = CYCLE_COUNTS[opcode as usize] & 0x0F;
+            let (real_address, mut cycle_addition) = self.set_address_mode(opcode);
+            cycle_addition += self.execute(opcode, real_address);
+            self.next = self.cycl + (opcode_cycles as u32) + (cycle_addition as u32); 
         }
-        self.cycl -= 1;
+        //self.cycl -= 1;
+        self.cycl += 1;
     }
 
     pub fn reset() {}
@@ -214,7 +240,6 @@ impl<'a> Cpu<'a> {
 
     //: set_address_mode {{{
     fn set_address_mode(&mut self, opcode: u8) -> (u16, u8) {
-        let opcode_cycles:u8 = CYCLE_COUNTS[opcode as usize] & 0x0F;
         let check_for_page_boundary:bool = (CYCLE_COUNTS[opcode as usize]& PBA) != 0x00;
 
         let mut real_address: u16 = 0;
@@ -267,15 +292,21 @@ impl<'a> Cpu<'a> {
                 self.pc += 2;
             }
             AddrM::IIX => {
-                let low_byte: u8 = self.read(self.pc);
-                let effective_address: u16 = low_byte as u16 + self.x as u16;
+                let loc: u8 = self.read(self.pc);
+                let low_byte: u8 = self.read((loc + self.x) as u16);
+                let high_byte: u8 = self.read((loc + self.x) as u16 + 1);
+                let effective_address: u16 = ((high_byte as u16) << 8) + low_byte as u16;
                 real_address = self.read_word_little(effective_address);
 
                 self.pc += 1;
             }
             AddrM::IIY => {
-                let effective_address: u16 = self.read(self.pc) as u16;
-                real_address = self.read_word_little(effective_address) + self.y as u16;
+                let loc: u8 = self.read(self.pc);
+                let low_byte: u8 = self.read(loc as u16);
+                let high_byte: u8 = self.read(loc as u16 + 1);
+                let effective_address: u16 = ((high_byte as u16) << 8) + low_byte as u16;
+
+                real_address = effective_address + (self.y as u16);
 
                 if check_for_page_boundary && (real_address & 0xFF) < (self.y as u16) { 
                     cycle_addition += 1;
@@ -310,7 +341,7 @@ impl<'a> Cpu<'a> {
     //: }}}
 
     //: execute helpers {{{
-    fn branch(&self, real_address: u16) -> u8 {
+    fn branch(&mut self, real_address: u16) -> u8 {
         let old_pc = self.pc; 
         self.pc = (self.pc as i32 + self.read(real_address) as i32) as u16;
         
@@ -702,6 +733,6 @@ impl<'a> Cpu<'a> {
         }
         return cycle_addition;
     }
-    ///: }}}
+    //: }}}
 }
 //: }}}

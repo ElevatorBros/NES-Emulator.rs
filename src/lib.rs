@@ -10,4 +10,4 @@ pub use crate::cpu::AddrM;
 pub use crate::bus::Bus;
 pub use crate::cartrige::Cart;
 pub use crate::ram::Ram;
-pub use crate::utils::print_asm;
+pub use crate::utils::get_asm;
