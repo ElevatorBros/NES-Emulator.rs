@@ -43,6 +43,7 @@ pub enum AddrM {
     IMD, // Immediate
     ZPG, // Zero Page
     ABS, // Absolute
+    ADR, // Fake addressing mode used for debugging
     REL, // Relative
     IND, // Indirect
     ZIX, // Zero Page Indexed X
@@ -82,9 +83,9 @@ let addressingModesFull6502: [u8, 0xFF] = [
 pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::ABS, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::ADR, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
@@ -154,8 +155,9 @@ impl<'a> Cpu<'a> {
             x: 0u8,
             y: 0u8,
             pc: 0x8000,
-            stp: 0u8,
-            stat: 0u8,
+            stp: 0xFD,
+            //stat: 0x34,
+            stat: 0x24,
             cycl: 0u32,
             next: 0u32,
             bus: bus
@@ -170,23 +172,28 @@ impl<'a> Cpu<'a> {
             //println!("PC:0x{:04x},A:0x{:02x},X:0x{:02x},Y:0x{:02x},STAT:0b{:b},STP:0x{:02x},CYCL:{}", self.pc, self.a, self.x, self.y, self.stat, self.stp, self.cycl);
             //print_debug_string(self.bus);
             //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
-            print!("{:04x}  ", self.pc);
+            print!("{:04X}  ", self.pc);
             match ADDRESSING_MODE_LOOKUP[self.read(self.pc) as usize] {
                 AddrM::ACC|AddrM::IMP => { // One Byte
-                    print!("{:02x}        ", self.read(self.pc));
+                    print!("{:02X}       ", self.read(self.pc));
                 }
                 AddrM::IMD|AddrM::ZPG|AddrM::REL|AddrM::ZIX|AddrM::ZIY|AddrM::IIX|AddrM::IIY => { // Two Bytes 
-                    print!("{:02x} {:02x}     ", self.read(self.pc), self.read(self.pc+1));
+                    print!("{:02X} {:02X}    ", self.read(self.pc), self.read(self.pc+1));
                 }
-                AddrM::ABS|AddrM::AIX|AddrM::AIY|AddrM::IND => { // Three Bytes
-                    print!("{:02x} {:02x} {:02x} ", self.read(self.pc), self.read(self.pc+1), self.read(self.pc+2));
+                AddrM::ABS|AddrM::ADR|AddrM::AIX|AddrM::AIY|AddrM::IND => { // Three Bytes
+                    print!("{:02X} {:02X} {:02X} ", self.read(self.pc), self.read(self.pc+1), self.read(self.pc+2));
                 }
                 AddrM::NUL => {
-                    print!("INVLD: {:02x} ", self.read(self.pc));
+                    print!("INVLD: {:02X} ", self.read(self.pc));
                 }
 
             }
-            println!("{}", get_asm(self.bus, self.pc));
+            print!(" {}  ", get_asm(self));
+            println!{"A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} PPU:{:>3},{:>3} CYC:{}", self.a, self.x, self.y, self.stat, self.stp, 0, 0, self.cycl};
+            // for i in 0..0xFF {
+            //     print!{"{}|", self.bus.read(0x100 + i)}; 
+            // }
+            // println!("");
             
             let opcode:u8 = self.read(self.pc);
             self.pc += 1;
@@ -245,10 +252,11 @@ impl<'a> Cpu<'a> {
         let mut real_address: u16 = 0;
         let mut cycle_addition: u8 = 0;
         match ADDRESSING_MODE_LOOKUP[opcode as usize] {
-            AddrM::ABS => {
-                let low_byte: u8 = self.read(self.pc);
-                let high_byte: u8 = self.read(self.pc+1);
-                real_address = ((high_byte as u16) << 8) + low_byte as u16;
+            AddrM::ABS|AddrM::ADR => {
+                //let low_byte: u8 = self.read(self.pc);
+                //let high_byte: u8 = self.read(self.pc+1);
+                //real_address = ((high_byte as u16) << 8) + low_byte as u16;
+                real_address = self.pc;
 
                 self.pc += 2;
             }
@@ -316,7 +324,7 @@ impl<'a> Cpu<'a> {
             }
             AddrM::REL => {
                real_address = self.pc;
-               self.pc += 2;
+               self.pc += 1;
             }
             AddrM::ZPG => {
                 real_address = self.read(self.pc) as u16;
@@ -342,8 +350,8 @@ impl<'a> Cpu<'a> {
 
     //: execute helpers {{{
     fn branch(&mut self, real_address: u16) -> u8 {
-        let old_pc = self.pc; 
-        self.pc = (self.pc as i32 + self.read(real_address) as i32) as u16;
+        let old_pc = self.pc;
+        self.pc = (self.pc as i32 + self.read(real_address) as i32) as u16; 
         
         if self.pc & 0xFF00 != old_pc & 0xFF00 {
             return 3; // Page Boundry + Branch Taken
@@ -543,16 +551,16 @@ impl<'a> Cpu<'a> {
                 //  "An original 6502 has does not correctly fetch the target address if the indirect vector falls on a page boundary (e.g. $xxFF where xx is any value from $00 to $FF). In this case fetches the LSB from $xxFF as expected but takes the MSB from $xx00. This is fixed in some later chips like the 65SC02 so for compatibility always ensure the indirect vector is not at the end of the page."
                 // -- https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP
 
-                let operand = self.read(real_address);
-                self.pc = operand as u16;
+                //let operand = self.read(real_address);
+                self.pc = self.read_word_little(real_address);
             }
             0x20 => { // JSR (Jump to Subroutine)
-                let return_point: u16 = self.pc + 2; // 3 bytes of jsr instruction minus 1 (e.i. 2)
-                self.stp -= 1;
+                let return_point: u16 = self.pc - 1; 
                 self.write(0x100 + self.stp as u16, (return_point >> 8) as u8);
                 self.stp -= 1;
                 self.write(0x100 + self.stp as u16, return_point as u8);
-                
+                self.stp -= 1;
+                self.pc = self.read_word_little(real_address);
             }
             0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator) 
                 self.a = self.read(real_address);
@@ -602,16 +610,12 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
             0x48 => { // PHA (Push Accumulator)
+                self.write(0x100 + self.stp as u16, self.stat);
                 self.stp += 1;
-                let stack_one = self.read(0x0100 + self.stp as u16);
-                self.stp += 1;
-                let stack_two = self.read(0x0100 + self.stp as u16);
-                
-                self.pc = ((stack_two as u16) << 8) + stack_one as u16 + 1;
             }
             0x08 => { // PHP (Push Processer Status)
+                self.write(0x100 + self.stp as u16, self.stat | Flags::B1 as u8);
                 self.stp -= 1;
-                self.write(0x100 + self.stp as u16, self.stat);
             }
             0x68 => { // PLA (Pull Accumulator)
                 self.stp += 1;
@@ -621,8 +625,8 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
             0x28 => { // PLP (Pull Processer Status)
-                self.stp += 1;
                 self.stat = self.read(0x0100 + self.stp as u16);
+                self.stp -= 1;
             }
             0x26|0x36|0x2E|0x3E => { // ROL (Rotate Left)
                 let low_bit: u8 = self.get_flag(Flags::CA);
@@ -661,7 +665,7 @@ impl<'a> Cpu<'a> {
                 self.stp += 1;
                 let stack_two = self.read(0x0100 + self.stp as u16);
 
-                self.pc = ((stack_two as u16) << 8) + stack_one as u16;
+                self.pc = ((stack_two as u16) << 8) + stack_one as u16 + 1;
             }
             0x60 => { // RTS (Return from subroutine)
                 self.stp += 1;
@@ -695,7 +699,7 @@ impl<'a> Cpu<'a> {
             0x85|0x95|0x8D|0x9D|0x99|0x81|0x91 => { // STA (Store A)
                 self.write(real_address, self.a);
             }
-            0x44|0x96|0x8E => { // STX (Store X)
+            0x86|0x96|0x8E => { // STX (Store X)
                 self.write(real_address, self.x);
             }
             0x84|0x94|0x8C => { // STY (Store Y)
