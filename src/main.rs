@@ -47,7 +47,8 @@ fn main() {
     main_cpu.pc = 0x0C000;
     main_cpu.cycl = 7;
     main_cpu.next = 7;
-    for _i in 0..10000 {
+    for _i in 0..26554 {
         main_cpu.clock();
     }
+    println!("Done");
 }
