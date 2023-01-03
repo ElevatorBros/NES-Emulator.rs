@@ -9,22 +9,22 @@ use crate::Cpu;
 
 //: ASM_LOOKUP {{{
 static ASM_LOOKUP : [&str; 0x100] = [
-    "BRK", "ORA", "NUL", "NUL", "NUL", "ORA", "ASL", "NUL", "PHP", "ORA", "ASL", "NUL", "NUL", "ORA", "ASL", "NUL",
-    "BPL", "ORA", "NUL", "NUL", "NUL", "ORA", "ASL", "NUL", "CLC", "ORA", "NUL", "NUL", "NUL", "ORA", "ASL", "NUL",
-    "JSR", "AND", "NUL", "NUL", "BIT", "AND", "ROL", "NUL", "PLP", "AND", "ROL", "NUL", "BIT", "AND", "ROL", "NUL",
-    "BMI", "AND", "NUL", "NUL", "NUL", "AND", "ROL", "NUL", "SEC", "AND", "NUL", "NUL", "NUL", "AND", "ROL", "NUL",
-    "RTI", "EOR", "NUL", "NUL", "NUL", "EOR", "LSR", "NUL", "PHA", "EOR", "LSR", "NUL", "JMP", "EOR", "LSR", "NUL",
-    "BVC", "EOR", "NUL", "NUL", "NUL", "EOR", "LSR", "NUL", "CLI", "EOR", "NUL", "NUL", "NUL", "EOR", "LSR", "NUL",
-    "RTS", "ADC", "NUL", "NUL", "NUL", "ADC", "ROR", "NUL", "PLA", "ADC", "ROR", "NUL", "JMP", "ADC", "ROR", "NUL",
-    "BVS", "ADC", "NUL", "NUL", "NUL", "ADC", "ROR", "NUL", "SEI", "ADC", "NUL", "NUL", "NUL", "ADC", "ROR", "NUL",
-    "NUL", "STA", "NUL", "NUL", "STY", "STA", "STX", "NUL", "DEY", "NUL", "TXA", "NUL", "STY", "STA", "STX", "NUL",
-    "BCC", "STA", "NUL", "NUL", "STY", "STA", "STX", "NUL", "TYA", "STA", "TXS", "NUL", "NUL", "STA", "NUL", "NUL",
-    "LDY", "LDA", "LDX", "NUL", "LDY", "LDA", "LDX", "NUL", "TAY", "LDA", "TAX", "NUL", "LDY", "LDA", "LDX", "NUL",
-    "BCS", "LDA", "NUL", "NUL", "LDY", "LDA", "LDX", "NUL", "CLV", "LDA", "TSX", "NUL", "LDY", "LDA", "LDX", "NUL",
-    "CPY", "CMP", "NUL", "NUL", "CPY", "CMP", "DEC", "NUL", "INY", "CMP", "DEX", "NUL", "CPY", "CMP", "DEC", "NUL",
-    "BNE", "CMP", "NUL", "NUL", "NUL", "CMP", "DEC", "NUL", "CLD", "CMP", "NUL", "NUL", "NUL", "CMP", "DEC", "NUL",
-    "CPX", "SBC", "NUL", "NUL", "CPX", "SBC", "INC", "NUL", "INX", "SBC", "NOP", "NUL", "CPX", "SBC", "INC", "NUL",
-    "BEQ", "SBC", "NUL", "NUL", "NUL", "SBC", "INC", "NUL", "SED", "SBC", "NUL", "NUL", "NUL", "SBC", "INC", "NUL",
+    " BRK"," ORA"," NUL"," NUL"," NUL"," ORA"," ASL"," NUL"," PHP"," ORA"," ASL","*AAC"," NUL"," ORA"," ASL"," NUL",
+    " BPL"," ORA"," NUL"," NUL"," NUL"," ORA"," ASL"," NUL"," CLC"," ORA"," NUL"," NUL"," NUL"," ORA"," ASL"," NUL",
+    " JSR"," AND"," NUL"," NUL"," BIT"," AND"," ROL"," NUL"," PLP"," AND"," ROL","*AAC"," BIT"," AND"," ROL"," NUL",
+    " BMI"," AND"," NUL"," NUL"," NUL"," AND"," ROL"," NUL"," SEC"," AND"," NUL"," NUL"," NUL"," AND"," ROL"," NUL",
+    " RTI"," EOR"," NUL"," NUL","*ASR"," EOR"," LSR"," NUL"," PHA"," EOR"," LSR"," NUL"," JMP"," EOR"," LSR"," NUL",
+    " BVC"," EOR"," NUL"," NUL"," NUL"," EOR"," LSR"," NUL"," CLI"," EOR"," NUL"," NUL"," NUL"," EOR"," LSR"," NUL",
+    " RTS"," ADC"," NUL"," NUL"," NUL"," ADC"," ROR"," NUL"," PLA"," ADC"," ROR","*ARR"," JMP"," ADC"," ROR"," NUL",
+    " BVS"," ADC"," NUL"," NUL"," NUL"," ADC"," ROR"," NUL"," SEI"," ADC"," NUL"," NUL"," NUL"," ADC"," ROR"," NUL",
+    " NUL"," STA"," NUL","*SAX"," STY"," STA"," STX","*SAX"," DEY"," NUL"," TXA"," NUL"," STY"," STA"," STX","*SAX",
+    " BCC"," STA"," NUL"," NUL"," STY"," STA"," STX","*SAX"," TYA"," STA"," TXS"," NUL"," NUL"," STA"," NUL"," NUL",
+    " LDY"," LDA"," LDX","*LAX"," LDY"," LDA"," LDX","*LAX"," TAY"," LDA"," TAX"," NUL"," LDY"," LDA"," LDX","*LAX",
+    " BCS"," LDA"," NUL","*LAX"," LDY"," LDA"," LDX","*LAX"," CLV"," LDA"," TSX"," NUL"," LDY"," LDA"," LDX","*LAX",
+    " CPY"," CMP"," NUL"," NUL"," CPY"," CMP"," DEC"," NUL"," INY"," CMP"," DEX","*AXS"," CPY"," CMP"," DEC"," NUL",
+    " BNE"," CMP"," NUL"," NUL"," NUL"," CMP"," DEC"," NUL"," CLD"," CMP"," NUL"," NUL"," NUL"," CMP"," DEC"," NUL",
+    " CPX"," SBC"," NUL"," NUL"," CPX"," SBC"," INC"," NUL"," INX"," SBC"," NOP"," NUL"," CPX"," SBC"," INC"," NUL",
+    " BEQ"," SBC"," NUL"," NUL"," NUL"," SBC"," INC"," NUL"," SED"," SBC"," NUL"," NUL"," NUL"," SBC"," INC"," NUL",
 ];
 //: }}}
 

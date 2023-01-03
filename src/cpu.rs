@@ -81,19 +81,19 @@ let addressingModesFull6502: [u8, 0xFF] = [
 
 //: ADDRESSING_MODE_LOOKUP {{{
 pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::ADR, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::ADR, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::NUL, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::NUL, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::NUL,
-   AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIY, AddrM::NUL,
-   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
+   AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::NUL, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::NUL,
+   AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIY, AddrM::AIY,
+   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
    AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
@@ -108,19 +108,19 @@ const BA: u8 = 0x40;
 
 //: CYCLE_COUNTS {{{
 static CYCLE_COUNTS: [u8; 0x100] = [ 
-    7    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 0    , 0    , 4    , 6    , 0    ,
+    7    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 2    , 0    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
-    6    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 4    , 2    , 2    , 0    , 4    , 4    , 6    , 0    ,
+    6    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 4    , 2    , 2    , 2    , 4    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 4    , 4|PBA, 7    , 0    ,
-    6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 0    , 3    , 4    , 6    , 0    ,
+    6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 2    , 3    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
-    6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 4    , 2    , 2    , 0    , 5    , 4    , 6    , 0    ,
+    6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 4    , 2    , 2    , 2    , 5    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
-    0    , 6    , 0    , 0    , 3    , 3    , 3    , 0    , 2    , 0    , 2    , 0    , 4    , 4    , 4    , 0    ,
-    2|BA , 6    , 2    , 0    , 4    , 4    , 4    , 0    , 2    , 5    , 2    , 0    , 4    , 5    , 4    , 0    ,
-    2    , 6    , 2    , 0    , 3    , 3    , 3    , 0    , 2    , 2    , 2    , 0    , 4    , 4    , 4    , 0    ,
-    2|BA , 5|PBA, 0    , 0    , 4    , 4    , 4    , 0    , 2    , 4|PBA, 2    , 0    , 4|PBA, 4|PBA, 4|PBA, 0    ,
-    2    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 2    , 2    , 2    , 0    , 4    , 4    , 6    , 0    ,
+    0    , 6    , 0    , 6    , 3    , 3    , 3    , 3    , 2    , 0    , 2    , 0    , 4    , 4    , 4    , 4    ,
+    2|BA , 6    , 2    , 0    , 4    , 4    , 4    , 4    , 2    , 5    , 2    , 0    , 4    , 5    , 4    , 0    ,
+    2    , 6    , 2    , 6    , 3    , 3    , 3    , 3    , 2    , 2    , 2    , 0    , 4    , 4    , 4    , 4    ,
+    2|BA , 5|PBA, 0    , 5    , 4    , 4    , 4    , 4    , 2    , 4|PBA, 2    , 0    , 4|PBA, 4|PBA, 4|PBA, 4    ,
+    2    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 2    , 2    , 2    , 2    , 4    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 3    , 4    , 6    , 0    , 2    , 4|PBA, 2    , 0    , 4    , 4|PBA, 7    , 0    ,
     2    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 2    , 2    , 2    , 0    , 4    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 2    , 0    , 0    , 4|PBA, 7    , 0    ,
@@ -367,8 +367,18 @@ impl<'a> Cpu<'a> {
     // Given an opcode, finds the amount of consecutive bits in memory to read, 
     fn execute(&mut self, opcode: u8, real_address: u16) -> u8 {
         let mut cycle_addition = 0;
+
+        // Note opcodes with a * are unofficial
         match opcode {
-            0x69|0x65|0x75|0x6D|0x7D|0x79|0x61|0x71 => { // ADC (Add With Carry)
+            0x0B|0x2B => { // *AAC (And And Copy)
+                self.a &= self.read(real_address);
+
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+                
+                self.set_flag(Flags::CA, self.get_flag(Flags::NG) != 0);
+            }
+            0x69|0x65|0x75|0x6D|0x7D|0x79|0x61|0x71 => { // ADC (Add With Carrrry)
                 let tmp:u16 = (self.a as u16).wrapping_add(self.read(real_address) as u16).wrapping_add(self.get_flag(Flags::CA) as u16);
                 
                 // Overflow flag, I probably messed this up 
@@ -405,6 +415,34 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (operand & 0x80) != 0);
 
                 self.write(real_address, operand);
+            }
+            0x4B => { // *ASR (And + Shift Right)
+                self.a &= self.read(real_address);
+                self.a = self.a >> 1;
+
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); // Nintendulator is clever and just sets it to zero, but not me.
+            }
+            0x6B => { // *ARR (And + Rotate)
+                self.a &= self.read(real_address);
+
+                let high_bit: u8 = self.get_flag(Flags::CA);
+                self.a = (self.a >> 1) + (high_bit << 7);
+
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+                
+                self.set_flag(Flags::CA, ((self.a >> 6) & 1) != 0);
+                self.set_flag(Flags::OV, self.get_flag(Flags::CA) ^ ((self.a >> 5) & 1) != 0);
+            }
+            0xCB => { // *AXS (A and X Subtract)
+                // I'm not sure about this, ask ronan
+                let tmp: u16 = ((self.a & self.x) as u16).wrapping_sub(self.read(real_address) as u16);
+                self.x = tmp as u8;
+
+                self.set_flag(Flags::CA, tmp <= 0xFF);
+                self.set_flag(Flags::ZE, self.x == 0x00);
+                self.set_flag(Flags::NG, (self.x & 0x80) != 0); 
             }
             0x90 => { // BCC (Branch if Carry Clear)
                 if self.get_flag(Flags::CA) == 0 {
@@ -517,7 +555,7 @@ impl<'a> Cpu<'a> {
             }
             0x88 => { // DEY (Decrement Y Register)
                 self.y = self.y.wrapping_sub(1);
-            
+
                 self.set_flag(Flags::ZE, self.y == 0);
                 self.set_flag(Flags::NG, (self.y & 0x80) != 0);
             }
@@ -550,12 +588,12 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.y & 0x80) != 0);
             }
             0x4C|0x6C => { // JMP (Jump)
-                // TODO: This function needs work
-                //  "An original 6502 has does not correctly fetch the target address if the indirect vector falls on a page boundary (e.g. $xxFF where xx is any value from $00 to $FF). In this case fetches the LSB from $xxFF as expected but takes the MSB from $xx00. This is fixed in some later chips like the 65SC02 so for compatibility always ensure the indirect vector is not at the end of the page."
-                // -- https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP
+                           // TODO: This function needs work
+                           //  "An original 6502 has does not correctly fetch the target address if the indirect vector falls on a page boundary (e.g. $xxFF where xx is any value from $00 to $FF). In this case fetches the LSB from $xxFF as expected but takes the MSB from $xx00. This is fixed in some later chips like the 65SC02 so for compatibility always ensure the indirect vector is not at the end of the page."
+                           // -- https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP
 
-                //let operand = self.read(real_address);
-                //self.pc = self.read_word_little(real_address);
+                           //let operand = self.read(real_address);
+                           //self.pc = self.read_word_little(real_address);
                 self.pc = real_address;
             }
             0x20 => { // JSR (Jump to Subroutine)
@@ -566,6 +604,14 @@ impl<'a> Cpu<'a> {
                 self.stp = self.stp.wrapping_sub(1);
                 //self.pc = self.read_word_little(real_address);
                 self.pc = real_address;
+            }
+
+            0xA3|0xA7|0xAF|0xB3|0xB7|0xBF => { // LAX (Load Accumulator and X)
+                self.a = self.read(real_address);
+                self.x = self.a;
+
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
 
             0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator) 
@@ -695,13 +741,15 @@ impl<'a> Cpu<'a> {
                 
                 self.pc = ((stack_two as u16) << 8) + stack_one as u16 + 1;
             }
+            0x83|0x87|0x8F|0x97 => { // *SAX (Store A and X)
+                self.write(real_address, self.a & self.x);
+            }
             0xE9|0xE5|0xF5|0xED|0xFD|0xF9|0xE1|0xF1 => { // SBC (Subtract with carry)
                 let tmp:u16 = (self.a as u16).wrapping_sub(self.read(real_address) as u16).wrapping_sub((1 as u16).wrapping_sub(self.get_flag(Flags::CA) as u16));
                 
                 // Overflow flag, I probably messed this up 
                 //self.set_flag(Flags::OV, (((self.a ^ self.read(real_address)) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
                 self.set_flag(Flags::OV, (((self.a as u16) ^ tmp) & ((!self.read(real_address) as u16) ^ tmp) & 0x80) != 0x00);
-                //f_V = (r_A ^ diff) & (~subtrahend ^ diff) & 0x80;
                 
                 self.a = tmp as u8;
             
