@@ -71,8 +71,11 @@ pub fn print_asm(bus: &Bus, pc: u16) {
     print!("\n");
 }
 
-pub fn readbuf(to: &mut[u8], from: &mut[u8]) {
-    for i in 0..from.len() {
+
+static LAST_READ: usize = 0;
+pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, size: usize) {
+    for i in LAST_READ..size {
         to[i] = from[i];
     }
+    LAST_READ += size;
 }
