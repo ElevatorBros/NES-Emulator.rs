@@ -1,6 +1,9 @@
 // Basicly mapper 0 right now
 use std::fs::File;
-use std::io::{prelude::*, Result};
+use std::io::prelude::*;
+use std::result::Result;
+use std::error::Error;
+use std::fmt::format;
 
 enum RomType {
     INES,
@@ -9,42 +12,63 @@ enum RomType {
 }
 
 pub struct Cart {
-    pub ROM: [u8; 0x8000], // 32 KB of ROM
-    pub r_type: RomType
+    pub rom: [u8; 0x8000], // 32 KB of ROM
+    r_type: RomType,
 }
 
 impl Cart {
     pub fn new() -> Self {
         Self {
-            ROM:[0; 0x8000],
-            r_type: RomType::Invalid
+            rom: [0u8; 0x8000],
+            r_type: RomType::Invalid,
         }
     }
 
-
-    fn load_file(filename: &str) -> Result<Vec<u8>> {
-        let file = match File::open(filename) {
-            Err(why) => panic!("Couldn't open file: {}. Error: {}", filename, why), 
-            Ok(f) => f,
-        };
-        let size = match file.metadata() {
-            Err(why) => panic!("Couldn't open file: {}. Error: {}", filename, why), 
-            Ok(data) => data.len() as usize,
-        };
-        let buffer = vec![0; size];
+    fn load_file(&mut self, filename: &str) -> Result<(), Box<dyn Error>> {
+        // Loads the file
+        let mut file = File::open(filename)?;
+        let size = file.metadata()?.len() as usize;
+        // Reads the data into the buffer
+        let mut buffer = vec![0; size];
         file.read(&mut buffer)?;
-        Ok(buffer)
+
+        // Determines rom type
+        if buffer[0] == 'N' as u8 && buffer[1] == 'E' as u8 && buffer[2] == 'S' as u8 && buffer[3] == 0x1A {
+            if buffer[7] & 0x0C == 0x08 {
+                self.r_type = RomType::NES20;
+            } else {
+                self.r_type = RomType::INES;
+            }
+            return Ok(());
+        }
+
+        return Err("Invalid NES Rom")?;
     }
 
-    fn determine_type(rom: &[u8]) -> RomType {
-        let i_nes = false;
-        let nes_20 = false;
-        if rom[0] == 'N' as u8 && rom[1] == 'E' as u8 && rom[2] == 'S' as u8 && rom[3] == 0x1A {
-            if rom[7] & 0x0C == 0x08 {
-                return RomType::NES20
-            }
-            return RomType::INES;
-        }
-        RomType::Invalid
+    fn pgr_lsb(&self) -> u8 { 
+        self.rom[4]
+    }
+    fn chr_lsb(&self) -> u8 {
+        self.rom[5]
+    }
+    fn mir_type(&self) -> u8 {
+        // Hori/Map = 0; Vert = 1
+        self.rom[6] & 0b00000001
+    } 
+    fn bat_get(&self) -> u8 {
+        // Battery and other non volatile memory
+        self.rom[6] & 0b00000010
+    }
+    fn has_trainer(&self) -> u8 {
+        // Determines if there is a 512 byte trainer
+        self.rom[6] & 0b00000100
+    }
+    fn four_screen_mode(&self) -> u8 {
+        // https://www.nesdev.org/wiki/NES_2.0#Hard-Wired_Mirroring
+        self.rom[6] & 0b00001000
+    }
+    fn console_type(&self) -> u8 {
+        // 0: NES; 1: Vs.; 2: Playchoice; 3: Extended
+        self.rom[7] & 0b00000011
     }
 }
