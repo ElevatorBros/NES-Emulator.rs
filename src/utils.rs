@@ -70,3 +70,12 @@ pub fn print_asm(bus: &Bus, pc: u16) {
     }
     print!("\n");
 }
+
+
+static LAST_READ: usize = 0;
+pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, size: usize) {
+    for i in LAST_READ..size {
+        to[i] = from[i];
+    }
+    LAST_READ += size;
+}
