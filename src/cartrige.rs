@@ -117,30 +117,24 @@ impl Cart {
         if prg_msb == 0xFu8 {
             // 2 ** prg_lsb >> 2
             let mul = 1 << (prg_lsb >> 2);
-            if mul >= 64 {
-                return Err(format!("{mul} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
+            if prg_lsb >= 128 {
+                return Err(format!("{prg_lsb} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
             }
             let can = (prg_lsb & 0b00000011) * 2 + 1;
             header.prg_size = mul as u16 * can as u16;
         } else {
-            // FIXME: For some reason `(buffer[9] as u16 << 8) | (buffer[4] as u16)` yields incorrect
-            // results
-            header.prg_size = (buffer[9] as u16) << 8;
-            header.prg_size |= buffer[4] as u16;
+            header.prg_size = (prg_msb as u16) | (prg_lsb as u16);
         }
         if chr_msb == 0xFu8 {
             // 2 ** prg_lsb >> 2
             let mul = 1 << (chr_lsb >> 2);
-            if mul >= 64 {
-                return Err(format!("{mul} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
+            if chr_lsb >= 64 {
+                return Err(format!("{chr_lsb} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
             }
             let can = (chr_lsb & 0b00000011) * 2 + 1;
             header.chr_size = mul as u16 * can as u16;
         } else {
-            // FIXME: For some reason `(buffer[9] as u16 << 8) | (buffer[4] as u16)` yields incorrect
-            // results
-            header.chr_size = (buffer[9] as u16) << 8;
-            header.chr_size |= buffer[5] as u16;
+            header.chr_size = (prg_msb as u16) | (prg_lsb as u16);
         }
 
         let trainer = vec![0; 512];
