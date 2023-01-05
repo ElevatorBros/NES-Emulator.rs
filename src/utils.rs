@@ -70,3 +70,9 @@ pub fn print_asm(bus: &Bus, pc: u16) {
     }
     print!("\n");
 }
+
+pub fn readbuf(to: &mut[u8], from: &mut[u8]) {
+    for i in 0..from.len() {
+        to[i] = from[i];
+    }
+}
