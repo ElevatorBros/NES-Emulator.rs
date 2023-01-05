@@ -131,10 +131,9 @@ pub fn get_asm(cpu: &Cpu) -> String {
 }
 //: }}}
 
-static LAST_READ: usize = 0;
-pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, size: usize) {
-    for i in LAST_READ..size {
+pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, start: &mut usize, size: usize) {
+    for i in *start..(*start + size) {
         to[i] = from[i];
     }
-    LAST_READ += size;
+    *start += size;
 }

@@ -140,11 +140,12 @@ impl Cart {
         let trainer = vec![0; 512];
         let prg = vec![0; header.prg_size as usize];
         let chr = vec![0; header.chr_size as usize];
+        let mut ptr: usize = 0;
         if header.trainer() {
-            utils::readbuf(&trainer, &buffer, 512);
+            utils::readbuf(&trainer, &buffer, &mut ptr, 512);
         }
-        utils::readbuf(&prg, &buffer, header.prg_size as usize);
-        utils::readbuf(&chr, &buffer, header.chr_size as usize);
+        utils::readbuf(&prg, &buffer, &mut ptr, header.prg_size as usize);
+        utils::readbuf(&chr, &buffer, &mut ptr, header.chr_size as usize);
 
         // Ensure the data is valid
         return Ok(Self { 
