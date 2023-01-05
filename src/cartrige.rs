@@ -3,11 +3,11 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::result::Result;
 use std::error::Error;
-use std::fmt::format;
 
 enum RomType {
     INES,
     NES20,
+    Invalid
 }
 
 pub struct NesHeader {
@@ -45,18 +45,17 @@ pub struct Cart {
 }
 
 impl Cart {
-    pub fn load(&mut self, filename: &str) -> Result<(), Box<dyn Error>> {
+    pub fn new(filename: &str) -> Result<Self, Box<dyn Error>> {
         // Loads the file
         let mut file = File::open(filename)?;
         let size = file.metadata()?.len() as usize;
         // Reads the data into the buffer
         let mut buffer = vec![0; size];
         file.read(&mut buffer)?;
-        self.header = NesHeader {
+        let header = NesHeader {
             magic      :  [buffer[0], buffer[1], buffer[2], buffer[3]],
-                          // MSB                            LSB
-            prg_size   :  (buffer[9] & 0b00001111) as u16 | (buffer[4] as u16),
-            chr_size   :  (buffer[9] & 0b11110000) as u16 | (buffer[5] as u16),
+            prg_size   :  0,
+            chr_size   :  0,
             mirror     :  (buffer[6] & 0b00000001) != 0,
             battery    :  (buffer[6] & 0b00000010) != 0,
             trainer    :  (buffer[6] & 0b00000100) != 0,
@@ -64,18 +63,63 @@ impl Cart {
             console    :  (buffer[6] & 0b00000011),
             flag13     :  buffer[13]
         };
+        let prg_msb = buffer[9] & 0b00001111;
+        let prg_lsb = buffer[4];
+        let chr_msb = (buffer[9] & 0b11110000) >> 4;
+        let chr_lsb = buffer[5];
 
         // Determines rom type
-        if self.header.magic == *b"NES\x1a" {
+        let rtype = RomType::Invalid;
+        if header.magic == *b"NES\x1a" {
             if buffer[7] & 0x0C == 0x08 {
-                self.rtype = RomType::NES20;
+                let rtype = RomType::NES20;
             } else {
-                self.rtype = RomType::INES;
+                let rtype = RomType::INES;
             }
         } else {
             return Err(format!("{filename} is not a valid rom. File does not have magic 'NES<EOF>' bytes"))?;
         }
 
-        return Err("what")?;
+        // If MSB nibble is $F, then prg and chr size is calculated like so:
+        if prg_msb == 0xFu8 {
+            // 2 ** prg_lsb >> 2
+            let mul = 1 << (prg_lsb >> 2);
+            if mul >= 64 {
+                return Err(format!("{mul} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
+            }
+            let can = (prg_lsb & 0b00000011) * 2 + 1;
+            header.prg_size = mul as u16 * can as u16;
+        } else {
+            // FIXME: For some reason `(buffer[9] as u16 << 8) | (buffer[4] as u16)` yields incorrect
+            // results
+            header.prg_size = (buffer[9] as u16) << 8;
+            header.prg_size |= buffer[4] as u16;
+        }
+        if chr_msb == 0xFu8 {
+            // 2 ** prg_lsb >> 2
+            let mul = 1 << (chr_lsb >> 2);
+            if mul >= 64 {
+                return Err(format!("{mul} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
+            }
+            let can = (chr_lsb & 0b00000011) * 2 + 1;
+            header.chr_size = mul as u16 * can as u16;
+        } else {
+            // FIXME: For some reason `(buffer[9] as u16 << 8) | (buffer[4] as u16)` yields incorrect
+            // results
+            header.chr_size = (buffer[9] as u16) << 8;
+            header.chr_size |= buffer[5] as u16;
+        }
+
+        // Ensure the data is valid
+        return Ok(Self { 
+            header, 
+            prg: vec![0; header.prg_size as usize], 
+            chr: vec![0; header.chr_size as usize], 
+            rtype 
+        });
+    }
+
+    pub fn read(&mut self, addr: u16) -> u16 {
+        unimplemented!()
     }
 }
