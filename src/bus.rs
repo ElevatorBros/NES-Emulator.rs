@@ -1,12 +1,15 @@
+// Vim folding 
+// vim:foldmethod=marker
 use crate::Ram;
 use crate::Cart;
+
 
 pub struct Bus<'a> {
     ram: &'a mut Ram, // 2KB Internal RAM
     cart: &'a Cart, 
 }
 
-
+//: Bus {{{
 impl<'a> Bus<'a> {
     // Setup Functions
     pub fn new(ram: &'a mut Ram, cart: &'a Cart) -> Self {
@@ -36,6 +39,16 @@ impl<'a> Bus<'a> {
         return (high << 8) + low;
     }
 
+    pub fn read_word_little_wrap(&self, addr: u16) -> u16 {
+        let low: u16 = self.read(addr) as u16;
+
+        //let high: u16 = self.read(addr + 1) as u16;
+        let low_addr: u8 = (addr as u8).wrapping_add(1);
+        let high: u16 = self.read((addr & 0xFF00) + low_addr as u16) as u16;
+        
+        return (high << 8) + low;
+    }
+
     pub fn write(&mut self, mut addr: u16, value: u8) {
         if addr < 0x2000 { // Internal RAM
             addr = addr % 0x0800;
@@ -48,3 +61,4 @@ impl<'a> Bus<'a> {
         } */
     }
 }
+//: }}}
