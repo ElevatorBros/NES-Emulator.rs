@@ -131,7 +131,7 @@ pub fn get_asm(cpu: &Cpu) -> String {
 }
 //: }}}
 
-pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, start: &mut usize, size: usize) {
+pub fn readbuf(to: &mut Vec<u8>, from: &mut Vec<u8>, start: &mut usize, size: usize) {
     for i in *start..(*start + size) {
         to[i] = from[i];
     }
