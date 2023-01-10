@@ -10,7 +10,7 @@ impl Ram {
         Self {memory:[0; 0x800]}
     }
 
-    pub fn setMemory(&mut self, addr: u16, value: u8) {
+    pub fn set_memory(&mut self, addr: u16, value: u8) {
         self.memory[addr as usize] = value;
     }
 }

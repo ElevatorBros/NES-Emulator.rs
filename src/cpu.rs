@@ -834,12 +834,6 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
-            0x20 => { // JSR (Jump to subroutine)
-                self.pc -= 1;
-                self.write(self.stp as u16 + 0x0100, (self.pc >> 8) as u8);
-                self.write(self.stp as u16 + 0x0100, (self.pc) as u8);
-                self.pc = real_address;
-            }
             _ => {
                 return 2; // Treat as nop
             }
