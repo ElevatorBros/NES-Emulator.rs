@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 pub struct Ram {
     pub memory: [u8; 0x800] // 2KB internal RAM
 }

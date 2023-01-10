@@ -1,5 +1,7 @@
 // Vim folding 
 // vim:foldmethod=marker
+#![allow(dead_code)]
+#![allow(unused_variables)]
 
 use crate::AddrM;
 use crate::ADDRESSING_MODE_LOOKUP;

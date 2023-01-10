@@ -2,6 +2,8 @@
 //pub mod cartrige;
 //pub mod bus;
 //pub mod cpu;
+#![allow(dead_code)]
+#![allow(unused_variables)]
 
 use NES_Emulator::Ram;
 use NES_Emulator::Cart;

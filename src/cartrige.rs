@@ -1,4 +1,6 @@
 // Basicly mapper 0 right now
+#![allow(dead_code)]
+#![allow(unused_variables)]
 use crate::utils;
 use std::fs::File;
 use std::io::prelude::*;
