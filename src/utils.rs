@@ -21,10 +21,10 @@ static ASM_LOOKUP : [&str; 0x100] = [
     " BCC"," STA"," NUL"," NUL"," STY"," STA"," STX","*SAX"," TYA"," STA"," TXS"," NUL"," NUL"," STA"," NUL"," NUL",
     " LDY"," LDA"," LDX","*LAX"," LDY"," LDA"," LDX","*LAX"," TAY"," LDA"," TAX"," NUL"," LDY"," LDA"," LDX","*LAX",
     " BCS"," LDA"," NUL","*LAX"," LDY"," LDA"," LDX","*LAX"," CLV"," LDA"," TSX"," NUL"," LDY"," LDA"," LDX","*LAX",
-    " CPY"," CMP"," NUL"," NUL"," CPY"," CMP"," DEC"," NUL"," INY"," CMP"," DEX","*AXS"," CPY"," CMP"," DEC"," NUL",
-    " BNE"," CMP"," NUL"," NUL"," NUL"," CMP"," DEC"," NUL"," CLD"," CMP"," NUL"," NUL"," NUL"," CMP"," DEC"," NUL",
-    " CPX"," SBC"," NUL"," NUL"," CPX"," SBC"," INC"," NUL"," INX"," SBC"," NOP"," NUL"," CPX"," SBC"," INC"," NUL",
-    " BEQ"," SBC"," NUL"," NUL"," NUL"," SBC"," INC"," NUL"," SED"," SBC"," NUL"," NUL"," NUL"," SBC"," INC"," NUL",
+    " CPY"," CMP"," NUL","*DCP"," CPY"," CMP"," DEC","*DCP"," INY"," CMP"," DEX","*AXS"," CPY"," CMP"," DEC","*DCP",
+    " BNE"," CMP"," NUL","*DCP"," NUL"," CMP"," DEC","*DCP"," CLD"," CMP"," NUL","*DCP"," NUL"," CMP"," DEC","*DCP",
+    " CPX"," SBC"," NUL","*ISB"," CPX"," SBC"," INC","*ISB"," INX"," SBC"," NOP"," NUL"," CPX"," SBC"," INC","*ISB",
+    " BEQ"," SBC"," NUL","*ISB"," NUL"," SBC"," INC","*ISB"," SED"," SBC"," NUL","*ISB"," NUL"," SBC"," INC","*ISB",
 ];
 //: }}}
 
@@ -131,10 +131,11 @@ pub fn get_asm(cpu: &Cpu) -> String {
 }
 //: }}}
 
-static LAST_READ: usize = 0;
-pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, size: usize) {
-    for i in LAST_READ..size {
+//static LAST_READ: usize = 0;
+pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, start: &usize, size: usize) {
+    for i in *start..size {
         to[i] = from[i];
     }
-    LAST_READ += size;
+    (*start) += size;
+    //LAST_READ += size;
 }

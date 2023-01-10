@@ -93,10 +93,10 @@ pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::NUL,
    AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIY, AddrM::AIY,
-   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIY,
+   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
 ];
 //: }}}
 
@@ -120,10 +120,10 @@ static CYCLE_COUNTS: [u8; 0x100] = [
     2|BA , 6    , 2    , 0    , 4    , 4    , 4    , 4    , 2    , 5    , 2    , 0    , 4    , 5    , 4    , 0    ,
     2    , 6    , 2    , 6    , 3    , 3    , 3    , 3    , 2    , 2    , 2    , 0    , 4    , 4    , 4    , 4    ,
     2|BA , 5|PBA, 0    , 5    , 4    , 4    , 4    , 4    , 2    , 4|PBA, 2    , 0    , 4|PBA, 4|PBA, 4|PBA, 4    ,
-    2    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 2    , 2    , 2    , 2    , 4    , 4    , 6    , 0    ,
-    2|BA , 5|PBA, 0    , 0    , 3    , 4    , 6    , 0    , 2    , 4|PBA, 2    , 0    , 4    , 4|PBA, 7    , 0    ,
-    2    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 2    , 2    , 2    , 0    , 4    , 4    , 6    , 0    ,
-    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 2    , 0    , 0    , 4|PBA, 7    , 0    ,
+    2    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 2    , 2    , 2    , 2    , 4    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 3    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 4    , 4|PBA, 7    , 7    ,
+    2    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 2    , 2    , 2    , 0    , 4    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 0    , 4|PBA, 7    , 7    ,
 ];
 //: }}}
 
@@ -378,7 +378,7 @@ impl<'a> Cpu<'a> {
                 
                 self.set_flag(Flags::CA, self.get_flag(Flags::NG) != 0);
             }
-            0x69|0x65|0x75|0x6D|0x7D|0x79|0x61|0x71 => { // ADC (Add With Carrrry)
+            0x69|0x65|0x75|0x6D|0x7D|0x79|0x61|0x71 => { // ADC (Add With Carry)
                 let tmp:u16 = (self.a as u16).wrapping_add(self.read(real_address) as u16).wrapping_add(self.get_flag(Flags::CA) as u16);
                 
                 // Overflow flag, I probably messed this up 
@@ -537,6 +537,16 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.y == m);
                 self.set_flag(Flags::NG, (res & 0x80) != 0);
             }
+            0xC3|0xC7|0xCF|0xD3|0xD7|0xDB|0xDF => { // *DCP (Decrement + Compare) 
+                let m: u8 = self.read(real_address);
+                let tmp_res: u8 = m.wrapping_sub(1);
+                self.write(real_address, tmp_res);
+
+                let res: u8 = self.a.wrapping_sub(tmp_res);
+                self.set_flag(Flags::CA, self.a >= res);
+                self.set_flag(Flags::ZE, self.a == res);
+                self.set_flag(Flags::NG, (res & 0x80) != 0);
+            }
             0xC6|0xD6|0xCE|0xDE => { // DEC (Decrement Memory)
                 let m: u8 = self.read(real_address);
                 let res: u8 = m.wrapping_sub(1);
@@ -586,6 +596,25 @@ impl<'a> Cpu<'a> {
 
                 self.set_flag(Flags::ZE, self.y == 0);
                 self.set_flag(Flags::NG, (self.y & 0x80) != 0);
+            }
+
+            0xE3|0xE7|0xEF|0xF3|0xF7|0xFB|0xFF => { // ISB (Increment + Subtract)
+                let m: u8 = self.read(real_address);
+                let res: u8 = m.wrapping_add(1);
+
+                self.write(real_address, res);
+
+                let tmp:u16 = (self.a as u16).wrapping_sub(res as u16).wrapping_sub((1 as u16).wrapping_sub(self.get_flag(Flags::CA) as u16));
+                
+                // Overflow flag, I probably messed this up 
+                //self.set_flag(Flags::OV, (((self.a ^ self.read(real_address)) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
+                self.set_flag(Flags::OV, (((self.a as u16) ^ tmp) & ((!self.read(real_address) as u16) ^ tmp) & 0x80) != 0x00);
+                
+                self.a = tmp as u8;
+            
+                self.set_flag(Flags::CA, tmp <= 0xFF);
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
             0x4C|0x6C => { // JMP (Jump)
                            // TODO: This function needs work
@@ -808,16 +837,6 @@ impl<'a> Cpu<'a> {
                 self.write(self.stp as u16 + 0x0100, (self.pc >> 8) as u8);
                 self.write(self.stp as u16 + 0x0100, (self.pc) as u8);
                 self.pc = real_address;
-            }
-            0xA9|0xA5|0xB5|0xAD|0xBD|0xB9|0xA1|0xB1 => { // LDA (Load Accumulator)
-                self.a = self.read(real_address);
-                self.set_flag(Flags::ZE, self.a == 0);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
-            }
-            0xA0|0xA4|0xB4|0xAC|0xBC => { // LDY (Load Y Register)
-                self.y = self.read(real_address);
-                self.set_flag(Flags::ZE, self.y == 0);
-                self.set_flag(Flags::NG, (self.y & 0x80) != 0);
             }
             _ => {
                 return 2; // Treat as nop
