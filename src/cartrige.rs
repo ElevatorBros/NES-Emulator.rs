@@ -135,7 +135,7 @@ impl Cart {
             header.chr_size = (prg_msb as u16) | (prg_lsb as u16);
         }
 
-<<<<<<< HEAD
+        /*
         let trainer = vec![0; 512];
         let prg = vec![0; header.prg_size as usize];
         let chr = vec![0; header.chr_size as usize];
@@ -146,13 +146,12 @@ impl Cart {
         }
         utils::readbuf(&prg, &buffer, &pointer, header.prg_size as usize);
         utils::readbuf(&chr, &buffer, &pointer, header.chr_size as usize);
-=======
+       */
         let mut trainer = vec![0; 512];
         let mut ptr: usize = 0;
         if header.trainer() {
             utils::readbuf(&mut trainer, &mut buffer, &mut ptr, 512);
         }
->>>>>>> refs/remotes/origin/main
 
         // Ensure the data is valid
         return Ok(Self { 
