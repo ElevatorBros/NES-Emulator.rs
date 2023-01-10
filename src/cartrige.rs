@@ -23,15 +23,13 @@ pub struct NesHeader {
 pub struct Cart {
     /// The Header data for the Cartridge
     pub header: NesHeader,
-    /// Contains all the data in the program area
-    pub prg: Vec<u8>,
-    /// Contains all the data in the character area
-    pub chr: Vec<u8>,
+    /// Contains the raw data
+    pub rom: Vec<u8>,
     // TODO: Make trainer an Option<[u8; 512]>
     /// The Trainer Area follows the 16-byte Header and precedes the PRG-ROM area if bit 2 of Header byte 6 is set. It is always 512 bytes in size if present, and contains data to be loaded into CPU memory at $7000. It is only used by some games that were modified to run on different hardware from the original cartridges, such as early RAM cartridges and emulators, and which put some additional compatibility code into those address ranges. 
     pub trainer: Vec<u8>,
     /// Either INES or NES2.0
-    pub rtype: RomType,
+    rtype: RomType,
 }
 
 impl NesHeader {
@@ -91,7 +89,7 @@ impl Cart {
         // Reads the data into the buffer
         let mut buffer = vec![0; size];
         file.read(&mut buffer)?;
-        let header = NesHeader {
+        let mut header = NesHeader {
             prg_size   : 0,
             chr_size   : 0,
             data       : buffer[0..=15].try_into().expect("Invalid length")
@@ -102,12 +100,12 @@ impl Cart {
         let chr_lsb = buffer[5];
 
         // Determines rom type
-        let rtype = RomType::Invalid;
+        let rtype: RomType;
         if header.data[0..=3] == *b"NES\x1a" {
             if buffer[7] & 0x0C == 0x08 {
-                let rtype = RomType::NES20;
+                rtype = RomType::NES20;
             } else {
-                let rtype = RomType::INES;
+                rtype = RomType::INES;
             }
         } else {
             return Err(format!("{filename} is not a valid rom. File does not have magic 'NES<EOF>' bytes"))?;
@@ -117,7 +115,7 @@ impl Cart {
         if prg_msb == 0xFu8 {
             // 2 ** prg_lsb >> 2
             let mul = 1 << (prg_lsb >> 2);
-            if prg_lsb >= 128 {
+            if prg_lsb > 128 {
                 return Err(format!("{prg_lsb} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
             }
             let can = (prg_lsb & 0b00000011) * 2 + 1;
@@ -128,7 +126,7 @@ impl Cart {
         if chr_msb == 0xFu8 {
             // 2 ** prg_lsb >> 2
             let mul = 1 << (chr_lsb >> 2);
-            if chr_lsb >= 64 {
+            if chr_lsb > 128 {
                 return Err(format!("{chr_lsb} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
             }
             let can = (chr_lsb & 0b00000011) * 2 + 1;
@@ -137,6 +135,7 @@ impl Cart {
             header.chr_size = (prg_msb as u16) | (prg_lsb as u16);
         }
 
+<<<<<<< HEAD
         let trainer = vec![0; 512];
         let prg = vec![0; header.prg_size as usize];
         let chr = vec![0; header.chr_size as usize];
@@ -147,20 +146,24 @@ impl Cart {
         }
         utils::readbuf(&prg, &buffer, &pointer, header.prg_size as usize);
         utils::readbuf(&chr, &buffer, &pointer, header.chr_size as usize);
+=======
+        let mut trainer = vec![0; 512];
+        let mut ptr: usize = 0;
+        if header.trainer() {
+            utils::readbuf(&mut trainer, &mut buffer, &mut ptr, 512);
+        }
+>>>>>>> refs/remotes/origin/main
 
         // Ensure the data is valid
         return Ok(Self { 
             trainer,
             header, 
-            prg,
-            chr,
+            rom: buffer,
             rtype 
         });
     }
 
-    // TODO: Maybe this should be an indexer. It will check to see where the address is and will
-    // index either the prg or chr
-    pub fn read(&mut self, addr: u16) -> u16 {
-        unimplemented!()
+    pub fn read(&self, addr: u16) -> u8 {
+        self.rom[addr as usize]
     }
 }

@@ -131,6 +131,7 @@ pub fn get_asm(cpu: &Cpu) -> String {
 }
 //: }}}
 
+<<<<<<< HEAD
 //static LAST_READ: usize = 0;
 pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, start: &usize, size: usize) {
     for i in *start..size {
@@ -138,4 +139,11 @@ pub fn readbuf(to: &Vec<u8>, from: &Vec<u8>, start: &usize, size: usize) {
     }
     (*start) += size;
     //LAST_READ += size;
+=======
+pub fn readbuf(to: &mut Vec<u8>, from: &mut Vec<u8>, start: &mut usize, size: usize) {
+    for i in *start..(*start + size) {
+        to[i] = from[i];
+    }
+    *start += size;
+>>>>>>> refs/remotes/origin/main
 }
