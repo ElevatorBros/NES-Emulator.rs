@@ -81,6 +81,13 @@ impl NesHeader {
     fn misc_roms(&self) -> u8 { self.data[14] & 3 }
     /// Default expansion device
     fn def_expansion_device(&self) -> u8 { self.data[15] & 0b00111111}
+    /// Gets the mapper number
+    fn mapper(&self) -> u16 {
+        let mut lsn = ((self.data[6] & 0b11110000) >> 4) as u16;
+        lsn |= (self.data[7] & 0b11110000) as u16;
+        let msn = ((self.data[8] & 0b00001111) as u16) << 4;
+        return lsn | msn;
+    }
 }
 
 impl Cart {
