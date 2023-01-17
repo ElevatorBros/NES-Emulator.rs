@@ -7,17 +7,7 @@ use std::io::prelude::*;
 use std::result::Result;
 use std::error::Error;
 
-enum RomType {
-    INES,
-    NES20,
-    Invalid
-}
-
 pub struct NesHeader {
-    /// Program size
-    prg_size: u16,
-    /// Character data size
-    chr_size: u16,
     /// Raw Data
     data: [u8; 16],
 }
@@ -25,69 +15,59 @@ pub struct NesHeader {
 pub struct Cart {
     /// The Header data for the Cartridge
     pub header: NesHeader,
-    /// Contains the raw data
-    pub rom: Vec<u8>,
-    // TODO: Make trainer an Option<[u8; 512]>
+    /// Contains the chr data
+    pub chr: Vec<u8>,
+    /// Contains the prg data
+    pub prg: Vec<u8>,
     /// The Trainer Area follows the 16-byte Header and precedes the PRG-ROM area if bit 2 of Header byte 6 is set. It is always 512 bytes in size if present, and contains data to be loaded into CPU memory at $7000. It is only used by some games that were modified to run on different hardware from the original cartridges, such as early RAM cartridges and emulators, and which put some additional compatibility code into those address ranges. 
-    pub trainer: Vec<u8>,
-    /// Either INES or NES2.0
-    rtype: RomType,
+    pub trainer: Option<[u8; 512]>,
 }
 
 impl NesHeader {
-    /// Bool if 512 byte trainer header exists between header and PRG-ROM
-    fn trainer(&self) -> bool { self.data[6] & (1 << 2) != 0 } 
-    /// Vertical or horizontal mirroring
-    ///     0: Horizontal/Mapper
-    ///     1: Vertical
-    fn mirror(&self) -> bool { self.data[6] & 1 != 0 }
-    /// Battery and other non volatile memory
-    fn battery(&self) -> bool { self.data[6] & 2 != 0}
-    /// Console type
-    ///     0: Nes/Famicom 
-    ///     1: Vs 
-    ///     2: Playchoice
-    ///     3: Extended
-    fn console(&self) -> u8 { self.data[7] & 3 }
-    fn prg_ram(&self) -> u8 { self.data[10] & 0b00001111 }
-    fn prg_nvram(&self) -> u8 { self.data[10] & 0b11110000 }
-    fn chr_ram(&self) -> u8 { self.data[11] & 0b00001111 }
-    fn chr_nvram(&self) -> u8 { self.data[11] & 0b11110000 }
-    /// CPU/PPU timing mode
-    ///      0: RP2C02 ("NTSC NES")
-    ///      1: RP2C07 ("Licensed PAL NES")
-    ///      2: Multiple-region
-    ///      3: UMC 6527P ("Dendy")
-    fn timing(&self) -> u8 { self.data[12] & 3 }
-    /// VS PPU
-    fn vs_ppu(&self) -> u8 { 
-        if self.console() == 1 {
-            self.data[13] & 0b00001111 
-        } else {
-            0
-        }
-    }
-    /// Extended Console Type
-    fn ext_console_type(&self) -> u8 { 
-        if self.console() == 3 {
-            self.data[13] & 0b00001111 
-        } else {
-            0
-        }
-    }
-    /// VS Hardware
-    fn vs_hw(&self) -> u8 { self.data[13] & 0b11110000 }
-    /// Number of miscellaneous roms present
-    fn misc_roms(&self) -> u8 { self.data[14] & 3 }
-    /// Default expansion device
-    fn def_expansion_device(&self) -> u8 { self.data[15] & 0b00111111}
+    /// Mirroring: 
+        /// 0: horizontal (vertical arrangement) (CIRAM A10 = PPU A11)
+        /// 1: vertical (horizontal arrangement) (CIRAM A10 = PPU A10)
+    fn mirror(&self) -> bool { (self.data[6] & 1) != 0 }
+    /// Returns true Cartridge contains battery-backed PRG RAM ($6000-7FFF) or other persistent memory
+    fn battery(&self) -> bool { (self.data[6] & (1 << 1)) != 0 }
+    /// If trainer data exists
+    fn trainer(&self) -> bool { (self.data[6] & (1 << 2)) != 0 }
+    /// Ignore mirror control; instead four screen vram is provided
+    fn four_screen(&self) -> bool { (self.data[6] & (1 << 3)) != 0 }
     /// Gets the mapper number
-    fn mapper(&self) -> u16 {
-        let mut lsn = ((self.data[6] & 0b11110000) >> 4) as u16;
-        lsn |= (self.data[7] & 0b11110000) as u16;
-        let msn = ((self.data[8] & 0b00001111) as u16) << 4;
-        return lsn | msn;
+    fn mapper(&self) -> u8 {
+        (self.data[7] & 0b1111000) | ((self.data[6] & 0b11110000) >> 4)
     }
+    fn unisystem(&self) -> bool { (self.data[7] & 1) != 0 }
+    /// PlayChoice-10 (8 KB of Hint Screen data stored after CHR data)
+        /// In the context of this emulator, this data is simply ignored
+    fn playchoice(&self) -> bool { (self.data[7] & (1 << 1)) != 0 }
+    /// Determines if this is in the nes2.0 format
+        /// This is simply for bookeeping
+    fn nes2(&self) -> bool {((self.data[7] & 0b00001100) >> 2)  == 2 }
+    /// Determines size of the prg ram
+    fn prg_ram(&self) -> u8 {
+        if self.data[8] == 0 {
+            return 8192
+        } else {
+            self.data[8] * 8192
+        }
+    }
+    /// NTSC vs PAL
+        /// 0: NTSC
+        /// 1: PAL
+        /// Note: No ROM images in circulation make use of this bit
+    fn tv_system(&self) -> bool { (self.data[9] & 1) != 0 }
+    /// Usually zeroed out data but sometimes may contain ripper's name or something
+    fn ripper_name(&self) -> [u8; 7] {
+        // Rust, my beloved, why
+        self.data[7..=15].try_into().expect("Invalid length")
+    }
+    /// Gets the size of the prg rom
+    fn prg_size(&self) -> u8 { self.data[4] * 16384 }
+    /// Gets the size of the chr rom
+        /// A value of 0 indicates that the board uses chr-ram
+    fn chr_size(&self) -> u8 { self.data[5] * 8192 }
 }
 
 impl Cart {
