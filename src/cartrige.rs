@@ -46,11 +46,11 @@ impl NesHeader {
         /// This is simply for bookeeping
     fn nes2(&self) -> bool {((self.data[7] & 0b00001100) >> 2)  == 2 }
     /// Determines size of the prg ram
-    fn prg_ram(&self) -> u8 {
+    fn prg_ram(&self) -> usize {
         if self.data[8] == 0 {
             return 8192
         } else {
-            self.data[8] * 8192
+            (self.data[8] as usize) * 8192
         }
     }
     /// NTSC vs PAL
@@ -64,10 +64,14 @@ impl NesHeader {
         self.data[7..=15].try_into().expect("Invalid length")
     }
     /// Gets the size of the prg rom
-    fn prg_size(&self) -> u8 { self.data[4] * 16384 }
+    fn prg_size(&self) -> usize { self.data[4] as usize * 16384 }
     /// Gets the size of the chr rom
         /// A value of 0 indicates that the board uses chr-ram
-    fn chr_size(&self) -> u8 { self.data[5] * 8192 }
+    fn chr_size(&self) -> usize { self.data[5] as usize * 8192 }
+    /// Checks to see if the magic bytes of the rom are accurrate
+    fn magic(&self) -> bool {
+        self.data[0..=3] == *b"NES\x1a"
+    }
 }
 
 impl Cart {
@@ -75,83 +79,38 @@ impl Cart {
         // Loads the file
         let mut file = File::open(filename)?;
         let size = file.metadata()?.len() as usize;
-        // Reads the data into the buffer
-        let mut buffer = vec![0; size];
+        let mut buffer = vec![0u8; size];
         file.read(&mut buffer)?;
-        let mut header = NesHeader {
-            prg_size   : 0,
-            chr_size   : 0,
-            data       : buffer[0..=15].try_into().expect("Invalid length")
-        };
-        let prg_msb = buffer[9] & 0b00001111;
-        let prg_lsb = buffer[4];
-        let chr_msb = (buffer[9] & 0b11110000) >> 4;
-        let chr_lsb = buffer[5];
 
-        // Determines rom type
-        let rtype: RomType;
-        if header.data[0..=3] == *b"NES\x1a" {
-            if buffer[7] & 0x0C == 0x08 {
-                rtype = RomType::NES20;
-            } else {
-                rtype = RomType::INES;
-            }
-        } else {
-            return Err(format!("{filename} is not a valid rom. File does not have magic 'NES<EOF>' bytes"))?;
+        // Reads the header data
+        let data = buffer[0..=15].try_into()?;
+        let mut ptr = 16;
+        let header = NesHeader { data };
+        if !header.magic() {
+            return Err("ROM does not contain magic bytes")?;
         }
 
-        // If MSB nibble is $F, then prg and chr size is calculated like so:
-        if prg_msb == 0xFu8 {
-            // 2 ** prg_lsb >> 2
-            let mul = 1 << (prg_lsb >> 2);
-            if prg_lsb > 128 {
-                return Err(format!("{prg_lsb} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
-            }
-            let can = (prg_lsb & 0b00000011) * 2 + 1;
-            header.prg_size = mul as u16 * can as u16;
-        } else {
-            header.prg_size = (prg_msb as u16) | (prg_lsb as u16);
-        }
-        if chr_msb == 0xFu8 {
-            // 2 ** prg_lsb >> 2
-            let mul = 1 << (chr_lsb >> 2);
-            if chr_lsb > 128 {
-                return Err(format!("{chr_lsb} is too large. Maybe there's an error with bitwise math or something here or cringe rust stuff, idk."))?;
-            }
-            let can = (chr_lsb & 0b00000011) * 2 + 1;
-            header.chr_size = mul as u16 * can as u16;
-        } else {
-            header.chr_size = (prg_msb as u16) | (prg_lsb as u16);
-        }
-
-        /*
-        let trainer = vec![0; 512];
-        let prg = vec![0; header.prg_size as usize];
-        let chr = vec![0; header.chr_size as usize];
-
-        let pointer: usize = 0;
+        let trainer = None;
         if header.trainer() {
-            utils::readbuf(&trainer, &buffer, &pointer, 512);
-        }
-        utils::readbuf(&prg, &buffer, &pointer, header.prg_size as usize);
-        utils::readbuf(&chr, &buffer, &pointer, header.chr_size as usize);
-       */
-        let mut trainer = vec![0; 512];
-        let mut ptr: usize = 0;
-        if header.trainer() {
-            utils::readbuf(&mut trainer, &mut buffer, &mut ptr, 512);
+            let trainer_data: [u8; 512] = buffer[ptr..=(ptr + 512)].try_into()?;
+            let trainer = Some(trainer_data);
+            ptr += 512;
         }
 
-        // Ensure the data is valid
-        return Ok(Self { 
+        let mut prg = vec![0u8; header.prg_size()];
+        let mut chr = vec![0u8; header.chr_size()];
+        utils::readbuf_vec(&mut prg, &mut buffer, &mut ptr, header.prg_size());
+        utils::readbuf_vec(&mut chr, &mut buffer, &mut ptr, header.chr_size());
+
+        return Ok(Cart{
+            header,
             trainer,
-            header, 
-            rom: buffer,
-            rtype 
+            prg,
+            chr
         });
     }
 
     pub fn read(&self, addr: u16) -> u8 {
-        self.rom[addr as usize]
+        self.chr[addr as usize]
     }
 }
