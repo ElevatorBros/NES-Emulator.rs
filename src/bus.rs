@@ -24,11 +24,12 @@ impl<'a> Bus<'a> {
             addr = addr % 0x800;
             return self.ram.memory[addr as usize];
         } else { // Cartridge space 
-            if addr >= 0x8000 {
-                addr -= 0x8000;
-                return self.cart.read(addr);
-            } else {
+            if addr < 0x4020 { // stuff
                 return 0;
+            } else if addr < 0x8000 { // Cart RAM, todo
+                return 0;
+            } else {
+                return self.cart.read(addr);
             }
         }
     }
@@ -60,7 +61,7 @@ impl<'a> Bus<'a> {
                 addr -= 0x8000;
                 self.cart.ROM[addr as usize] = value;
             }
-        } */
+        }*/
     }
 }
 //: }}}

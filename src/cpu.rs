@@ -190,7 +190,7 @@ impl<'a> Cpu<'a> {
                 }
 
             }
-            print!(" {}  ", get_asm(self));
+            print!("{}  ", get_asm(self));
             println!{"A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} PPU:{:>3},{:>3} CYC:{}", self.a, self.x, self.y, self.stat, self.stp, 0, 0, self.cycl};
             // for i in 0..0xFF {
             //     print!{"{}|", self.bus.read(0x100 + i)}; 

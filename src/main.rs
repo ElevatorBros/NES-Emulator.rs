@@ -28,9 +28,9 @@ fn main() {
     */
 
     //let mut buffer = [0u8; 8]; // the buffer can be reused!
-    for i in 0..16384 {
-        main_cart.rom[(i+(0x0C000 - 0x08000 - 0x10)) as usize] = main_cart.rom[i as usize];
-    }
+    //for i in 0..16384 {
+    //    main_cart.rom[(i+(0x0C000 - 0x08000 - 0x10)) as usize] = main_cart.rom[i as usize];
+    //}
 
     let mut main_bus = Bus::new(&mut main_ram, &main_cart);
 
