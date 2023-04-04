@@ -89,8 +89,8 @@ pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::NUL,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
    AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::NUL, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::NUL,
    AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
@@ -116,8 +116,8 @@ static CYCLE_COUNTS: [u8; 0x100] = [
     2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 4    , 4|PBA, 7    , 7    ,
     6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 2    , 3    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
-    6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 4    , 2    , 2    , 2    , 5    , 4    , 6    , 0    ,
-    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
+    6    , 6    , 0    , 8    , 0    , 3    , 5    , 5    , 4    , 2    , 2    , 2    , 5    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 0    , 4|PBA, 7    , 7    ,
     0    , 6    , 0    , 6    , 3    , 3    , 3    , 3    , 2    , 0    , 2    , 0    , 4    , 4    , 4    , 4    ,
     2|BA , 6    , 2    , 0    , 4    , 4    , 4    , 4    , 2    , 5    , 2    , 0    , 4    , 5    , 4    , 0    ,
     2    , 6    , 2    , 6    , 3    , 3    , 3    , 3    , 2    , 2    , 2    , 0    , 4    , 4    , 4    , 4    ,
@@ -618,20 +618,6 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
-            
-            0x23|0x27|0x2F|0x33|0x37|0x3B|0x3F => { // *RLA (ROL + AND) 
-                let low_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.read(real_address) & 0x80) != 0);
-
-                let tmp: u8 = (self.read(real_address) << 1) + low_bit;
-
-                self.a &= tmp; 
-
-                self.write(real_address, tmp);
-            
-                self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
-            }
 
             0x4C|0x6C => { // JMP (Jump)
                            // TODO: This function needs work
@@ -727,6 +713,21 @@ impl<'a> Cpu<'a> {
                 self.stp = self.stp.wrapping_add(1);
                 self.stat = self.read(0x0100 + self.stp as u16) & 0b11101111 | (Flags::B2 as u8); // B flag
             }
+            
+            0x23|0x27|0x2F|0x33|0x37|0x3B|0x3F => { // *RLA (ROL + AND) 
+                let low_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.read(real_address) & 0x80) != 0);
+
+                let tmp: u8 = (self.read(real_address) << 1) + low_bit;
+
+                self.a &= tmp; 
+
+                self.write(real_address, tmp);
+            
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+            }
+
             0x26|0x36|0x2E|0x3E => { // ROL (Rotate Left)
                 let low_bit: u8 = self.get_flag(Flags::CA);
                 self.set_flag(Flags::CA, (self.read(real_address) & 0x80) != 0);
@@ -765,6 +766,20 @@ impl<'a> Cpu<'a> {
 
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
+            }
+            
+            0x63|0x67|0x6F|0x73|0x77|0x7B|0x7F => { // *RRA (ROR + AND) 
+                let high_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.read(real_address) & 0x01) != 0);
+
+                let tmp: u8 = (self.read(real_address) >> 1) + (high_bit << 7);
+
+                self.a &= tmp; 
+
+                self.write(real_address, tmp);
+            
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
 
             0x40 => { // RTI (Return from interrupt)
