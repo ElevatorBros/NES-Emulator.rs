@@ -85,8 +85,8 @@ let addressingModesFull6502: [u8, 0xFF] = [
 pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
-   AddrM::ADR, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::NUL,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::ADR, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::NUL,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::NUL,
@@ -112,8 +112,8 @@ const BA: u8 = 0x40;
 static CYCLE_COUNTS: [u8; 0x100] = [ 
     7    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 2    , 0    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
-    6    , 6    , 0    , 0    , 3    , 3    , 5    , 0    , 4    , 2    , 2    , 2    , 4    , 4    , 6    , 0    ,
-    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 4    , 4|PBA, 7    , 0    ,
+    6    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 4    , 2    , 2    , 2    , 4    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 4    , 4|PBA, 7    , 7    ,
     6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 2    , 3    , 4    , 6    , 0    ,
     2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
     6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 4    , 2    , 2    , 2    , 5    , 4    , 6    , 0    ,
@@ -600,7 +600,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.y & 0x80) != 0);
             }
 
-            0xE3|0xE7|0xEF|0xF3|0xF7|0xFB|0xFF => { // ISB (Increment + Subtract)
+            0xE3|0xE7|0xEF|0xF3|0xF7|0xFB|0xFF => { // *ISB (Increment + Subtract)
                 let m: u8 = self.read(real_address);
                 let res: u8 = m.wrapping_add(1);
 
@@ -618,6 +618,21 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
+            
+            0x23|0x27|0x2F|0x33|0x37|0x3B|0x3F => { // *RLA (ROL + AND) 
+                let low_bit: u8 = self.get_flag(Flags::CA);
+                self.set_flag(Flags::CA, (self.read(real_address) & 0x80) != 0);
+
+                let tmp: u8 = (self.read(real_address) << 1) + low_bit;
+
+                self.a &= tmp; 
+
+                self.write(real_address, tmp);
+            
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+            }
+
             0x4C|0x6C => { // JMP (Jump)
                            // TODO: This function needs work
                            //  "An original 6502 has does not correctly fetch the target address if the indirect vector falls on a page boundary (e.g. $xxFF where xx is any value from $00 to $FF). In this case fetches the LSB from $xxFF as expected but takes the MSB from $xx00. This is fixed in some later chips like the 65SC02 so for compatibility always ensure the indirect vector is not at the end of the page."
