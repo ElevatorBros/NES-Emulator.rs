@@ -11,8 +11,8 @@ use crate::Cpu;
 
 //: ASM_LOOKUP {{{
 static ASM_LOOKUP : [&str; 0x100] = [
-    " BRK"," ORA"," NUL"," NUL"," NUL"," ORA"," ASL"," NUL"," PHP"," ORA"," ASL","*AAC"," NUL"," ORA"," ASL"," NUL",
-    " BPL"," ORA"," NUL"," NUL"," NUL"," ORA"," ASL"," NUL"," CLC"," ORA"," NUL"," NUL"," NUL"," ORA"," ASL"," NUL",
+    " BRK"," ORA"," NUL","*SLO"," NUL"," ORA"," ASL","*SLO"," PHP"," ORA"," ASL","*AAC"," NUL"," ORA"," ASL","*SLO",
+    " BPL"," ORA"," NUL","*SLO"," NUL"," ORA"," ASL","*SLO"," CLC"," ORA"," NUL","*SLO"," NUL"," ORA"," ASL","*SLO",
     " JSR"," AND"," NUL","*RLA"," BIT"," AND"," ROL","*RLA"," PLP"," AND"," ROL","*AAC"," BIT"," AND"," ROL","*RLA",
     " BMI"," AND"," NUL","*RLA"," NUL"," AND"," ROL","*RLA"," SEC"," AND"," NUL","*RLA"," NUL"," AND"," ROL","*RLA",
     " RTI"," EOR"," NUL"," NUL","*ASR"," EOR"," LSR"," NUL"," PHA"," EOR"," LSR"," NUL"," JMP"," EOR"," LSR"," NUL",

@@ -83,8 +83,8 @@ let addressingModesFull6502: [u8, 0xFF] = [
 
 //: ADDRESSING_MODE_LOOKUP {{{
 pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::NUL,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::NUL, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::NUL,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
    AddrM::ADR, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::NUL, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::NUL, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::NUL,
@@ -110,8 +110,8 @@ const BA: u8 = 0x40;
 
 //: CYCLE_COUNTS {{{
 static CYCLE_COUNTS: [u8; 0x100] = [ 
-    7    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 2    , 0    , 4    , 6    , 0    ,
-    2|BA , 5|PBA, 0    , 0    , 0    , 4    , 6    , 0    , 2    , 4|PBA, 0    , 0    , 0    , 4|PBA, 7    , 0    ,
+    7    , 6    , 0    , 8    , 0    , 3    , 5    , 5    , 3    , 2    , 2    , 2    , 0    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 0    , 4|PBA, 7    , 7    ,
     6    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 4    , 2    , 2    , 2    , 4    , 4    , 6    , 6    ,
     2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 4    , 4|PBA, 7    , 7    ,
     6    , 6    , 0    , 0    , 0    , 3    , 5    , 0    , 3    , 2    , 2    , 2    , 3    , 4    , 6    , 0    ,
@@ -826,6 +826,19 @@ impl<'a> Cpu<'a> {
             }
             0x78 => { // SEI (Set Interrupt)
                 self.set_flag(Flags::ID, true);
+            }
+            0x03|0x07|0x0F|0x13|0x17|0x1B|0x1F => { // SLO (ASL + ORA)
+                let mut operand = self.read(real_address);
+                self.set_flag(Flags::CA, (operand & 0x80) != 0);
+
+                operand = operand << 1;
+
+                self.a |= operand;
+
+                self.write(real_address, self.a);
+
+                self.set_flag(Flags::ZE, self.a == 0x00);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
             0x85|0x95|0x8D|0x9D|0x99|0x81|0x91 => { // STA (Store A)
                 self.write(real_address, self.a);
