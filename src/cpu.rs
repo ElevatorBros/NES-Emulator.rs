@@ -83,22 +83,22 @@ let addressingModesFull6502: [u8, 0xFF] = [
 
 //: ADDRESSING_MODE_LOOKUP {{{
 pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
    AddrM::ADR, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::ABS,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
-   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::ABS,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
-   AddrM::NUL, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::NUL, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+   AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+   AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::NUL,
    AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIY, AddrM::AIY,
-   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIY,
-   AddrM::IMD, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
-   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::NUL, AddrM::AIY, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+   AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+   AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+   AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
 ];
 //: }}}
 
@@ -110,22 +110,22 @@ const BA: u8 = 0x40;
 
 //: CYCLE_COUNTS {{{
 static CYCLE_COUNTS: [u8; 0x100] = [ 
-    7    , 6    , 0    , 8    , 0    , 3    , 5    , 5    , 3    , 2    , 2    , 2    , 0    , 4    , 6    , 6    ,
-    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 0    , 4|PBA, 7    , 7    ,
+    7    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 3    , 2    , 2    , 2    , 4    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 4    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 4|PBA, 4|PBA, 7    , 7    ,
     6    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 4    , 2    , 2    , 2    , 4    , 4    , 6    , 6    ,
-    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 4    , 4|PBA, 7    , 7    ,
-    6    , 6    , 0    , 8    , 0    , 3    , 5    , 5    , 3    , 2    , 2    , 2    , 3    , 4    , 6    , 6    ,
-    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 0    , 4|PBA, 7    , 7    ,
-    6    , 6    , 0    , 8    , 0    , 3    , 5    , 5    , 4    , 2    , 2    , 2    , 5    , 4    , 6    , 6    ,
-    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 0    , 7    , 0    , 4|PBA, 7    , 7    ,
-    0    , 6    , 0    , 6    , 3    , 3    , 3    , 3    , 2    , 0    , 2    , 0    , 4    , 4    , 4    , 4    ,
+    2|BA , 5|PBA, 0    , 8    , 4    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 4|PBA, 4|PBA, 7    , 7    ,
+    6    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 3    , 2    , 2    , 2    , 3    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 4    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 4|PBA, 4|PBA, 7    , 7    ,
+    6    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 4    , 2    , 2    , 2    , 5    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 4    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 4|PBA, 4|PBA, 7    , 7    ,
+    2    , 6    , 2    , 6    , 3    , 3    , 3    , 3    , 2    , 2    , 2    , 0    , 4    , 4    , 4    , 4    ,
     2|BA , 6    , 2    , 0    , 4    , 4    , 4    , 4    , 2    , 5    , 2    , 0    , 4    , 5    , 4    , 0    ,
     2    , 6    , 2    , 6    , 3    , 3    , 3    , 3    , 2    , 2    , 2    , 0    , 4    , 4    , 4    , 4    ,
-    2|BA , 5|PBA, 0    , 5    , 4    , 4    , 4    , 4    , 2    , 4|PBA, 2    , 0    , 4|PBA, 4|PBA, 4|PBA, 4    ,
-    2    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 2    , 2    , 2    , 2    , 4    , 4    , 6    , 6    ,
-    2|BA , 5|PBA, 0    , 8    , 3    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 4    , 4|PBA, 7    , 7    ,
-    2    , 6    , 0    , 8    , 3    , 3    , 5    , 5    , 2    , 2    , 2    , 0    , 4    , 4    , 6    , 6    ,
-    2|BA , 5|PBA, 0    , 8    , 0    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 0    , 4|PBA, 7    , 7    ,
+    2|BA , 5|PBA, 0    , 5|PBA, 4    , 4    , 4    , 4    , 2    , 4|PBA, 2    , 0    , 4|PBA, 4|PBA, 4|PBA, 4    ,
+    2    , 6    , 2    , 8    , 3    , 3    , 5    , 5    , 2    , 2    , 2    , 2    , 4    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 4    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 4|PBA, 4|PBA, 7    , 7    ,
+    2    , 6    , 2    , 8    , 3    , 3    , 5    , 5    , 2    , 2    , 2    , 2    , 4    , 4    , 6    , 6    ,
+    2|BA , 5|PBA, 0    , 8    , 4    , 4    , 6    , 6    , 2    , 4|PBA, 2    , 7    , 4|PBA, 4|PBA, 7    , 7    ,
 ];
 //: }}}
 
@@ -354,14 +354,26 @@ impl<'a> Cpu<'a> {
     //: execute helpers {{{
     fn branch(&mut self, real_address: u16) -> u8 {
         let old_pc = self.pc;
-        self.pc = (self.pc as i32).wrapping_add(self.read(real_address) as i32) as u16; 
         //self.pc = (self.pc as i32 + self.read(real_address) as i32) as u16; 
+        //self.pc = (self.pc as i32).wrapping_add(self.read(real_address) as i32) as u16; 
+        //self.pc = (self.pc as u32).wrapping_add(self.read(real_address) as u32) as u16; 
+        //self.pc = self.pc.wrapping_add_signed(self.read(real_address) as i16);
+        let mut offset:u8 = self.read(real_address);
+        
+        if offset <= 0x7F  {
+            self.pc = self.pc.wrapping_add(offset as u16);
+        } else {
+            offset = !offset;
+            offset += 1;
+            self.pc = self.pc.wrapping_sub(offset as u16);
+        }
+
         
         if self.pc & 0xFF00 != old_pc & 0xFF00 {
-            return 3; // Page Boundry + Branch Taken
-        } else {
-            return 1; // Branch Taken
-        }
+            return 2; // Page Boundry
+        } 
+        
+        return 1; // Branch Taken
     } 
     //: }}}
 
@@ -546,7 +558,7 @@ impl<'a> Cpu<'a> {
 
                 let res: u8 = self.a.wrapping_sub(tmp_res);
                 self.set_flag(Flags::CA, self.a >= res);
-                self.set_flag(Flags::ZE, self.a == res);
+                self.set_flag(Flags::ZE, res == 0);
                 self.set_flag(Flags::NG, (res & 0x80) != 0);
             }
             0xC6|0xD6|0xCE|0xDE => { // DEC (Decrement Memory)
@@ -638,6 +650,11 @@ impl<'a> Cpu<'a> {
                 self.pc = real_address;
             }
 
+            0x02|0x12|0x22|0x32|0x42|0x52|0x62|0x72|0x92|0xB2|0xD2|0xF2 => { // *KIL Crash
+                println!("Crash encounted.");
+                std::process::exit(0);
+            }
+
             0xA3|0xA7|0xAF|0xB3|0xB7|0xBF => { // LAX (Load Accumulator and X)
                 self.a = self.read(real_address);
                 self.x = self.a;
@@ -686,8 +703,9 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (operand & 0x80) != 0);
                 
             }
-            0xEA => { // NOP (No Operation)
-
+            0xEA|0x1A|0x3A|0x5A|0x7A|0xDA|0xFA|0x80|0x82|0x89|0xC2|0xE2|0x0C|0x1C|
+            0x3C|0x5C|0x7C|0xDC|0xFC|0x04|0x44|0x64|0x14|0x34|0x54|0x74|0xD4|0xF4 => { // NOP (No Operation)
+            
             }
             0x09|0x05|0x15|0x0D|0x1D|0x19|0x01|0x11 => { // ORA (Or Memory with Accumulator)
                 self.a |= self.read(real_address);
@@ -768,18 +786,24 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
             
-            0x63|0x67|0x6F|0x73|0x77|0x7B|0x7F => { // *RRA (ROR + AND) 
+            0x63|0x67|0x6F|0x73|0x77|0x7B|0x7F => { // *RRA (ROR + ADC) 
                 let high_bit: u8 = self.get_flag(Flags::CA);
                 self.set_flag(Flags::CA, (self.read(real_address) & 0x01) != 0);
 
                 let tmp: u8 = (self.read(real_address) >> 1) + (high_bit << 7);
-
-                self.a &= tmp; 
-
                 self.write(real_address, tmp);
-            
+
+
+                let sum:u16 = (self.a as u16).wrapping_add(tmp as u16).wrapping_add(self.get_flag(Flags::CA) as u16);
+                
+                // Overflow flag, I probably messed this up 
+                self.set_flag(Flags::OV, (((self.a ^ self.read(real_address)) & 0x80 == 0)) && ((self.a ^ sum as u8) & 0x80 == 0x80));
+                
+                self.a = sum as u8;
+
+                self.set_flag(Flags::CA, sum > 0xFF);
                 self.set_flag(Flags::ZE, self.a == 0x00);
-                self.set_flag(Flags::NG, (self.a & 0x80) != 0);
+                self.set_flag(Flags::NG, (self.a & 0x80) != 0); 
             }
 
             0x40 => { // RTI (Return from interrupt)
@@ -805,7 +829,7 @@ impl<'a> Cpu<'a> {
             0x83|0x87|0x8F|0x97 => { // *SAX (Store A and X)
                 self.write(real_address, self.a & self.x);
             }
-            0xE9|0xE5|0xF5|0xED|0xFD|0xF9|0xE1|0xF1 => { // SBC (Subtract with carry)
+            0xE9|0xE5|0xF5|0xED|0xFD|0xF9|0xE1|0xF1|0xEB => { // SBC (Subtract with carry)
                 let tmp:u16 = (self.a as u16).wrapping_sub(self.read(real_address) as u16).wrapping_sub((1 as u16).wrapping_sub(self.get_flag(Flags::CA) as u16));
                 
                 // Overflow flag, I probably messed this up 
@@ -829,30 +853,30 @@ impl<'a> Cpu<'a> {
             }
             0x03|0x07|0x0F|0x13|0x17|0x1B|0x1F => { // *SLO (ASL + ORA)
                 let mut operand = self.read(real_address);
+
                 self.set_flag(Flags::CA, (operand & 0x80) != 0);
 
                 operand = operand << 1;
+                self.write(real_address, operand);
 
                 self.a |= operand;
-
-                self.write(real_address, self.a);
 
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
     
-            0x43|0x47|0x4F|0x54|0x57|0x5B|0x5F => { // *SRE (LSR + EOR)
+            0x43|0x47|0x4F|0x53|0x57|0x5B|0x5F => { // *SRE (LSR + EOR)
                 let mut operand = self.read(real_address);
 
                 self.set_flag(Flags::CA, (operand & 0x01) != 0);
                 
                 operand = operand >> 1;
+                self.write(real_address, operand);
 
                 self.a ^= operand;
 
-                self.write(real_address, self.a);
 
-                self.set_flag(Flags::ZE, self.a == 0);
+                self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
 

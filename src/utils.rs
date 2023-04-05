@@ -11,22 +11,22 @@ use crate::Cpu;
 
 //: ASM_LOOKUP {{{
 static ASM_LOOKUP : [&str; 0x100] = [
-    " BRK"," ORA"," NUL","*SLO"," NUL"," ORA"," ASL","*SLO"," PHP"," ORA"," ASL","*AAC"," NUL"," ORA"," ASL","*SLO",
-    " BPL"," ORA"," NUL","*SLO"," NUL"," ORA"," ASL","*SLO"," CLC"," ORA"," NUL","*SLO"," NUL"," ORA"," ASL","*SLO",
-    " JSR"," AND"," NUL","*RLA"," BIT"," AND"," ROL","*RLA"," PLP"," AND"," ROL","*AAC"," BIT"," AND"," ROL","*RLA",
-    " BMI"," AND"," NUL","*RLA"," NUL"," AND"," ROL","*RLA"," SEC"," AND"," NUL","*RLA"," NUL"," AND"," ROL","*RLA",
-    " RTI"," EOR"," NUL","*SRE","*ASR"," EOR"," LSR","*SRE"," PHA"," EOR"," LSR"," NUL"," JMP"," EOR"," LSR","*SRE",
-    " BVC"," EOR"," NUL","*SRE"," NUL"," EOR"," LSR","*SRE"," CLI"," EOR"," NUL","*SRE"," NUL"," EOR"," LSR","*SRE",
-    " RTS"," ADC"," NUL","*RRA"," NUL"," ADC"," ROR","*RRA"," PLA"," ADC"," ROR","*ARR"," JMP"," ADC"," ROR","*RRA",
-    " BVS"," ADC"," NUL","*RRA"," NUL"," ADC"," ROR","*RRA"," SEI"," ADC"," NUL","*RRA"," NUL"," ADC"," ROR","*RRA",
-    " NUL"," STA"," NUL","*SAX"," STY"," STA"," STX","*SAX"," DEY"," NUL"," TXA"," NUL"," STY"," STA"," STX","*SAX",
-    " BCC"," STA"," NUL"," NUL"," STY"," STA"," STX","*SAX"," TYA"," STA"," TXS"," NUL"," NUL"," STA"," NUL"," NUL",
+    " BRK"," ORA","*KIL","*SLO","*IGN"," ORA"," ASL","*SLO"," PHP"," ORA"," ASL","*AAC","*IGN"," ORA"," ASL","*SLO",
+    " BPL"," ORA","*KIL","*SLO","*IGN"," ORA"," ASL","*SLO"," CLC"," ORA","*NOP","*SLO","*IGN"," ORA"," ASL","*SLO",
+    " JSR"," AND","*KIL","*RLA"," BIT"," AND"," ROL","*RLA"," PLP"," AND"," ROL","*AAC"," BIT"," AND"," ROL","*RLA",
+    " BMI"," AND","*KIL","*RLA","*IGN"," AND"," ROL","*RLA"," SEC"," AND","*NOP","*RLA","*IGN"," AND"," ROL","*RLA",
+    " RTI"," EOR","*KIL","*SRE","*IGN"," EOR"," LSR","*SRE"," PHA"," EOR"," LSR","*ASR"," JMP"," EOR"," LSR","*SRE",
+    " BVC"," EOR","*KIL","*SRE","*IGN"," EOR"," LSR","*SRE"," CLI"," EOR","*NOP","*SRE","*IGN"," EOR"," LSR","*SRE",
+    " RTS"," ADC","*KIL","*RRA","*IGN"," ADC"," ROR","*RRA"," PLA"," ADC"," ROR","*ARR"," JMP"," ADC"," ROR","*RRA",
+    " BVS"," ADC","*KIL","*RRA","*IGN"," ADC"," ROR","*RRA"," SEI"," ADC","*NOP","*RRA","*IGN"," ADC"," ROR","*RRA",
+    "*SKB"," STA","*SKB","*SAX"," STY"," STA"," STX","*SAX"," DEY","*SKB"," TXA"," NUL"," STY"," STA"," STX","*SAX",
+    " BCC"," STA","*KIL"," NUL"," STY"," STA"," STX","*SAX"," TYA"," STA"," TXS"," NUL"," NUL"," STA"," NUL"," NUL",
     " LDY"," LDA"," LDX","*LAX"," LDY"," LDA"," LDX","*LAX"," TAY"," LDA"," TAX"," NUL"," LDY"," LDA"," LDX","*LAX",
-    " BCS"," LDA"," NUL","*LAX"," LDY"," LDA"," LDX","*LAX"," CLV"," LDA"," TSX"," NUL"," LDY"," LDA"," LDX","*LAX",
-    " CPY"," CMP"," NUL","*DCP"," CPY"," CMP"," DEC","*DCP"," INY"," CMP"," DEX","*AXS"," CPY"," CMP"," DEC","*DCP",
-    " BNE"," CMP"," NUL","*DCP"," NUL"," CMP"," DEC","*DCP"," CLD"," CMP"," NUL","*DCP"," NUL"," CMP"," DEC","*DCP",
-    " CPX"," SBC"," NUL","*ISB"," CPX"," SBC"," INC","*ISB"," INX"," SBC"," NOP"," NUL"," CPX"," SBC"," INC","*ISB",
-    " BEQ"," SBC"," NUL","*ISB"," NUL"," SBC"," INC","*ISB"," SED"," SBC"," NUL","*ISB"," NUL"," SBC"," INC","*ISB",
+    " BCS"," LDA","*KIL","*LAX"," LDY"," LDA"," LDX","*LAX"," CLV"," LDA"," TSX"," NUL"," LDY"," LDA"," LDX","*LAX",
+    " CPY"," CMP","*SKB","*DCP"," CPY"," CMP"," DEC","*DCP"," INY"," CMP"," DEX","*AXS"," CPY"," CMP"," DEC","*DCP",
+    " BNE"," CMP","*KIL","*DCP","*IGN"," CMP"," DEC","*DCP"," CLD"," CMP","*NOP","*DCP","*IGN"," CMP"," DEC","*DCP",
+    " CPX"," SBC","*SKB","*ISB"," CPX"," SBC"," INC","*ISB"," INX"," SBC"," NOP","*SBC"," CPX"," SBC"," INC","*ISB",
+    " BEQ"," SBC","*KIL","*ISB","*IGN"," SBC"," INC","*ISB"," SED"," SBC","*NOP","*ISB","*IGN"," SBC"," INC","*ISB",
 ];
 //: }}}
 
@@ -105,8 +105,20 @@ pub fn get_asm(cpu: &Cpu) -> String {
         }
         AddrM::REL => {
             //print!("${:X}", cpu.bus.read(pc+1));
+            let mut offset:u8 = cpu.bus.read(cpu.pc+1);
+           
+            let effective_address:u16;
+            if offset <= 0x7F  {
+                 effective_address = cpu.pc.wrapping_add(offset as u16);
+            } else {
+                offset = !offset;
+                offset += 1;
+                effective_address = cpu.pc.wrapping_sub(offset as u16);
+            }
+
             // Plus 2 because the the program counter will be incremented twice before the jump actually happens
-            asm_string = format!("{} ${:04X}                     ", asm_string, ((cpu.pc as i32) + (cpu.bus.read(cpu.pc+1) as i32) + 2) as u16);
+            //asm_string = format!("{} ${:04X}                     ", asm_string, ((cpu.pc as i32) + (cpu.bus.read(cpu.pc+1) as i32) + 2) as u16);
+            asm_string = format!("{} ${:04X}                     ", asm_string, effective_address + 2);
         }
         AddrM::ZPG => {
             let operand: u8 = cpu.bus.read(cpu.pc+1);
