@@ -30,7 +30,7 @@ static ASM_LOOKUP : [&str; 0x100] = [
 ];
 //: }}}
 
-//: print_asm {{{
+//: get_asm {{{
 pub fn get_asm(cpu: &Cpu) -> String {
     //let bus = cpu.bus;
 
@@ -145,9 +145,34 @@ pub fn get_asm(cpu: &Cpu) -> String {
 }
 //: }}}
 
+//: output_debug_info {{{ 
+pub fn output_debug_info(cpu: &Cpu) {
+    print!("{:04X}  ", cpu.pc);
+    match ADDRESSING_MODE_LOOKUP[cpu.bus.read(cpu.pc) as usize] {
+        AddrM::ACC|AddrM::IMP => { // One Byte
+            print!("{:02X}       ", cpu.bus.read(cpu.pc));
+        }
+        AddrM::IMD|AddrM::ZPG|AddrM::REL|AddrM::ZIX|AddrM::ZIY|AddrM::IIX|AddrM::IIY => { // Two Bytes 
+            print!("{:02X} {:02X}    ", cpu.bus.read(cpu.pc), cpu.bus.read(cpu.pc+1));
+        }
+        AddrM::ABS|AddrM::ADR|AddrM::AIX|AddrM::AIY|AddrM::IND => { // Three Bytes
+            print!("{:02X} {:02X} {:02X} ", cpu.bus.read(cpu.pc), cpu.bus.read(cpu.pc+1), cpu.bus.read(cpu.pc+2));
+        }
+        AddrM::NUL => {
+            print!("INVLD: {:02X}", cpu.bus.read(cpu.pc));
+        }
+
+    }
+    print!("{}  ", get_asm(cpu));
+    println!{"A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} PPU:{:>3},{:>3} CYC:{}", cpu.a, cpu.x, cpu.y, cpu.stat, cpu.stp, 0, 0, cpu.cycl};
+}
+//: }}}
+
+//: readbuf_vec {{{
 pub fn readbuf_vec(to: &mut Vec<u8>, from: &mut Vec<u8>, start: &mut usize, size: usize) {
     for i in 0..size {
         to[i] = from[i + *start];
     }
     *start += size;
 }
+//: }}}

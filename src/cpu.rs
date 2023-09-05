@@ -3,12 +3,12 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 use crate::Bus;
-use crate::get_asm;
+use crate::output_debug_info;
 
 
-const NMI_VEC: u16 = 0xfffa;
-const RESET_VEC: u16 = 0xfffc;
-const BRK_VEC: u16 = 0xfffe;
+const NMI_VECTOR: u16 = 0xFFFA;
+const RESET_VECTOR: u16 = 0xFFFC;
+const IRQ_VECTOR: u16 = 0xFFFE;
 
 //: Cpu {{{
 pub struct Cpu<'a> {
@@ -20,6 +20,9 @@ pub struct Cpu<'a> {
     pub stat: u8,  // Status Register
     pub cycl: u32, // CPU Ticks 
     pub next: u32, // Tick of next instruction
+    
+    pub irq_siginal: bool,
+    pub nmi_siginal: bool,
 
     pub bus : &'a mut Bus<'a> // Reference to main bus
 }
@@ -162,59 +165,76 @@ impl<'a> Cpu<'a> {
             stat: 0x24,
             cycl: 0u32,
             next: 0u32,
-            bus: bus
+            irq_siginal: false,
+            nmi_siginal: false,
+            bus: bus // maybe just bus?
         }
     }
+    
+
 
     // Interface functions
     pub fn clock(&mut self) {
         if self.cycl == self.next {
-            //print_asm(self.bus, self.pc);
-            //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
-            //println!("PC:0x{:04x},A:0x{:02x},X:0x{:02x},Y:0x{:02x},STAT:0b{:b},STP:0x{:02x},CYCL:{}", self.pc, self.a, self.x, self.y, self.stat, self.stp, self.cycl);
-            //print_debug_string(self.bus);
-            //C000  4C F5 C5  JMP $C5F5                       A:00 X:00 Y:00 P:24 SP:FD PPU:  0, 21 CYC:7
-            print!("{:04X}  ", self.pc);
-            match ADDRESSING_MODE_LOOKUP[self.read(self.pc) as usize] {
-                AddrM::ACC|AddrM::IMP => { // One Byte
-                    print!("{:02X}       ", self.read(self.pc));
-                }
-                AddrM::IMD|AddrM::ZPG|AddrM::REL|AddrM::ZIX|AddrM::ZIY|AddrM::IIX|AddrM::IIY => { // Two Bytes 
-                    print!("{:02X} {:02X}    ", self.read(self.pc), self.read(self.pc+1));
-                }
-                AddrM::ABS|AddrM::ADR|AddrM::AIX|AddrM::AIY|AddrM::IND => { // Three Bytes
-                    print!("{:02X} {:02X} {:02X} ", self.read(self.pc), self.read(self.pc+1), self.read(self.pc+2));
-                }
-                AddrM::NUL => {
-                    print!("INVLD: {:02X}", self.read(self.pc));
-                }
+            if self.irq_siginal && self.get_flag(Flags::ID) == 0 {
+                self.interrupt(IRQ_VECTOR);
+                self.irq_siginal = false;
+                self.next = self.cycl + 7;
+            } else if self.nmi_siginal {
+                self.interrupt(NMI_VECTOR);
+                self.nmi_siginal = false;
+                self.next = self.cycl + 8;
+            } else {
+                output_debug_info(self);
+                
+                let opcode:u8 = self.read(self.pc);
+                self.pc += 1;
 
+                let opcode_cycles:u8 = CYCLE_COUNTS[opcode as usize] & 0x0F;
+                let (real_address, mut cycle_addition) = self.set_address_mode(opcode);
+                cycle_addition += self.execute(opcode, real_address);
+                self.next = self.cycl + (opcode_cycles as u32) + (cycle_addition as u32); 
             }
-            print!("{}  ", get_asm(self));
-            println!{"A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} PPU:{:>3},{:>3} CYC:{}", self.a, self.x, self.y, self.stat, self.stp, 0, 0, self.cycl};
-            // for i in 0..0xFF {
-            //     print!{"{}|", self.bus.read(0x100 + i)}; 
-            // }
-            // println!("");
-            
-            let opcode:u8 = self.read(self.pc);
-            self.pc += 1;
-           
-
-            let opcode_cycles:u8 = CYCLE_COUNTS[opcode as usize] & 0x0F;
-            let (real_address, mut cycle_addition) = self.set_address_mode(opcode);
-            cycle_addition += self.execute(opcode, real_address);
-            self.next = self.cycl + (opcode_cycles as u32) + (cycle_addition as u32); 
         }
-        //self.cycl -= 1;
+
         self.cycl += 1;
     }
 
-    pub fn reset() {}
-    pub fn irq() {}
-    pub fn nmi() {}
+    pub fn reset(&mut self) {
+        self.set_flag(Flags::ID, true);
+
+        let pc_one = self.read(RESET_VECTOR);
+        let pc_two = self.read(RESET_VECTOR + 1);
+        self.pc = ((pc_two as u16) << 8) + pc_one as u16;
+        self.cycl = 0;
+        self.next = 8;
+    }
+
+    pub fn irq(&mut self) {
+       self.irq_siginal = true; 
+    }
+
+    pub fn nmi(&mut self) {
+        self.nmi_siginal = true;
+    }
 
     // Internal functions
+    fn interrupt(&mut self, addr:u16) {
+        self.write(0x100 + self.stp as u16, (self.pc >> 8) as u8);
+        self.stp = self.stp.wrapping_sub(1);
+
+        self.write(0x100 + self.stp as u16, self.pc as u8);
+        self.stp = self.stp.wrapping_sub(1);
+
+        self.write(0x0100 + self.stp as u16, self.stp);
+        self.stp = self.stp.wrapping_sub(1);
+
+
+        let pc_one = self.read(addr);
+        let pc_two = self.read(addr + 1);
+        self.pc = ((pc_two as u16) << 8) + pc_one as u16;
+    }
+
     fn set_flag(&mut self, flag: Flags, value: bool) {
         let bit: u8 = flag as u8;
         if value {
@@ -506,7 +526,7 @@ impl<'a> Cpu<'a> {
                 self.write(0x0100 + self.stp as u16, self.stat);
                 self.stp = self.stp.wrapping_sub(1);
                 self.set_flag(Flags::ID, true);
-                self.pc = BRK_VEC;
+                self.pc = IRQ_VECTOR;
             }
             0x50 => { // BVC (Branch if Overflow Clear)
                 if self.get_flag(Flags::OV) == 0 {
