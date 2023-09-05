@@ -7,7 +7,7 @@
 
 use NES_Emulator::Ram;
 use NES_Emulator::Cart;
-//use NES_Emulator::Ppu;
+use NES_Emulator::Ppu;
 use NES_Emulator::Bus;
 use NES_Emulator::Cpu;
 
@@ -21,7 +21,7 @@ fn main() {
         }
     };
 
-    //let mut main_ppu = Ppu::new();
+    let mut main_ppu = Ppu::new();
 
     /*main_cart.ROM[0x00] = 0xA9;
     main_cart.ROM[0x01] = 0x07;
