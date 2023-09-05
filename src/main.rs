@@ -11,7 +11,6 @@ use NES_Emulator::Cart;
 use NES_Emulator::Bus;
 use NES_Emulator::Cpu;
 
-
 fn main() {
     let mut main_ram = Ram::new();
     let main_cart = match Cart::new("./nestest.nes") {
@@ -43,8 +42,13 @@ fn main() {
     main_cpu.pc = 0x0C000;
     main_cpu.cycl = 7;
     main_cpu.next = 7;
+
+
     for _i in 0..26554 {
         main_cpu.clock(&mut main_bus);
     }
+
+
+
     println!("Done");
 }
