@@ -4,7 +4,7 @@
 #![allow(unused_variables)]
 use crate::Ram;
 use crate::Cart;
-use crate::Ppu;
+//use crate::Ppu;
 
 
 pub struct Bus<'a> {
@@ -16,8 +16,8 @@ pub struct Bus<'a> {
 //: Bus {{{
 impl<'a> Bus<'a> {
     // Setup Functions
-    pub fn new(ram: &'a mut Ram, ppu: &'a mut Ppu, cart: &'a Cart ) -> Self {
-        Self { ram, ppu, cart}
+    pub fn new(ram: &'a mut Ram, cart: &'a Cart ) -> Self {
+        Self { ram, cart}
     }
 
     // Interface Functions
@@ -61,9 +61,10 @@ impl<'a> Bus<'a> {
         if addr < 0x2000 { // Internal RAM
             addr = addr % 0x0800;
             self.ram.set_memory(addr, value);
-        } else if addr < 0x3FFF { // PPU Registers
-            return self.ppu.write(addr, value);
-        } /* else { // Cartridge space 
+        } 
+        /* else if addr < 0x3FFF { // PPU Registers
+            //return self.ppu.write(addr, value);
+        //}  else { // Cartridge space 
             if addr >= 0x8000 {
                 addr -= 0x8000;
                 self.cart.ROM[addr as usize] = value;

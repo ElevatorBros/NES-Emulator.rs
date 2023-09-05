@@ -5,7 +5,7 @@
 
 use crate::AddrM;
 use crate::ADDRESSING_MODE_LOOKUP;
-//use crate::Bus;
+use crate::Bus;
 use crate::Cpu;
 
 
@@ -31,11 +31,11 @@ static ASM_LOOKUP : [&str; 0x100] = [
 //: }}}
 
 //: get_asm {{{
-pub fn get_asm(cpu: &Cpu) -> String {
-    //let bus = cpu.bus;
+pub fn get_asm(cpu: &Cpu, bus: &mut Bus) -> String {
+    //let bus = bus;
 
     let mut asm_string: String;
-    let opcode: u8 = cpu.bus.read(cpu.pc);
+    let opcode: u8 = bus.read(cpu.pc);
     //print!("{}", ASM_LOOKUP[opcode as usize]);
     //print!(" ");
     //asm_string += 
@@ -46,30 +46,30 @@ pub fn get_asm(cpu: &Cpu) -> String {
             asm_string = format!("{} A                         ", asm_string);
         }
         AddrM::ABS => {
-            //print!("${:X}", cpu.bus.read_word_little(pc+1));
-            let operand: u16 = cpu.bus.read_word_little(cpu.pc+1);
-            asm_string = format!("{} ${:04X} = {:02X}                ", asm_string, operand, cpu.bus.read(operand));
+            //print!("${:X}", bus.read_word_little(pc+1));
+            let operand: u16 = bus.read_word_little(cpu.pc+1);
+            asm_string = format!("{} ${:04X} = {:02X}                ", asm_string, operand, bus.read(operand));
         }
         AddrM::ADR => {
-            //print!("${:X}", cpu.bus.read_word_little(pc+1));
-            let operand: u16 = cpu.bus.read_word_little(cpu.pc+1);
+            //print!("${:X}", bus.read_word_little(pc+1));
+            let operand: u16 = bus.read_word_little(cpu.pc+1);
             asm_string = format!("{} ${:04X}                     ", asm_string, operand);
         }
         AddrM::AIX => {
-            //print!("${:X},X", cpu.bus.read_word_little(pc+1));
-            let operand: u16 = cpu.bus.read_word_little(cpu.pc+1);
+            //print!("${:X},X", bus.read_word_little(pc+1));
+            let operand: u16 = bus.read_word_little(cpu.pc+1);
             let effective_address: u16 = operand + cpu.x as u16;
-            asm_string = format!("{} ${:04X},X @ {:04X} = {:02X}       ", asm_string, operand, effective_address, cpu.bus.read(effective_address));
+            asm_string = format!("{} ${:04X},X @ {:04X} = {:02X}       ", asm_string, operand, effective_address, bus.read(effective_address));
         }
         AddrM::AIY => {
-            //print!("${:X},Y", cpu.bus.read_word_little(pc+1));
-            let operand: u16 = cpu.bus.read_word_little(cpu.pc+1);
+            //print!("${:X},Y", bus.read_word_little(pc+1));
+            let operand: u16 = bus.read_word_little(cpu.pc+1);
             let effective_address: u16 = operand.wrapping_add(cpu.y as u16);
-            asm_string = format!("{} ${:04X},Y @ {:04X} = {:02X}       ", asm_string, operand, effective_address, cpu.bus.read(effective_address));
+            asm_string = format!("{} ${:04X},Y @ {:04X} = {:02X}       ", asm_string, operand, effective_address, bus.read(effective_address));
         }
         AddrM::IMD => {
-            //print!("#${:X}", cpu.bus.read(pc+1));
-            let operand: u8 = cpu.bus.read(cpu.pc+1);
+            //print!("#${:X}", bus.read(pc+1));
+            let operand: u8 = bus.read(cpu.pc+1);
             asm_string = format!("{} #${:02X}                      ", asm_string, operand);
         }
         AddrM::IMP => {
@@ -77,35 +77,35 @@ pub fn get_asm(cpu: &Cpu) -> String {
             asm_string = format!("{}                           ", asm_string);
         }
         AddrM::IND => {
-            //print!("$({:X})", cpu.bus.read_word_little(pc+1));
-            let operand: u16 = cpu.bus.read_word_little(cpu.pc+1);
-            let effective_address: u16 = cpu.bus.read_word_little_wrap(operand);
+            //print!("$({:X})", bus.read_word_little(pc+1));
+            let operand: u16 = bus.read_word_little(cpu.pc+1);
+            let effective_address: u16 = bus.read_word_little_wrap(operand);
             asm_string = format!("{} (${:04X}) = {:04X}            ", asm_string, operand, effective_address);
         } 
         AddrM::IIX => {
-            //print!("$({:X},X)", cpu.bus.read(pc+1));
-            let operand: u8 = cpu.bus.read(cpu.pc+1);
+            //print!("$({:X},X)", bus.read(pc+1));
+            let operand: u8 = bus.read(cpu.pc+1);
             let mid_address: u8 = operand.wrapping_add(cpu.x);
-            let low_byte: u8 = cpu.bus.read(mid_address as u16);
-            let high_byte: u8 = cpu.bus.read((operand.wrapping_add(cpu.x)).wrapping_add(1) as u16);
+            let low_byte: u8 = bus.read(mid_address as u16);
+            let high_byte: u8 = bus.read((operand.wrapping_add(cpu.x)).wrapping_add(1) as u16);
             let effective_address: u16 = ((high_byte as u16) << 8) + low_byte as u16;
 
-            asm_string = format!("{} (${:02X},X) @ {:02X} = {:04X} = {:02X}  ", asm_string, operand, mid_address, effective_address, cpu.bus.read(effective_address));
+            asm_string = format!("{} (${:02X},X) @ {:02X} = {:04X} = {:02X}  ", asm_string, operand, mid_address, effective_address, bus.read(effective_address));
         }
         AddrM::IIY => {
-            //print!("$({:X}),Y", cpu.bus.read(pc+1));
-            let operand: u8 = cpu.bus.read(cpu.pc+1);
-            let low_byte: u8 = cpu.bus.read(operand as u16);
-            let high_byte: u8 = cpu.bus.read(operand.wrapping_add(1) as u16);
+            //print!("$({:X}),Y", bus.read(pc+1));
+            let operand: u8 = bus.read(cpu.pc+1);
+            let low_byte: u8 = bus.read(operand as u16);
+            let high_byte: u8 = bus.read(operand.wrapping_add(1) as u16);
             let raw_address: u16 = ((high_byte as u16) << 8) + low_byte as u16;
 
             let effective_address: u16 = raw_address.wrapping_add(cpu.y as u16);
 
-            asm_string = format!("{} (${:02X}),Y = {:04X} @ {:04X} = {:02X}", asm_string, operand, raw_address, effective_address, cpu.bus.read(effective_address));
+            asm_string = format!("{} (${:02X}),Y = {:04X} @ {:04X} = {:02X}", asm_string, operand, raw_address, effective_address, bus.read(effective_address));
         }
         AddrM::REL => {
-            //print!("${:X}", cpu.bus.read(pc+1));
-            let mut offset:u8 = cpu.bus.read(cpu.pc+1);
+            //print!("${:X}", bus.read(pc+1));
+            let mut offset:u8 = bus.read(cpu.pc+1);
            
             let effective_address:u16;
             if offset <= 0x7F  {
@@ -117,22 +117,22 @@ pub fn get_asm(cpu: &Cpu) -> String {
             }
 
             // Plus 2 because the the program counter will be incremented twice before the jump actually happens
-            //asm_string = format!("{} ${:04X}                     ", asm_string, ((cpu.pc as i32) + (cpu.bus.read(cpu.pc+1) as i32) + 2) as u16);
+            //asm_string = format!("{} ${:04X}                     ", asm_string, ((cpu.pc as i32) + (bus.read(cpu.pc+1) as i32) + 2) as u16);
             asm_string = format!("{} ${:04X}                     ", asm_string, effective_address + 2);
         }
         AddrM::ZPG => {
-            let operand: u8 = cpu.bus.read(cpu.pc+1);
-            asm_string = format!("{} ${:02X} = {:02X}                  ", asm_string, operand, cpu.bus.read(operand as u16));
+            let operand: u8 = bus.read(cpu.pc+1);
+            asm_string = format!("{} ${:02X} = {:02X}                  ", asm_string, operand, bus.read(operand as u16));
         }
         AddrM::ZIX => {
-            let operand: u8 = cpu.bus.read(cpu.pc+1);
+            let operand: u8 = bus.read(cpu.pc+1);
             let effective_address: u8 = operand.wrapping_add(cpu.x);
-            asm_string = format!("{} ${:02X},X @ {:02X} = {:02X}           ", asm_string, operand, effective_address, cpu.bus.read(effective_address as u16));
+            asm_string = format!("{} ${:02X},X @ {:02X} = {:02X}           ", asm_string, operand, effective_address, bus.read(effective_address as u16));
         }
         AddrM::ZIY => {
-            let operand: u8 = cpu.bus.read(cpu.pc+1);
+            let operand: u8 = bus.read(cpu.pc+1);
             let effective_address: u8 = operand.wrapping_add(cpu.y);
-            asm_string = format!("{} ${:02X},Y @ {:02X} = {:02X}           ", asm_string, operand, effective_address, cpu.bus.read(effective_address as u16));
+            asm_string = format!("{} ${:02X},Y @ {:02X} = {:02X}           ", asm_string, operand, effective_address, bus.read(effective_address as u16));
         }
         AddrM::NUL => {
             asm_string = format!("Invalid Opcode                ");
@@ -146,24 +146,24 @@ pub fn get_asm(cpu: &Cpu) -> String {
 //: }}}
 
 //: output_debug_info {{{ 
-pub fn output_debug_info(cpu: &Cpu) {
+pub fn output_debug_info(cpu: &Cpu, bus: &mut Bus) {
     print!("{:04X}  ", cpu.pc);
-    match ADDRESSING_MODE_LOOKUP[cpu.bus.read(cpu.pc) as usize] {
+    match ADDRESSING_MODE_LOOKUP[bus.read(cpu.pc) as usize] {
         AddrM::ACC|AddrM::IMP => { // One Byte
-            print!("{:02X}       ", cpu.bus.read(cpu.pc));
+            print!("{:02X}       ", bus.read(cpu.pc));
         }
         AddrM::IMD|AddrM::ZPG|AddrM::REL|AddrM::ZIX|AddrM::ZIY|AddrM::IIX|AddrM::IIY => { // Two Bytes 
-            print!("{:02X} {:02X}    ", cpu.bus.read(cpu.pc), cpu.bus.read(cpu.pc+1));
+            print!("{:02X} {:02X}    ", bus.read(cpu.pc), bus.read(cpu.pc+1));
         }
         AddrM::ABS|AddrM::ADR|AddrM::AIX|AddrM::AIY|AddrM::IND => { // Three Bytes
-            print!("{:02X} {:02X} {:02X} ", cpu.bus.read(cpu.pc), cpu.bus.read(cpu.pc+1), cpu.bus.read(cpu.pc+2));
+            print!("{:02X} {:02X} {:02X} ", bus.read(cpu.pc), bus.read(cpu.pc+1), bus.read(cpu.pc+2));
         }
         AddrM::NUL => {
-            print!("INVLD: {:02X}", cpu.bus.read(cpu.pc));
+            print!("INVLD: {:02X}", bus.read(cpu.pc));
         }
 
     }
-    print!("{}  ", get_asm(cpu));
+    print!("{}  ", get_asm(cpu, bus));
     println!{"A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} PPU:{:>3},{:>3} CYC:{}", cpu.a, cpu.x, cpu.y, cpu.stat, cpu.stp, 0, 0, cpu.cycl};
 }
 //: }}}

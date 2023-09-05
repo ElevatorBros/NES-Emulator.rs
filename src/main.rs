@@ -7,14 +7,14 @@
 
 use NES_Emulator::Ram;
 use NES_Emulator::Cart;
-use NES_Emulator::Ppu;
+//use NES_Emulator::Ppu;
 use NES_Emulator::Bus;
 use NES_Emulator::Cpu;
 
 
 fn main() {
     let mut main_ram = Ram::new();
-    let mut main_cart = match Cart::new("./nestest.nes") {
+    let main_cart = match Cart::new("./nestest.nes") {
         Ok(c) => c,
         Err(e) => {
             println!("{e}");
@@ -22,7 +22,7 @@ fn main() {
         }
     };
 
-    let mut main_ppu = Ppu::new();
+    //let mut main_ppu = Ppu::new();
 
     /*main_cart.ROM[0x00] = 0xA9;
     main_cart.ROM[0x01] = 0x07;
@@ -35,16 +35,16 @@ fn main() {
     //    main_cart.rom[(i+(0x0C000 - 0x08000 - 0x10)) as usize] = main_cart.rom[i as usize];
     //}
 
-    let mut main_bus = Bus::new(&mut main_ram, &mut main_ppu, &main_cart);
+    let mut main_bus = Bus::new(&mut main_ram, &main_cart);
 
-    let mut main_cpu = Cpu::new(&mut main_bus);
+    let mut main_cpu = Cpu::new();
     
 
     main_cpu.pc = 0x0C000;
     main_cpu.cycl = 7;
     main_cpu.next = 7;
     for _i in 0..26554 {
-        main_cpu.clock();
+        main_cpu.clock(&mut main_bus);
     }
     println!("Done");
 }

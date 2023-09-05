@@ -8,19 +8,16 @@ use crate::output_debug_info;
 
 //: Ppu {{{
 pub struct Ppu<'a> {
-    pub chr_rom: [u8; 0x2000] // 8KB internal chr rom 
-    pub vram: [u8; 0x800] // 2KB internal vram 
-    pub pallet: [u8; 0x100] // 256 bytes internal pallet ram 
-    pub oam: [u8; 0x100] // 256 bytes internal oam 
+    pub chr_rom: [u8; 0x2000], // 8KB internal chr rom 
+    pub vram: [u8; 0x800], // 2KB internal vram 
+    pub pallet: [u8; 0x100], // 256 bytes internal pallet ram 
+    pub oam: [u8; 0x100], // 256 bytes internal oam 
     
     pub bus : &'a mut Bus<'a> // Reference to main bus
 }
 //: }}}
 
 
-fn read(&self, addr: u16) -> u8 {
-    return self.bus.read(addr);
-}
 
 const PPU_CTRL_ADDR: u16 = 0x2000;
 const PPU_MASK_ADDR: u16 = 0x2001;
@@ -31,7 +28,11 @@ const PPU_SCROLL_ADDR: u16 = 0x2005;
 const PPU_ADDR_ADDR: u16 = 0x2006;
 const PPU_DATA_ADDR: u16 = 0x2007;
 
-impl PPUTHING {
+impl Ppu {
+
+    fn read(&self, addr: u16) -> u8 {
+        return self.bus.read(addr);
+    }
     /* CPU Registers */
     // PPU_CTRL
     // 0: disable, 1: enable
@@ -70,11 +71,29 @@ impl PPUTHING {
     // PPU_STATUS
     // Open bus is weird, make sure to come back to this
     // Only write to the low five bits
-    fn set_open_bus(&self, value:u8) { self.bus.write(PPU_STATUS_ADDR, value & 0x1F) }
+    fn set_open_bus(&self, value:u8) { self.bus.write(PPU_STATUS_ADDR, (value & 0x1F) | (self.bus.read(PPU_STATUS_ADDR) & 0xE0)) }
     // Weird as well because of hardware bug, look into sprite evaluation
-    fn set_sprite_overflow(&self, value:bool) { self.bus.write(PPU_STATUS_ADDR, (value?1:0) << 5) };
-    fn set_sprite_hit(&self, value:bool) { self.bus.write(PPU_STATUS_ADDR, (value?1:0) << 6) };
-    fn set_vblank(&self, value:bool) { self.bus.write(PPU_STATUS_ADDR, (value?1:0) << 7) };
+    fn set_sprite_overflow(&self, value:bool) { 
+        if (value) {
+            self.bus.write(self.bus.read(PPU_STATUS_ADDR) | 0x20);
+        } else {
+            self.bus.write(self.bus.read(PPU_STATUS_ADDR) & 0xDF);
+        }
+    }
+    fn set_sprite_hit(&self, value:bool) { 
+        if (value) {
+            self.bus.write(self.bus.read(PPU_STATUS_ADDR) | 0x40);
+        } else {
+            self.bus.write(self.bus.read(PPU_STATUS_ADDR) & 0xBF);
+        }
+    }
+    fn set_vblank(&self, value:bool) { 
+        if (value) {
+            self.bus.write(self.bus.read(PPU_STATUS_ADDR) | 0x80);
+        } else {
+            self.bus.write(self.bus.read(PPU_STATUS_ADDR) & 0x7F);
+        }
+    }
 
     // OAM_ADDR
     fn get_oam_addr(&self) -> u8 { self.bus.read(OAM_ADDR_ADDR) }
