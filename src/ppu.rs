@@ -13,6 +13,10 @@ pub struct Ppu {
     pub oam: [u8; 0x100], // 256 bytes internal oam 
     
     pub screen: [u8; 3 * 256 * 240], // screen pixel buffer
+    
+
+    pub scanline: i16,
+    pub cycle: i16,
 }
 //: }}}
 
@@ -34,7 +38,11 @@ impl Ppu {
             vram: [0; 0x800],
             pallet: [0; 0x100],
             oam: [0; 0x100],
-            screen: [0; 3 * 256 * 240]
+            screen: [0; 3 * 256 * 240],
+
+
+            scanline: -1,
+            cycle: 0,
         }
     }
 
@@ -127,5 +135,34 @@ impl Ppu {
 
 
     fn clock(&self, bus: &mut Bus) {
+        if scanline == -1 { // pre-render scanline
+            
+        } else if scanline <= 239 { // rendering
+            if cycle == 0 { // idle cycle
+                            
+            } else if cycle <= 256 { // current line tile data fetch
+
+            } else if cycle <= 320 { // next line first two tiles
+                                     
+            } else { // fetch two bytes for unknown reason
+
+            }
+        } else if scanline == 240 { // post render scanline
+                                    
+        } else { // vblank
+
+        }
+
+        if cycle < 341 {
+            cycle += 1;
+        } else {
+            cycle = 0;
+            if scanline < 261 {
+                scanline += 1;
+            } else {
+                scanline = -1;
+            }
+        }
+    
     }
 }
