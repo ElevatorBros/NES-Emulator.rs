@@ -4,6 +4,7 @@ mod bus;
 mod cartrige;
 mod ram;
 mod utils;
+mod graphics;
 
 pub use crate::cpu::Cpu;
 pub use crate::cpu::ADDRESSING_MODE_LOOKUP;

@@ -17,7 +17,7 @@ pub struct Bus<'a> {
 impl<'a> Bus<'a> {
     // Setup Functions
     pub fn new(ram: &'a mut Ram, cart: &'a Cart ) -> Self {
-        Self { ram, cart}
+        Self { ram, cart }
     }
 
     // Interface Functions

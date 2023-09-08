@@ -10,18 +10,21 @@ use NES_Emulator::Cart;
 use NES_Emulator::Ppu;
 use NES_Emulator::Bus;
 use NES_Emulator::Cpu;
+use std::sync::mpsc;
 
 fn main() {
     let mut main_ram = Ram::new();
     let main_cart = match Cart::new("./nestest.nes") {
         Ok(c) => c,
         Err(e) => {
-            println!("{e}");
+            eprintln!("{e}");
             return;
         }
     };
 
-    let mut main_ppu = Ppu::new();
+
+    let (sender, receiver) = mpsc::channel();
+    let main_ppu = Ppu::new(sender, receiver);
 
     /*main_cart.ROM[0x00] = 0xA9;
     main_cart.ROM[0x01] = 0x07;
@@ -35,9 +38,7 @@ fn main() {
     //}
 
     let mut main_bus = Bus::new(&mut main_ram, &main_cart);
-
     let mut main_cpu = Cpu::new();
-    
 
     main_cpu.pc = 0x0C000;
     main_cpu.cycl = 7;
@@ -47,8 +48,6 @@ fn main() {
     for _i in 0..26554 {
         main_cpu.clock(&mut main_bus);
     }
-
-
 
     println!("Done");
 }

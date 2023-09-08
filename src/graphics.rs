@@ -21,10 +21,13 @@ struct Stage {
 
     pipeline: Pipeline,
     bindings: Bindings,
+    texture: Texture,
+
+    receiver: Receiver
 }
 
 impl Stage {
-    pub fn new() -> Stage {
+    pub fn new(receiver: Receiver) -> Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
         #[rustfmt::skip]
@@ -94,12 +97,27 @@ impl Stage {
             pipeline,
             bindings,
             ctx,
+            texture,
+            receiver
         }
+    }
+
+    // Called from bus.rs
+    fn update_screen(pixel_buffer: &[u8; 4 * pixel_buffer_width * pixel_buffer_height]) {
+        
     }
 }
 
 impl EventHandler for Stage {
-    fn update(&mut self) {}
+    fn update(&mut self) {
+        let pixel_buffer = match self.receiver.try_recv() {
+            Ok(k) => k,
+            Err(_) => {
+                [0; 4 * pixel_buffer_width * pixel_buffer_height]
+            }
+        };
+        self.texture.update(self.ctx, pixel_buffer);
+    }
 
     fn draw(&mut self) {
         self.ctx.begin_default_pass(Default::default());
@@ -111,15 +129,10 @@ impl EventHandler for Stage {
 
         self.ctx.commit_frame();
     }
-
-    // Called from bus.rs
-    pub fn update_screen(pixel_buffer: &[u8; 4 * pixel_buffer_width * pixel_buffer_height]) {
-        update(self.ctx, pixel_buffer);
-    }
 }
 
 // Put in thread
-fn main() {
+pub fn start(recv: Receiver) {
     let mut conf = conf::Conf::default();
     conf.window_title = "NES".to_string();
     conf.window_width = 256;
@@ -132,7 +145,7 @@ fn main() {
         conf::AppleGfxApi::OpenGl
     };
 
-    miniquad::start(conf, move || Box::new(Stage::new()));
+    miniquad::start(conf, move || Box::new(Stage::new(recv)));
 }
 
 

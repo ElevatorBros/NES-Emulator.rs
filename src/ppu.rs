@@ -2,6 +2,9 @@
 // vim:foldmethod=marker
 #![allow(dead_code)]
 #![allow(unused_variables)]
+
+use std::{sync::mpsc::{Sender, Receiver}, thread};
+
 use crate::Bus;
 
 
@@ -12,11 +15,12 @@ pub struct Ppu {
     pub pallet: [u8; 0x100], // 256 bytes internal pallet ram 
     pub oam: [u8; 0x100], // 256 bytes internal oam 
     
-    pub screen: [u8; 3 * 256 * 240], // screen pixel buffer
+    pub screen: [u8; 4 * 256 * 240], // screen pixel buffer
     
 
     pub scanline: i16,
     pub cycle: i16,
+    pub sender: Sender<[u8; 4 * 256 * 240]>
 }
 //: }}}
 
@@ -32,17 +36,20 @@ const PPU_ADDR_ADDR: u16 = 0x2006;
 const PPU_DATA_ADDR: u16 = 0x2007;
 
 impl Ppu {
-    pub fn new() -> Self {
+    pub fn new(sender: Sender<[u8; 4 * 256 * 240]>, receiver: Receiver<[u8; 4 * 256 * 240]>) -> Self {
+        let handle = thread::spawn(move || {
+            graphics::start()
+        });
         Self {
             chr_rom: [0; 0x2000],
             vram: [0; 0x800],
             pallet: [0; 0x100],
             oam: [0; 0x100],
-            screen: [0; 3 * 256 * 240],
-
+            screen: [0; 4 * 256 * 240],
 
             scanline: -1,
             cycle: 0,
+            sender
         }
     }
 
@@ -130,9 +137,9 @@ impl Ppu {
        // copy $xx00 - $xxFF to oam where xx = value
     }
 
-
-
-
+    fn render_frame(&self) {
+        self.sender.send(self.screen).unwrap();
+    }
 
     fn clock(&mut self, bus: &mut Bus) {
         if self.scanline == -1 { // pre-render scanline
@@ -161,8 +168,8 @@ impl Ppu {
                 self.scanline += 1;
             } else {
                 self.scanline = -1;
+                self.render_frame();
             }
         }
-    
     }
 }
