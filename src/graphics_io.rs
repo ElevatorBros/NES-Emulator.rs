@@ -106,13 +106,14 @@ impl Stage {
 
 impl EventHandler for Stage {
     fn update(&mut self) {
-        let pixel_buffer = match self.receiver.try_recv() {
-            Ok(k) => k,
+        match self.receiver.try_recv() {
+            Ok(pixel_buffer) => {
+                self.ctx.texture_update(self.texture, &pixel_buffer);
+            },
             Err(_) => {
-                [0; 4 * PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT]
+                return;
             }
         };
-        self.ctx.texture_update(self.texture, &pixel_buffer);
     }
 
     fn draw(&mut self) {

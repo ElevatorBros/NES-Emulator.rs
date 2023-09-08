@@ -50,7 +50,7 @@ impl Ppu {
             vram: [0; 0x800],
             pallet: [0; 0x100],
             oam: [0; 0x100],
-            screen: [0; 4 * 256 * 240],
+            screen: [0xff; 4 * 256 * 240],
 
             scanline: -1,
             cycle: 0,
@@ -143,22 +143,27 @@ impl Ppu {
     }
 
     fn render_frame(&self) {
+        println!("Sending the thing");
         self.sender.send(self.screen).unwrap();
     }
 
-    fn put_pixel(&self, y: u16, x: u16, rgba: RGBA) {
-        self.screen[4 * (y * 256 + x) + 0] = rgba.r;
-        self.screen[4 * (y * 256 + x) + 1] = rgba.g;
-        self.screen[4 * (y * 256 + x) + 2] = rgba.b;
-        self.screen[4 * (y * 256 + x) + 3] = rgba.a;
+    fn put_pixel(&mut self, y: u16, x: u16, rgba: RGBA) {
+        let offset = 4 * ((y as usize) * 256 + (x as usize));
+        if offset > 245700 {
+            return
+        }
+        self.screen[(offset + 0) as usize] = rgba.r;
+        self.screen[(offset + 1) as usize] = rgba.g;
+        self.screen[(offset + 2) as usize] = rgba.b;
+        self.screen[(offset + 3) as usize] = rgba.a;
     }
 
     pub fn clock(&mut self, bus: &mut Bus) {
         if self.scanline == -1 { // pre-render scanline
             
         } else if self.scanline <= 239 { // rendering
-            if (self.cycle % 2 == 0) {
-                put_pixel(self.scanline, self.cycle, RGBA{1.0,1.0,1.0,1.0});
+            if self.cycle % 2 == 0 {
+                self.put_pixel(self.scanline as u16, self.cycle as u16, RGBA{r:0xff,g:0xff,b:0xff,a:0xff});
             }
             if self.cycle == 0 { // idle cycle
                             

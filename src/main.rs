@@ -45,7 +45,7 @@ fn main() {
     main_cpu.next = 7;
 
 
-    for _i in 0..26554 {
+    for _i in 0..100000 {
         main_ppu.clock(&mut main_bus);
     }
 
