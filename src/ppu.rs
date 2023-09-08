@@ -5,8 +5,8 @@
 
 use std::{sync::mpsc::{Sender, Receiver}, thread};
 
-use crate::Bus;
-
+use crate::bus::Bus;
+use crate::graphics_io;
 
 //: Ppu {{{
 pub struct Ppu {
@@ -24,7 +24,12 @@ pub struct Ppu {
 }
 //: }}}
 
-
+struct RGBA {
+    r: u8,
+    g: u8,
+    b: u8,
+    a: u8,
+}
 
 const PPU_CTRL_ADDR: u16 = 0x2000;
 const PPU_MASK_ADDR: u16 = 0x2001;
@@ -38,7 +43,7 @@ const PPU_DATA_ADDR: u16 = 0x2007;
 impl Ppu {
     pub fn new(sender: Sender<[u8; 4 * 256 * 240]>, receiver: Receiver<[u8; 4 * 256 * 240]>) -> Self {
         let handle = thread::spawn(move || {
-            graphics::start()
+            graphics_io::start(receiver)
         });
         Self {
             chr_rom: [0; 0x2000],
@@ -141,10 +146,20 @@ impl Ppu {
         self.sender.send(self.screen).unwrap();
     }
 
-    fn clock(&mut self, bus: &mut Bus) {
+    fn put_pixel(&self, y: u16, x: u16, rgba: RGBA) {
+        self.screen[4 * (y * 256 + x) + 0] = rgba.r;
+        self.screen[4 * (y * 256 + x) + 1] = rgba.g;
+        self.screen[4 * (y * 256 + x) + 2] = rgba.b;
+        self.screen[4 * (y * 256 + x) + 3] = rgba.a;
+    }
+
+    pub fn clock(&mut self, bus: &mut Bus) {
         if self.scanline == -1 { // pre-render scanline
             
         } else if self.scanline <= 239 { // rendering
+            if (self.cycle % 2 == 0) {
+                put_pixel(self.scanline, self.cycle, RGBA{1.0,1.0,1.0,1.0});
+            }
             if self.cycle == 0 { // idle cycle
                             
             } else if self.cycle <= 256 { // current line tile data fetch

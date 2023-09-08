@@ -1,8 +1,9 @@
 // Based off of miniquad example: https://github.com/not-fl3/miniquad/blob/master/examples/quad.rs
+use std::sync::mpsc::Receiver;
 use miniquad::*;
 
-let const pixel_buffer_width = 256;
-let const pixel_buffer_height = 240;
+const PIXEL_BUFFER_WIDTH: usize = 256;
+const PIXEL_BUFFER_HEIGHT: usize = 240;
 
 
 #[repr(C)]
@@ -21,13 +22,13 @@ struct Stage {
 
     pipeline: Pipeline,
     bindings: Bindings,
-    texture: Texture,
+    texture: TextureId,
 
-    receiver: Receiver
+    receiver: Receiver<[u8;4 * PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT]>
 }
 
 impl Stage {
-    pub fn new(receiver: Receiver) -> Stage {
+    pub fn new(receiver: Receiver<[u8;4 * PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT]>) -> Stage {
         let mut ctx: Box<dyn RenderingBackend> = window::new_rendering_backend();
 
         #[rustfmt::skip]
@@ -59,9 +60,9 @@ impl Stage {
             0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         ];
         */
-        let pixels: [u8; 4 * pixel_buffer_width * pixel_buffer_height] = [0; 4 * pixel_buffer_width * pixel_buffer_height];
+        let pixels: [u8; 4 * PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT] = [0; 4 * PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT];
 
-        let texture = ctx.new_texture_from_rgba8(pixel_buffer_width, pixel_buffer_height, &pixels);
+        let texture = ctx.new_texture_from_rgba8(PIXEL_BUFFER_WIDTH as u16, PIXEL_BUFFER_HEIGHT as u16, &pixels);
 
         let bindings = Bindings {
             vertex_buffers: vec![vertex_buffer],
@@ -101,11 +102,6 @@ impl Stage {
             receiver
         }
     }
-
-    // Called from bus.rs
-    fn update_screen(pixel_buffer: &[u8; 4 * pixel_buffer_width * pixel_buffer_height]) {
-        
-    }
 }
 
 impl EventHandler for Stage {
@@ -113,10 +109,10 @@ impl EventHandler for Stage {
         let pixel_buffer = match self.receiver.try_recv() {
             Ok(k) => k,
             Err(_) => {
-                [0; 4 * pixel_buffer_width * pixel_buffer_height]
+                [0; 4 * PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT]
             }
         };
-        self.texture.update(self.ctx, pixel_buffer);
+        self.ctx.texture_update(self.texture, &pixel_buffer);
     }
 
     fn draw(&mut self) {
@@ -132,7 +128,7 @@ impl EventHandler for Stage {
 }
 
 // Put in thread
-pub fn start(recv: Receiver) {
+pub fn start(recv: Receiver<[u8;4 * PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT]>) {
     let mut conf = conf::Conf::default();
     conf.window_title = "NES".to_string();
     conf.window_width = 256;
@@ -183,10 +179,5 @@ mod shader {
                 uniforms: vec![],
             },
         }
-    }
-
-    #[repr(C)]
-    pub struct Uniforms {
-        pub offset: (f32, f32),
     }
 }

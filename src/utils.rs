@@ -3,10 +3,10 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use crate::AddrM;
-use crate::ADDRESSING_MODE_LOOKUP;
-use crate::Bus;
-use crate::Cpu;
+use crate::cpu::Cpu;
+use crate::cpu::AddrM;
+use crate::cpu::ADDRESSING_MODE_LOOKUP;
+use crate::bus::Bus;
 
 
 //: ASM_LOOKUP {{{

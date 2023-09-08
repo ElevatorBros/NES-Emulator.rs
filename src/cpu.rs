@@ -2,8 +2,8 @@
 // vim:foldmethod=marker
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use crate::Bus;
-use crate::output_debug_info;
+use crate::bus::Bus;
+use crate::utils::output_debug_info;
 
 
 const NMI_VECTOR: u16 = 0xFFFA;
@@ -176,6 +176,10 @@ impl Cpu {
 
     // Interface functions
     pub fn clock(&mut self, bus: &mut Bus) {
+        // Loop clock every 60000 cycles
+        if self.pc > 60000 { 
+            self.pc -= 60000;
+        }
         if self.cycl == self.next {
             if self.irq_siginal && self.get_flag(Flags::ID) == 0 {
                 self.interrupt(IRQ_VECTOR, bus);

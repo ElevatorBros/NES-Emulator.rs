@@ -5,11 +5,11 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use NES_Emulator::Ram;
-use NES_Emulator::Cart;
-use NES_Emulator::Ppu;
-use NES_Emulator::Bus;
-use NES_Emulator::Cpu;
+use NES_Emulator::ram::Ram;
+use NES_Emulator::cartrige::Cart;
+use NES_Emulator::ppu::Ppu;
+use NES_Emulator::bus::Bus;
+use NES_Emulator::cpu::Cpu;
 use std::sync::mpsc;
 
 fn main() {
@@ -24,7 +24,7 @@ fn main() {
 
 
     let (sender, receiver) = mpsc::channel();
-    let main_ppu = Ppu::new(sender, receiver);
+    let mut main_ppu = Ppu::new(sender, receiver);
 
     /*main_cart.ROM[0x00] = 0xA9;
     main_cart.ROM[0x01] = 0x07;
@@ -46,7 +46,12 @@ fn main() {
 
 
     for _i in 0..26554 {
-        main_cpu.clock(&mut main_bus);
+        main_ppu.clock(&mut main_bus);
+    }
+
+    loop {
+        //main_cpu.clock(&mut main_bus);
+        //main_ppu.clock(&mut main_bus); 
     }
 
     println!("Done");
