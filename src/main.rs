@@ -1,18 +1,17 @@
-//pub mod ram;
-//pub mod cartrige;
-//pub mod bus;
-//pub mod cpu;
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use NES_Emulator::ram::Ram;
-use NES_Emulator::cartrige::Cart;
-use NES_Emulator::ppu::Ppu;
-use NES_Emulator::bus::Bus;
-use NES_Emulator::cpu::Cpu;
-use std::sync::mpsc;
+use macroquad::window::next_frame;
+use nes_emulator::Ram;
+use nes_emulator::Cart;
+use nes_emulator::Ppu;
+use nes_emulator::Bus;
+use nes_emulator::Cpu;
+use nes_emulator::window_conf;
+use nes_emulator::put;
 
-fn main() {
+#[macroquad::main(window_conf)]
+async fn main() {
     let mut main_ram = Ram::new();
     let main_cart = match Cart::new("./nestest.nes") {
         Ok(c) => c,
@@ -22,9 +21,7 @@ fn main() {
         }
     };
 
-
-    let (sender, receiver) = mpsc::channel();
-    let mut main_ppu = Ppu::new(sender, receiver);
+    let main_ppu = Ppu::new();
 
     /*main_cart.ROM[0x00] = 0xA9;
     main_cart.ROM[0x01] = 0x07;
@@ -44,15 +41,9 @@ fn main() {
     main_cpu.cycl = 7;
     main_cpu.next = 7;
 
-
-    for _i in 0..100000 {
-        main_ppu.clock(&mut main_bus);
+    for _i in 0..26554 {
+        main_cpu.clock(&mut main_bus);
+        //next_frame().await
     }
-
-    loop {
-        //main_cpu.clock(&mut main_bus);
-        //main_ppu.clock(&mut main_bus); 
-    }
-
     println!("Done");
 }

@@ -2,6 +2,7 @@
 // vim:foldmethod=marker
 #![allow(dead_code)]
 #![allow(unused_variables)]
+use crate::{Bus, put};
 
 use std::{sync::mpsc::{Sender, Receiver}, thread};
 
@@ -25,11 +26,12 @@ pub struct Ppu {
 //: }}}
 
 struct RGBA {
-    r: u8,
-    g: u8,
-    b: u8,
-    a: u8,
+  r: u8,
+  g: u8,
+  b: u8,
+  a: u8
 }
+
 
 const PPU_CTRL_ADDR: u16 = 0x2000;
 const PPU_MASK_ADDR: u16 = 0x2001;
@@ -142,9 +144,8 @@ impl Ppu {
        // copy $xx00 - $xxFF to oam where xx = value
     }
 
-    fn render_frame(&self) {
-        println!("Sending the thing");
-        self.sender.send(self.screen).unwrap();
+    fn render(&self) {
+        put(&self.screen);
     }
 
     fn put_pixel(&mut self, y: u16, x: u16, rgba: RGBA) {
@@ -188,7 +189,7 @@ impl Ppu {
                 self.scanline += 1;
             } else {
                 self.scanline = -1;
-                self.render_frame();
+                self.render();
             }
         }
     }
