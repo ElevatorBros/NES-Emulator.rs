@@ -1,17 +1,14 @@
-//pub mod ram;
-//pub mod cartrige;
-//pub mod bus;
-//pub mod cpu;
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use NES_Emulator::Ram;
-use NES_Emulator::Cart;
-use NES_Emulator::Ppu;
-use NES_Emulator::Bus;
-use NES_Emulator::Cpu;
+use nes_emulator::Ram;
+use nes_emulator::Cart;
+use nes_emulator::Ppu;
+use nes_emulator::Bus;
+use nes_emulator::Cpu;
 
-fn main() {
+#[macroquad::main("NES Emulator")]
+async fn main() {
     let mut main_ram = Ram::new();
     let main_cart = match Cart::new("./nestest.nes") {
         Ok(c) => c,
@@ -21,8 +18,7 @@ fn main() {
         }
     };
 
-    let mut main_ppu = Ppu::new();
-
+    let main_ppu = Ppu::new();
     /*main_cart.ROM[0x00] = 0xA9;
     main_cart.ROM[0x01] = 0x07;
     main_cart.ROM[0x02] = 0x90;
@@ -35,20 +31,15 @@ fn main() {
     //}
 
     let mut main_bus = Bus::new(&mut main_ram, &main_cart);
-
     let mut main_cpu = Cpu::new();
-    
 
     main_cpu.pc = 0x0C000;
     main_cpu.cycl = 7;
     main_cpu.next = 7;
 
-
     for _i in 0..26554 {
         main_cpu.clock(&mut main_bus);
     }
-
-
 
     println!("Done");
 }

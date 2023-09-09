@@ -130,39 +130,39 @@ impl Ppu {
        // copy $xx00 - $xxFF to oam where xx = value
     }
 
+    fn render(&self) {
 
+    }
 
-
-
-    fn clock(&self, bus: &mut Bus) {
-        if scanline == -1 { // pre-render scanline
+    fn clock(&mut self, bus: &mut Bus) {
+        if self.scanline == -1 { // pre-render scanline
             
-        } else if scanline <= 239 { // rendering
-            if cycle == 0 { // idle cycle
+        } else if self.scanline <= 239 { // rendering
+            if self.cycle == 0 { // idle cycle
                             
-            } else if cycle <= 256 { // current line tile data fetch
+            } else if self.cycle <= 256 { // current line tile data fetch
 
-            } else if cycle <= 320 { // next line first two tiles
+            } else if self.cycle <= 320 { // next line first two tiles
                                      
             } else { // fetch two bytes for unknown reason
 
             }
-        } else if scanline == 240 { // post render scanline
+        } else if self.scanline == 240 { // post render scanline
                                     
         } else { // vblank
 
         }
 
-        if cycle < 341 {
-            cycle += 1;
+        if self.cycle < 341 {
+            self.cycle += 1;
         } else {
-            cycle = 0;
-            if scanline < 261 {
-                scanline += 1;
+            self.cycle = 0;
+            if self.scanline < 261 {
+                self.scanline += 1;
             } else {
-                scanline = -1;
+                self.scanline = -1;
+                self.render();
             }
         }
-    
     }
 }
