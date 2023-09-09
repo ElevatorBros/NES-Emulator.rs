@@ -1,7 +1,7 @@
 use macroquad::{texture::{Texture2D, draw_texture_ex, DrawTextureParams}, window::Conf, prelude::{WHITE, vec2}};
 
-const WINDOW_WIDTH: u16 = 256;
-const WINDOW_HEIGHT: u16 = 256;
+pub const WINDOW_WIDTH: u16 = 256;
+pub const WINDOW_HEIGHT: u16 = 240;
 
 pub fn window_conf() -> Conf {
     Conf {
@@ -13,7 +13,7 @@ pub fn window_conf() -> Conf {
     }
 }
 
-pub fn put(bytes: &[u8]) {
+pub fn render_screen(bytes: &[u8]) {
     let texture = Texture2D::from_rgba8(WINDOW_WIDTH, WINDOW_HEIGHT, bytes);
     draw_texture_ex(
         &texture,

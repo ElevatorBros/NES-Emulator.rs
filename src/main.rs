@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use macroquad::prelude::BLACK;
-use macroquad::window::clear_background;
 use macroquad::window::next_frame;
 use nes_emulator::Ram;
 use nes_emulator::Cart;
@@ -37,15 +35,15 @@ async fn main() {
 
     let mut main_bus = Bus::new(&mut main_ram, &main_cart);
     let mut main_cpu = Cpu::new();
+    let bytes = [0xff; 4 * 256 * 240];
 
     main_cpu.pc = 0x0C000;
     main_cpu.cycl = 7;
     main_cpu.next = 7;
 
     for _i in 0..26554 {
-        clear_background(BLACK);
         main_cpu.clock(&mut main_bus);
-        // put(&bytes);
+        put(&bytes);
         next_frame().await
     }
 

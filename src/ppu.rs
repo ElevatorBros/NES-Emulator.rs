@@ -2,7 +2,7 @@
 // vim:foldmethod=marker
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use crate::Bus;
+use crate::{Bus, put};
 
 
 //: Ppu {{{
@@ -129,7 +129,7 @@ impl Ppu {
     }
 
     fn render(&self) {
-
+        put(&self.screen);
     }
 
     fn clock(&mut self, bus: &mut Bus) {
