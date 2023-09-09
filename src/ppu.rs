@@ -20,8 +20,6 @@ pub struct Ppu {
 }
 //: }}}
 
-
-
 const PPU_CTRL_ADDR: u16 = 0x2000;
 const PPU_MASK_ADDR: u16 = 0x2001;
 const PPU_STATUS_ADDR: u16 = 0x2002;

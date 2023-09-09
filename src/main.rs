@@ -1,13 +1,18 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use macroquad::prelude::BLACK;
+use macroquad::window::clear_background;
+use macroquad::window::next_frame;
 use nes_emulator::Ram;
 use nes_emulator::Cart;
 use nes_emulator::Ppu;
 use nes_emulator::Bus;
 use nes_emulator::Cpu;
+use nes_emulator::window_conf;
+use nes_emulator::put;
 
-#[macroquad::main("NES Emulator")]
+#[macroquad::main(window_conf)]
 async fn main() {
     let mut main_ram = Ram::new();
     let main_cart = match Cart::new("./nestest.nes") {
@@ -38,7 +43,10 @@ async fn main() {
     main_cpu.next = 7;
 
     for _i in 0..26554 {
+        clear_background(BLACK);
         main_cpu.clock(&mut main_bus);
+        // put(&bytes);
+        next_frame().await
     }
 
     println!("Done");
