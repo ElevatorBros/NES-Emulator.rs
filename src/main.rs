@@ -16,12 +16,13 @@ async fn main() {
     let main_cart = match Cart::new("./nestest.nes") {
         Ok(c) => c,
         Err(e) => {
-            println!("{e}");
+            eprintln!("{e}");
             return;
         }
     };
 
     let main_ppu = Ppu::new();
+
     /*main_cart.ROM[0x00] = 0xA9;
     main_cart.ROM[0x01] = 0x07;
     main_cart.ROM[0x02] = 0x90;
@@ -35,7 +36,6 @@ async fn main() {
 
     let mut main_bus = Bus::new(&mut main_ram, &main_cart);
     let mut main_cpu = Cpu::new();
-    let bytes = [0xff; 4 * 256 * 240];
 
     main_cpu.pc = 0x0C000;
     main_cpu.cycl = 7;
@@ -43,9 +43,7 @@ async fn main() {
 
     for _i in 0..26554 {
         main_cpu.clock(&mut main_bus);
-        put(&bytes);
-        next_frame().await
+        //next_frame().await
     }
-
     println!("Done");
 }

@@ -4,6 +4,10 @@
 #![allow(unused_variables)]
 use crate::{Bus, put};
 
+use std::{sync::mpsc::{Sender, Receiver}, thread};
+
+use crate::bus::Bus;
+use crate::graphics_io;
 
 //: Ppu {{{
 pub struct Ppu {
@@ -12,13 +16,22 @@ pub struct Ppu {
     pub pallet: [u8; 0x100], // 256 bytes internal pallet ram 
     pub oam: [u8; 0x100], // 256 bytes internal oam 
     
-    pub screen: [u8; 3 * 256 * 240], // screen pixel buffer
+    pub screen: [u8; 4 * 256 * 240], // screen pixel buffer
     
 
     pub scanline: i16,
     pub cycle: i16,
+    pub sender: Sender<[u8; 4 * 256 * 240]>
 }
 //: }}}
+
+struct RGBA {
+  r: u8,
+  g: u8,
+  b: u8,
+  a: u8
+}
+
 
 const PPU_CTRL_ADDR: u16 = 0x2000;
 const PPU_MASK_ADDR: u16 = 0x2001;
@@ -30,17 +43,20 @@ const PPU_ADDR_ADDR: u16 = 0x2006;
 const PPU_DATA_ADDR: u16 = 0x2007;
 
 impl Ppu {
-    pub fn new() -> Self {
+    pub fn new(sender: Sender<[u8; 4 * 256 * 240]>, receiver: Receiver<[u8; 4 * 256 * 240]>) -> Self {
+        let handle = thread::spawn(move || {
+            graphics_io::start(receiver)
+        });
         Self {
             chr_rom: [0; 0x2000],
             vram: [0; 0x800],
             pallet: [0; 0x100],
             oam: [0; 0x100],
-            screen: [0; 3 * 256 * 240],
-
+            screen: [0xff; 4 * 256 * 240],
 
             scanline: -1,
             cycle: 0,
+            sender
         }
     }
 
@@ -132,10 +148,24 @@ impl Ppu {
         put(&self.screen);
     }
 
-    fn clock(&mut self, bus: &mut Bus) {
+    fn put_pixel(&mut self, y: u16, x: u16, rgba: RGBA) {
+        let offset = 4 * ((y as usize) * 256 + (x as usize));
+        if offset > 245700 {
+            return
+        }
+        self.screen[(offset + 0) as usize] = rgba.r;
+        self.screen[(offset + 1) as usize] = rgba.g;
+        self.screen[(offset + 2) as usize] = rgba.b;
+        self.screen[(offset + 3) as usize] = rgba.a;
+    }
+
+    pub fn clock(&mut self, bus: &mut Bus) {
         if self.scanline == -1 { // pre-render scanline
             
         } else if self.scanline <= 239 { // rendering
+            if self.cycle % 2 == 0 {
+                self.put_pixel(self.scanline as u16, self.cycle as u16, RGBA{r:0xff,g:0xff,b:0xff,a:0xff});
+            }
             if self.cycle == 0 { // idle cycle
                             
             } else if self.cycle <= 256 { // current line tile data fetch

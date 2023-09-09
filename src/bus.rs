@@ -2,8 +2,8 @@
 // vim:foldmethod=marker
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use crate::Ram;
-use crate::Cart;
+use crate::ram::Ram;
+use crate::cartrige::Cart;
 //use crate::Ppu;
 
 
@@ -17,7 +17,7 @@ pub struct Bus<'a> {
 impl<'a> Bus<'a> {
     // Setup Functions
     pub fn new(ram: &'a mut Ram, cart: &'a Cart ) -> Self {
-        Self { ram, cart}
+        Self { ram, cart }
     }
 
     // Interface Functions
