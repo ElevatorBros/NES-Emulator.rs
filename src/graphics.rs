@@ -13,14 +13,3 @@ pub fn window_conf() -> Conf {
     }
 }
 
-pub async fn render_screen(bytes: &[u8]) {
-    let texture = Texture2D::from_rgba8(WINDOW_WIDTH, WINDOW_HEIGHT, &bytes);
-
-    draw_texture(
-        &texture,
-        0.0,
-        0.0,
-        WHITE
-    );
-    next_frame().await
-}

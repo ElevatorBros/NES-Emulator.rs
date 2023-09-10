@@ -6,7 +6,7 @@ use nes_emulator::cartridge::Cart;
 use nes_emulator::ppu::Ppu;
 use nes_emulator::bus::Bus;
 use nes_emulator::cpu::Cpu;
-use nes_emulator::graphics::window_conf;
+use nes_emulator::graphics::*;
 use macroquad::window::next_frame;
 use macroquad::prelude::*;
 
@@ -47,6 +47,19 @@ async fn main() {
         main_ppu.clock(&mut main_bus);
         main_ppu.clock(&mut main_bus);
         main_ppu.clock(&mut main_bus);
+
+        if main_ppu.render_frame {
+            let texture = Texture2D::from_rgba8(WINDOW_WIDTH, WINDOW_HEIGHT, &main_ppu.screen);
+
+            draw_texture(
+                &texture,
+                0.0,
+                0.0,
+                WHITE
+            );
+            next_frame().await;
+            main_ppu.render_frame = false;
+        }
     }
     println!("Done");
 }

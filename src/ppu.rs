@@ -18,6 +18,8 @@ pub struct Ppu {
 
     pub scanline: i16,
     pub cycle: i16,
+
+    pub render_frame: bool,
 }
 //: }}}
 
@@ -45,10 +47,11 @@ impl Ppu {
             vram: [0; 0x800],
             pallet: [0; 0x100],
             oam: [0; 0x100],
-            screen: [0xFF; 4 * 256 * 240],
+            screen: [0x00; 4 * 256 * 240],
 
             scanline: -1,
             cycle: 0,
+            render_frame: false,
         }
     }
 
@@ -136,13 +139,13 @@ impl Ppu {
        // copy $xx00 - $xxFF to oam where xx = value
     }
 
-    fn render(&self) {
-        graphics::render_screen(&self.screen);
+    fn render(&mut self) {
+        self.render_frame = true;
     }
 
     fn put_pixel(&mut self, y: u16, x: u16, rgba: RGBA) {
         let offset = 4 * ((y as usize) * 256 + (x as usize));
-        if offset > 245700 {
+        if offset > 4 * 256 * 240  - 1 {
             return
         }
         self.screen[(offset + 0) as usize] = rgba.r;
@@ -155,7 +158,7 @@ impl Ppu {
         if self.scanline == -1 { // pre-render scanline
             
         } else if self.scanline <= 239 { // rendering
-            if self.cycle % 2 == 0 {
+            if self.cycle % 8 == 0 {
                 self.put_pixel(self.scanline as u16, self.cycle as u16, RGBA{r:0xff,g:0xff,b:0xff,a:0xff});
             }
             if self.cycle == 0 { // idle cycle
