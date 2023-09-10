@@ -2,12 +2,9 @@
 // vim:foldmethod=marker
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use crate::{Bus, put};
-
-use std::{sync::mpsc::{Sender, Receiver}, thread};
-
 use crate::bus::Bus;
-use crate::graphics_io;
+use crate::graphics;
+use macroquad::prelude::*;
 
 //: Ppu {{{
 pub struct Ppu {
@@ -21,7 +18,6 @@ pub struct Ppu {
 
     pub scanline: i16,
     pub cycle: i16,
-    pub sender: Sender<[u8; 4 * 256 * 240]>
 }
 //: }}}
 
@@ -43,20 +39,16 @@ const PPU_ADDR_ADDR: u16 = 0x2006;
 const PPU_DATA_ADDR: u16 = 0x2007;
 
 impl Ppu {
-    pub fn new(sender: Sender<[u8; 4 * 256 * 240]>, receiver: Receiver<[u8; 4 * 256 * 240]>) -> Self {
-        let handle = thread::spawn(move || {
-            graphics_io::start(receiver)
-        });
+    pub fn new() -> Self {
         Self {
             chr_rom: [0; 0x2000],
             vram: [0; 0x800],
             pallet: [0; 0x100],
             oam: [0; 0x100],
-            screen: [0xff; 4 * 256 * 240],
+            screen: [0xFF; 4 * 256 * 240],
 
             scanline: -1,
             cycle: 0,
-            sender
         }
     }
 
@@ -145,7 +137,7 @@ impl Ppu {
     }
 
     fn render(&self) {
-        put(&self.screen);
+        graphics::render_screen(&self.screen);
     }
 
     fn put_pixel(&mut self, y: u16, x: u16, rgba: RGBA) {
@@ -159,7 +151,7 @@ impl Ppu {
         self.screen[(offset + 3) as usize] = rgba.a;
     }
 
-    pub fn clock(&mut self, bus: &mut Bus) {
+    pub fn clock(&mut self, bus: &mut Bus<'_>) {
         if self.scanline == -1 { // pre-render scanline
             
         } else if self.scanline <= 239 { // rendering

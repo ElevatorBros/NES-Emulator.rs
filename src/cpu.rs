@@ -190,7 +190,9 @@ impl Cpu {
                 self.nmi_siginal = false;
                 self.next = self.cycl + 8;
             } else {
-                output_debug_info(self, bus);
+                if bus.cpu_debug {
+                    output_debug_info(self, bus);
+                }
                 
                 let opcode:u8 = bus.read(self.pc);
                 self.pc += 1;

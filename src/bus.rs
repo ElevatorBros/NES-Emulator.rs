@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 use crate::ram::Ram;
-use crate::cartrige::Cart;
+use crate::cartridge::Cart;
 //use crate::Ppu;
 
 
@@ -11,13 +11,15 @@ pub struct Bus<'a> {
     ram: &'a mut Ram, // 2KB Internal RAM
     //ppu: &'a mut Ppu,
     cart: &'a Cart, 
+
+    pub cpu_debug: bool,
 }
 
 //: Bus {{{
 impl<'a> Bus<'a> {
     // Setup Functions
     pub fn new(ram: &'a mut Ram, cart: &'a Cart ) -> Self {
-        Self { ram, cart }
+        Self { ram, cart, cpu_debug: false }
     }
 
     // Interface Functions
