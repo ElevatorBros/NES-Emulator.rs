@@ -151,7 +151,7 @@ impl std::fmt::Debug for Cpu {
 }
 //: }}}
 
-//: CPU {{{
+//: Cpu Funtions {{{
 impl Cpu {
     // Setup functions
     //pub fn new(bus: &'a mut Bus<'a>) -> Self {

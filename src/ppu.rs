@@ -40,6 +40,7 @@ const PPU_SCROLL_ADDR: u16 = 0x2005;
 const PPU_ADDR_ADDR: u16 = 0x2006;
 const PPU_DATA_ADDR: u16 = 0x2007;
 
+//: Ppu Functions {{{
 impl Ppu {
     pub fn new() -> Self {
         Self {
@@ -189,3 +190,4 @@ impl Ppu {
         }
     }
 }
+// }}}

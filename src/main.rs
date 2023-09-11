@@ -6,7 +6,7 @@ use nes_emulator::cartridge::Cart;
 use nes_emulator::ppu::Ppu;
 use nes_emulator::bus::Bus;
 use nes_emulator::cpu::Cpu;
-use nes_emulator::graphics::*;
+use nes_emulator::graphics::window_conf;
 use macroquad::window::next_frame;
 use macroquad::prelude::*;
 
@@ -22,17 +22,6 @@ async fn main() {
         }
     };
 
-    /*main_cart.ROM[0x00] = 0xA9;
-    main_cart.ROM[0x01] = 0x07;
-    main_cart.ROM[0x02] = 0x90;
-    main_cart.ROM[0x03] = 0xFC;
-    */
-
-    //let mut buffer = [0u8; 8]; // the buffer can be reused!
-    //for i in 0..16384 {
-    //    main_cart.rom[(i+(0x0C000 - 0x08000 - 0x10)) as usize] = main_cart.rom[i as usize];
-    //}
-
     let mut main_bus = Bus::new(&mut main_ram, &main_cart);
     let mut main_cpu = Cpu::new();
     let mut main_ppu = Ppu::new();
@@ -41,12 +30,22 @@ async fn main() {
     main_cpu.cycl = 7;
     main_cpu.next = 7; 
 
-    //for _i in 0..26554 {
+    let clock = 0;
+
     loop {
-        main_cpu.clock(&mut main_bus);
-        main_ppu.clock(&mut main_bus);
-        main_ppu.clock(&mut main_bus);
-        main_ppu.clock(&mut main_bus);
+        if clock % 12 == 0 {
+            main_cpu.clock(&mut main_bus);
+        }
+        if clock % 4 == 0 {
+            main_ppu.clock(&mut main_bus);
+        }
+
+        // 3840 = 16 * 12 * 5 * 4 (NTSC & PAL clock divides)
+        if clock == 3840 {
+            clock = 0;
+        } else {
+            clock += 1;
+        }
 
         if main_ppu.render_frame {
             let texture = Texture2D::from_rgba8(WINDOW_WIDTH, WINDOW_HEIGHT, &main_ppu.screen);

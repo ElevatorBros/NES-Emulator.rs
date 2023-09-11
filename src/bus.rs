@@ -4,18 +4,17 @@
 #![allow(unused_variables)]
 use crate::ram::Ram;
 use crate::cartridge::Cart;
-//use crate::Ppu;
 
-
+//: Bus {{{
 pub struct Bus<'a> {
     ram: &'a mut Ram, // 2KB Internal RAM
-    //ppu: &'a mut Ppu,
     cart: &'a Cart, 
 
     pub cpu_debug: bool,
 }
+//}}}
 
-//: Bus {{{
+//: Bus Functions {{{
 impl<'a> Bus<'a> {
     // Setup Functions
     pub fn new(ram: &'a mut Ram, cart: &'a Cart ) -> Self {

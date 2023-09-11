@@ -1,3 +1,5 @@
+// Vim folding 
+// vim:foldmethod=marker
 // Basicly mapper 0 right now
 #![allow(dead_code)]
 #![allow(unused_variables)]
@@ -7,6 +9,7 @@ use std::io::prelude::*;
 use std::result::Result;
 use std::error::Error;
 
+//: Cart Structs {{{
 pub struct NesHeader {
     /// Raw Data
     data: [u8; 16],
@@ -22,7 +25,9 @@ pub struct Cart {
     /// The Trainer Area follows the 16-byte Header and precedes the PRG-ROM area if bit 2 of Header byte 6 is set. It is always 512 bytes in size if present, and contains data to be loaded into CPU memory at $7000. It is only used by some games that were modified to run on different hardware from the original cartridges, such as early RAM cartridges and emulators, and which put some additional compatibility code into those address ranges. 
     pub trainer: Option<[u8; 512]>,
 }
+// }}}
 
+//: Cart Functions {{{
 impl NesHeader {
     /// Mirroring: 
         /// 0: horizontal (vertical arrangement) (CIRAM A10 = PPU A11)
@@ -128,3 +133,4 @@ impl Cart {
         }
     }
 }
+// }}}
