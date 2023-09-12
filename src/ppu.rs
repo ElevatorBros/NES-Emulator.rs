@@ -2,9 +2,7 @@
 // vim:foldmethod=marker
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use crate::bus::Bus;
-use crate::graphics;
-use macroquad::prelude::*;
+use crate::bus::*;
 
 //: Ppu {{{
 pub struct Ppu {
@@ -31,14 +29,6 @@ struct RGBA {
 }
 
 
-const PPU_CTRL_ADDR: u16 = 0x2000;
-const PPU_MASK_ADDR: u16 = 0x2001;
-const PPU_STATUS_ADDR: u16 = 0x2002;
-const OAM_ADDR_ADDR: u16 = 0x2003;
-const OAM_DATA_ADDR: u16 = 0x2004;
-const PPU_SCROLL_ADDR: u16 = 0x2005;
-const PPU_ADDR_ADDR: u16 = 0x2006;
-const PPU_DATA_ADDR: u16 = 0x2007;
 
 //: Ppu Functions {{{
 impl Ppu {
@@ -126,18 +116,20 @@ impl Ppu {
     fn set_oam_data(&self, bus: &mut Bus, value: u8) { bus.write(OAM_DATA_ADDR, value) }
 
     // PPU_SCROLL
-    fn get_ppu_scroll(&self, bus: &mut Bus) -> u8 { bus.read(PPU_SCROLL_ADDR) }
+    fn get_ppu_scroll(&self, bus: &mut Bus) -> u16 { bus.ppu_current_scroll }
 
     // PPU_ADDR
-    fn get_ppu_addr(&self, bus: &mut Bus) -> u8 { bus.read(PPU_ADDR_ADDR) }
+    fn get_ppu_addr(&self, bus: &mut Bus) -> u16 { bus.ppu_current_addr }
 
     // PPU_DATA
     fn get_ppu_data(&self, bus: &mut Bus) -> u8 { bus.read(PPU_DATA_ADDR) }
 
     // OAM_DMA
-    fn copy_to_oam(&self, bus: &mut Bus, value: u8) {
-       // increase_cpu_clock(); 
-       // copy $xx00 - $xxFF to oam where xx = value
+    fn copy_to_oam(&mut self, bus: &mut Bus) {
+        for i in 0x0..0x100 {
+            self.oam[i] = bus.read(bus.oam_dma_addr + (i as u16));
+        }
+        bus.oam_dma_ppu = false;
     }
 
     fn render(&mut self) {
@@ -156,6 +148,12 @@ impl Ppu {
     }
 
     pub fn clock(&mut self, bus: &mut Bus<'_>) {
+
+        // Check for oam dma
+        if bus.oam_dma_ppu {
+            self.copy_to_oam(bus);
+        }
+
         if self.scanline == -1 { // pre-render scanline
             
         } else if self.scanline <= 239 { // rendering

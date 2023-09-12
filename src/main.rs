@@ -5,6 +5,7 @@ use nes_emulator::ram::Ram;
 use nes_emulator::cartridge::Cart;
 use nes_emulator::ppu::Ppu;
 use nes_emulator::bus::Bus;
+use nes_emulator::bus::{WINDOW_WIDTH, WINDOW_HEIGHT};
 use nes_emulator::cpu::Cpu;
 use nes_emulator::graphics::window_conf;
 use macroquad::window::next_frame;
@@ -30,7 +31,7 @@ async fn main() {
     main_cpu.cycl = 7;
     main_cpu.next = 7; 
 
-    let clock = 0;
+    let mut clock = 0;
 
     loop {
         if clock % 12 == 0 {

@@ -5,12 +5,31 @@
 use crate::ram::Ram;
 use crate::cartridge::Cart;
 
+pub const WINDOW_WIDTH: u16 = 256;
+pub const WINDOW_HEIGHT: u16 = 240;
+
+
+pub const PPU_CTRL_ADDR: u16 = 0x2000;
+pub const PPU_MASK_ADDR: u16 = 0x2001;
+pub const PPU_STATUS_ADDR: u16 = 0x2002;
+pub const OAM_ADDR_ADDR: u16 = 0x2003;
+pub const OAM_DATA_ADDR: u16 = 0x2004;
+pub const PPU_SCROLL_ADDR: u16 = 0x2005;
+pub const PPU_ADDR_ADDR: u16 = 0x2006;
+pub const PPU_DATA_ADDR: u16 = 0x2007;
+pub const OAM_DMA_ADDR: u16 = 0x4014;
 //: Bus {{{
 pub struct Bus<'a> {
     ram: &'a mut Ram, // 2KB Internal RAM
     cart: &'a Cart, 
 
+    pub ppu_current_scroll: u16,
+    pub ppu_current_addr: u16,
+
     pub cpu_debug: bool,
+    pub oam_dma_cpu: bool,
+    pub oam_dma_ppu: bool,
+    pub oam_dma_addr: u16,
 }
 //}}}
 
@@ -18,7 +37,14 @@ pub struct Bus<'a> {
 impl<'a> Bus<'a> {
     // Setup Functions
     pub fn new(ram: &'a mut Ram, cart: &'a Cart ) -> Self {
-        Self { ram, cart, cpu_debug: false }
+        Self {  ram, 
+                cart, 
+                ppu_current_scroll: 0, 
+                ppu_current_addr: 0, 
+                cpu_debug: false, 
+                oam_dma_cpu: false, 
+                oam_dma_ppu: false, 
+                oam_dma_addr: 0}
     }
 
     // Interface Functions
@@ -62,7 +88,17 @@ impl<'a> Bus<'a> {
         if addr < 0x2000 { // Internal RAM
             addr = addr % 0x0800;
             self.ram.set_memory(addr, value);
-        } 
+        } else if addr == PPU_SCROLL_ADDR {
+            self.ppu_current_scroll = self.ppu_current_scroll << 8;
+            self.ppu_current_scroll |= value as u16;
+        } else if addr == PPU_ADDR_ADDR {
+            self.ppu_current_addr = self.ppu_current_addr << 8;
+            self.ppu_current_addr |= value as u16;
+        } else if addr == OAM_DMA_ADDR {
+            self.oam_dma_cpu = true;
+            self.oam_dma_ppu = true;
+            self.oam_dma_addr = (value as u16) << 8;
+        }
         /* else if addr < 0x3FFF { // PPU Registers
             //return self.ppu.write(addr, value);
         //}  else { // Cartridge space 

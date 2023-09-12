@@ -1,7 +1,5 @@
 use macroquad::{texture::{Texture2D, draw_texture, DrawTextureParams}, window::{Conf, screen_height, screen_width, next_frame}, prelude::{WHITE, BLACK, vec2}};
-
-pub const WINDOW_WIDTH: u16 = 256;
-pub const WINDOW_HEIGHT: u16 = 240;
+use crate::bus::{WINDOW_WIDTH, WINDOW_HEIGHT};
 
 pub fn window_conf() -> Conf {
     Conf {

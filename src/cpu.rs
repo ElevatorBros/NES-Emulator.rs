@@ -5,7 +5,6 @@
 use crate::bus::Bus;
 use crate::utils::output_debug_info;
 
-
 const NMI_VECTOR: u16 = 0xFFFA;
 const RESET_VECTOR: u16 = 0xFFFC;
 const IRQ_VECTOR: u16 = 0xFFFE;
@@ -176,10 +175,21 @@ impl Cpu {
 
     // Interface functions
     pub fn clock(&mut self, bus: &mut Bus) {
+        if bus.oam_dma_cpu {
+            self.next += 513;
+            if self.cycl % 2 == 1 {
+                // Wait an additional cycle if odd cycle tick
+                // I'm not sure if this is the right way to do
+                self.next += 1;
+            }
+            bus.oam_dma_cpu = false;
+        }
+
         // Loop clock every 60000 cycles
         if self.pc > 60000 { 
             self.pc -= 60000;
         }
+
         if self.cycl == self.next {
             if self.irq_siginal && self.get_flag(Flags::ID) == 0 {
                 self.interrupt(IRQ_VECTOR, bus);
