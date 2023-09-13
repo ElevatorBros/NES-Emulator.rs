@@ -21,7 +21,7 @@ pub struct Cpu {
     pub next: u32, // Tick of next instruction
     
     pub irq_siginal: bool,
-    pub nmi_siginal: bool,
+    //pub nmi_siginal: bool,
 
 //    pub bus : &'a mut Bus<'a> // Reference to main bus
 }
@@ -166,7 +166,7 @@ impl Cpu {
             cycl: 0u32,
             next: 0u32,
             irq_siginal: false,
-            nmi_siginal: false,
+            //nmi_siginal: false,
             //bus: bus // maybe just bus?
         }
     }
@@ -185,6 +185,7 @@ impl Cpu {
             bus.oam_dma_cpu = false;
         }
 
+
         // Loop clock every 60000 cycles
         if self.pc > 60000 { 
             self.pc -= 60000;
@@ -195,9 +196,9 @@ impl Cpu {
                 self.interrupt(IRQ_VECTOR, bus);
                 self.irq_siginal = false;
                 self.next = self.cycl + 7;
-            } else if self.nmi_siginal {
+            } else if bus.nmi_signal {
                 self.interrupt(NMI_VECTOR, bus);
-                self.nmi_siginal = false;
+                bus.nmi_signal = false;
                 self.next = self.cycl + 8;
             } else {
                 if bus.cpu_debug {
@@ -231,9 +232,11 @@ impl Cpu {
        self.irq_siginal = true; 
     }
 
+    /*
     pub fn nmi(&mut self) {
         self.nmi_siginal = true;
     }
+    */
 
     // Internal functions
     fn interrupt(&mut self, addr:u16, bus: &mut Bus) {

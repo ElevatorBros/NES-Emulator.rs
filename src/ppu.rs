@@ -11,13 +11,15 @@ pub struct Ppu {
     pub pallet: [u8; 0x100], // 256 bytes internal pallet ram 
     pub oam: [u8; 0x100], // 256 bytes internal oam 
     
-    pub screen: [u8; 4 * 256 * 240], // screen pixel buffer
     
 
     pub scanline: i16,
     pub cycle: i16,
 
+    pub even: bool,
+
     pub render_frame: bool,
+    pub screen: [u8; 4 * 256 * 240], // screen pixel buffer
 }
 //: }}}
 
@@ -38,91 +40,98 @@ impl Ppu {
             vram: [0; 0x800],
             pallet: [0; 0x100],
             oam: [0; 0x100],
-            screen: [0x00; 4 * 256 * 240],
 
             scanline: -1,
             cycle: 0,
+
+
+            even: true,
+
+
+
+
             render_frame: false,
+            screen: [0x00; 4 * 256 * 240],
         }
     }
 
     /* CPU Registers */
     // PPU_CTRL
     // 0: disable, 1: enable
-    fn get_nmi_enable(&self, bus: &mut Bus) -> bool { (bus.read(PPU_CTRL_ADDR) & (1 << 7)) != 0 }
+    fn get_nmi_enable(&self, bus: &mut Bus) -> bool { (bus.ppu_data.ctrl & (1 << 7)) != 0 }
     // 0: slave, 1: master
-    fn get_master_slave(&self, bus: &mut Bus) -> bool { (bus.read(PPU_CTRL_ADDR) & (1 << 6)) != 0 }
+    fn get_master_slave(&self, bus: &mut Bus) -> bool { (bus.ppu_data.ctrl & (1 << 6)) != 0 }
     // 0: 8x8, 1: 8x16
-    fn get_sprite_size(&self, bus: &mut Bus) -> bool { (bus.read(PPU_CTRL_ADDR) & (1 << 5)) != 0 }
+    fn get_sprite_size(&self, bus: &mut Bus) -> bool { (bus.ppu_data.ctrl & (1 << 5)) != 0 }
     // 0: $0000; 1: $1000
-    fn get_background_tile_select(&self, bus: &mut Bus) -> bool { (bus.read(PPU_CTRL_ADDR) & (1 << 4)) != 0 }
+    fn get_background_tile_select(&self, bus: &mut Bus) -> bool { (bus.ppu_data.ctrl & (1 << 4)) != 0 }
     // 0: $0000; 1: $1000
-    fn get_sprite_tile_select(&self, bus: &mut Bus) -> bool { (bus.read(PPU_CTRL_ADDR) & (1 << 3)) != 0 }
+    fn get_sprite_tile_select(&self, bus: &mut Bus) -> bool { (bus.ppu_data.ctrl & (1 << 3)) != 0 }
     // 0: horizontal; 1: vertical
-    fn get_increment_mode(&self, bus: &mut Bus) -> bool { (bus.read(PPU_CTRL_ADDR) & (1 << 2)) != 0 }
+    fn get_increment_mode(&self, bus: &mut Bus) -> bool { (bus.ppu_data.ctrl & (1 << 2)) != 0 }
     // 0: $2000, 1: $2400, 2: $2800, 3:$2C00
-    fn get_base_nametable_addr(&self, bus: &mut Bus) -> u8 { bus.read(PPU_CTRL_ADDR) & 0x04 }
+    fn get_base_nametable_addr(&self, bus: &mut Bus) -> u8 { bus.ppu_data.ctrl & 0x04 }
 
     // PPU_MASK
     // 0: color, 1: greyscale
-    fn get_greyscale(&self, bus: &mut Bus) -> bool { (bus.read(PPU_MASK_ADDR) & (1 << 0)) != 0 }
+    fn get_greyscale(&self, bus: &mut Bus) -> bool { (bus.ppu_data.mask & (1 << 0)) != 0 }
     // 0: hide; 1: show 
-    fn get_background_left_column_enable(&self, bus: &mut Bus) -> bool { (bus.read(PPU_MASK_ADDR) & (1 << 2)) != 0 }
+    fn get_background_left_column_enable(&self, bus: &mut Bus) -> bool { (bus.ppu_data.mask & (1 << 2)) != 0 }
     // 0: hide, 1: show sprites in leftmost 8 pixels of screen 
-    fn get_sprite_left_column_enable(&self, bus: &mut Bus) -> bool { (bus.read(PPU_MASK_ADDR) & (1 << 1)) != 0 }
+    fn get_sprite_left_column_enable(&self, bus: &mut Bus) -> bool { (bus.ppu_data.mask & (1 << 1)) != 0 }
     // 0: hide; 1: show 
-    fn get_background_enable(&self, bus: &mut Bus) -> bool { (bus.read(PPU_MASK_ADDR) & (1 << 4)) != 0 }
+    fn get_background_enable(&self, bus: &mut Bus) -> bool { (bus.ppu_data.mask & (1 << 4)) != 0 }
     // 0: hide, 1: show background in leftmost 8 pixels of screen
-    fn get_sprite_enable(&self, bus: &mut Bus) -> bool { (bus.read(PPU_MASK_ADDR) & (1 << 3)) != 0 }
+    fn get_sprite_enable(&self, bus: &mut Bus) -> bool { (bus.ppu_data.mask & (1 << 3)) != 0 }
     // 0: none; 1: emphasize 
-    fn get_emphasize_red(&self, bus: &mut Bus) -> bool { (bus.read(PPU_MASK_ADDR) & (1 << 5)) != 0 }
+    fn get_emphasize_red(&self, bus: &mut Bus) -> bool { (bus.ppu_data.mask & (1 << 5)) != 0 }
     // 0: none; 1: emphasize 
-    fn get_emphasize_green(&self, bus: &mut Bus) -> bool { (bus.read(PPU_MASK_ADDR) & (1 << 6)) != 0 }
+    fn get_emphasize_green(&self, bus: &mut Bus) -> bool { (bus.ppu_data.mask & (1 << 6)) != 0 }
     // 0: $2000, 1: $2400, 2: $2800, 3:$2C00
-    fn get_emphasize_blue(&self, bus: &mut Bus) -> bool { (bus.read(PPU_MASK_ADDR) & (1 << 7)) != 0 }
+    fn get_emphasize_blue(&self, bus: &mut Bus) -> bool { (bus.ppu_data.mask & (1 << 7)) != 0 }
 
     // PPU_STATUS
     // Open bus is weird, make sure to come back to this
     // Only write to the low five bits
-    fn set_open_bus(&self, bus: &mut Bus, value:u8) { bus.write(PPU_STATUS_ADDR, (value & 0x1F) | (bus.read(PPU_STATUS_ADDR) & 0xE0)) }
+    fn set_open_bus(&self, bus: &mut Bus, value:u8) { bus.ppu_data.status = (value & 0x1F) | (bus.ppu_data.status & 0xE0) }
     // Weird as well because of hardware bug, look into sprite evaluation
     fn set_sprite_overflow(&self, bus: &mut Bus, value:bool) { 
         if value {
-            bus.write(PPU_STATUS_ADDR, bus.read(PPU_STATUS_ADDR) | 0x20);
+            bus.ppu_data.status = bus.ppu_data.status | 0x20;
         } else {
-            bus.write(PPU_STATUS_ADDR, bus.read(PPU_STATUS_ADDR) & 0xDF);
+            bus.ppu_data.status = bus.ppu_data.status & 0xDF;
         }
     }
     fn set_sprite_hit(&self, bus: &mut Bus, value:bool) { 
         if value {
-            bus.write(PPU_STATUS_ADDR, bus.read(PPU_STATUS_ADDR) | 0x40);
+            bus.ppu_data.status = bus.ppu_data.status | 0x40;
         } else {
-            bus.write(PPU_STATUS_ADDR, bus.read(PPU_STATUS_ADDR) & 0xBF);
+            bus.ppu_data.status = bus.ppu_data.status & 0xBF;
         }
     }
     fn set_vblank(&self, bus: &mut Bus, value:bool) { 
         if value {
-            bus.write(PPU_STATUS_ADDR, bus.read(PPU_STATUS_ADDR) | 0x80);
+            bus.ppu_data.status = bus.ppu_data.status | 0x80;
         } else {
-            bus.write(PPU_STATUS_ADDR, bus.read(PPU_STATUS_ADDR) & 0x7F);
+            bus.ppu_data.status = bus.ppu_data.status & 0x7F;
         }
     }
 
     // OAM_ADDR
-    fn get_oam_addr(&self, bus: &mut Bus) -> u8 { bus.read(OAM_ADDR_ADDR) }
+    fn get_oam_addr(&self, bus: &mut Bus) -> u8 { bus.ppu_data.oam_addr }
 
     // OAM_DATA
-    fn get_oam_data(&self, bus: &mut Bus) -> u8 { bus.read(OAM_DATA_ADDR) }
-    fn set_oam_data(&self, bus: &mut Bus, value: u8) { bus.write(OAM_DATA_ADDR, value) }
+    fn get_oam_data(&self, bus: &mut Bus) -> u8 { bus.ppu_data.oam_data }
+    fn set_oam_data(&self, bus: &mut Bus, value: u8) { bus.ppu_data.oam_data = value }
 
     // PPU_SCROLL
-    fn get_ppu_scroll(&self, bus: &mut Bus) -> u16 { bus.ppu_current_scroll }
+    fn get_ppu_scroll(&self, bus: &mut Bus) -> u16 { bus.ppu_data.scroll }
 
     // PPU_ADDR
-    fn get_ppu_addr(&self, bus: &mut Bus) -> u16 { bus.ppu_current_addr }
+    fn get_ppu_addr(&self, bus: &mut Bus) -> u16 { bus.ppu_data.addr }
 
     // PPU_DATA
-    fn get_ppu_data(&self, bus: &mut Bus) -> u8 { bus.read(PPU_DATA_ADDR) }
+    fn get_ppu_data(&self, bus: &mut Bus) -> u8 { bus.ppu_data.data }
 
     // OAM_DMA
     fn copy_to_oam(&mut self, bus: &mut Bus) {
@@ -154,14 +163,17 @@ impl Ppu {
             self.copy_to_oam(bus);
         }
 
-        if self.scanline == -1 { // pre-render scanline
-            
-        } else if self.scanline <= 239 { // rendering
+        if self.scanline == 0 && self.cycle == 0 && !self.even && (self.get_sprite_enable(bus) || self.get_background_enable(bus)) {
+               // Skip a clock cycle on cycle 0 scanline 0 if we are on an even frame and rendering
+               self.cycle+=1;
+        }
+
+        if self.scanline <= 239 { // rendering
             if self.cycle % 8 == 0 {
                 self.put_pixel(self.scanline as u16, self.cycle as u16, RGBA{r:0xff,g:0xff,b:0xff,a:0xff});
             }
             if self.cycle == 0 { // idle cycle
-                            
+
             } else if self.cycle <= 256 { // current line tile data fetch
 
             } else if self.cycle <= 320 { // next line first two tiles
@@ -171,18 +183,34 @@ impl Ppu {
             }
         } else if self.scanline == 240 { // post render scanline
                                     
-        } else { // vblank
-
+        } else if self.scanline <= 260 { // vblank
+            if self.scanline == 241 && self.cycle == 1 { // Set nmi
+                self.set_vblank(bus, true);
+                bus.ppu_data.nmi_occurred = true;
+                if self.get_nmi_enable(bus) {
+                    bus.nmi_signal = true;
+                }
+            }
+        } else if self.scanline == 261 { // pre-render scanline
+            if self.cycle == 1 {
+                bus.ppu_data.nmi_occurred = false;
+                self.set_vblank(bus, false);
+                self.set_sprite_hit(bus, false);
+                self.set_sprite_overflow(bus, false);
+            }
+        } else {
+            // error
         }
 
         if self.cycle < 341 {
             self.cycle += 1;
         } else {
             self.cycle = 0;
-            if self.scanline < 261 {
+            if self.scanline < 262 {
                 self.scanline += 1;
             } else {
-                self.scanline = -1;
+                self.scanline = 0;
+                self.even = !self.even;
                 self.render();
             }
         }
