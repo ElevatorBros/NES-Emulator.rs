@@ -1,19 +1,18 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use nes_emulator::ram::Ram;
-use nes_emulator::cartridge::Cart;
-use nes_emulator::ppu::Ppu;
+use macroquad::prelude::*;
+use macroquad::window::next_frame;
 use nes_emulator::bus::Bus;
-use nes_emulator::bus::{WINDOW_WIDTH, WINDOW_HEIGHT};
+use nes_emulator::bus::{WINDOW_HEIGHT, WINDOW_WIDTH};
+use nes_emulator::cartridge::Cart;
 use nes_emulator::cpu::Cpu;
 use nes_emulator::graphics::window_conf;
-use macroquad::window::next_frame;
-use macroquad::prelude::*;
+use nes_emulator::ppu::Ppu;
+use nes_emulator::ram::Ram;
 
 #[macroquad::main(window_conf)]
 async fn main() {
-
     let mut main_ram = Ram::new();
     let main_cart = match Cart::new("./nestest.nes") {
         Ok(c) => c,
@@ -29,7 +28,7 @@ async fn main() {
 
     main_cpu.pc = 0x0C000;
     main_cpu.cycl = 7;
-    main_cpu.next = 7; 
+    main_cpu.next = 7;
 
     let mut clock = 0;
 
@@ -51,15 +50,10 @@ async fn main() {
         if main_ppu.render_frame {
             let texture = Texture2D::from_rgba8(WINDOW_WIDTH, WINDOW_HEIGHT, &main_ppu.screen);
 
-            draw_texture(
-                &texture,
-                0.0,
-                0.0,
-                WHITE
-            );
+            draw_texture(&texture, 0.0, 0.0, WHITE);
             next_frame().await;
             main_ppu.render_frame = false;
         }
     }
-    println!("Done");
+    //println!("Done");
 }
