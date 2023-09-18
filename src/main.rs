@@ -7,22 +7,17 @@ use nes_emulator::ppu::Ppu;
 use nes_emulator::bus::Bus;
 use nes_emulator::bus::{WINDOW_WIDTH, WINDOW_HEIGHT};
 use nes_emulator::cpu::Cpu;
-use nes_emulator::graphics::window_conf;
-use macroquad::window::next_frame;
-use macroquad::prelude::*;
+use pixels::{Pixels, SurfaceTexture};
+use winit::{
+    dpi::LogicalSize,
+    event_loop::EventLoop,
+    window::WindowBuilder,
+};
 
-#[macroquad::main(window_conf)]
-async fn main() {
 
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut main_ram = Ram::new();
-    let main_cart = match Cart::new("./nestest.nes") {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("{e}");
-            return;
-        }
-    };
-
+    let main_cart = Cart::new("./nestest.nes")?;
     let mut main_bus = Bus::new(&mut main_ram, &main_cart);
     let mut main_cpu = Cpu::new();
     let mut main_ppu = Ppu::new();
@@ -32,6 +27,23 @@ async fn main() {
     main_cpu.next = 7; 
 
     let mut clock = 0;
+
+    let event_loop = EventLoop::new();
+    let window = {
+        let size = LogicalSize::new(WINDOW_WIDTH as f64, WINDOW_HEIGHT as f64);
+        let scaled_size = LogicalSize::new(WINDOW_WIDTH as f64 * 3.0, WINDOW_HEIGHT as f64 * 3.0);
+        WindowBuilder::new()
+            .with_title("NES Emulator")
+            .with_inner_size(scaled_size)
+            .with_min_inner_size(size)
+            .build(&event_loop)
+            .unwrap()
+    };
+    let mut pixels = {
+        let window_size = window.inner_size();
+        let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
+        Pixels::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32, surface_texture)?
+    };
 
     loop {
         if clock % 12 == 0 {
@@ -49,17 +61,11 @@ async fn main() {
         }
 
         if main_ppu.render_frame {
-            let texture = Texture2D::from_rgba8(WINDOW_WIDTH, WINDOW_HEIGHT, &main_ppu.screen);
-
-            draw_texture(
-                &texture,
-                0.0,
-                0.0,
-                WHITE
-            );
-            next_frame().await;
+            pixels.frame_mut().copy_from_slice(&main_ppu.screen);
+            pixels.render()?;
+            window.request_redraw();
             main_ppu.render_frame = false;
         }
     }
-    println!("Done");
+    // println!("Done");
 }

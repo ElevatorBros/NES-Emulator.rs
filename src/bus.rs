@@ -18,6 +18,7 @@ pub const PPU_SCROLL_ADDR: u16 = 0x2005;
 pub const PPU_ADDR_ADDR: u16 = 0x2006;
 pub const PPU_DATA_ADDR: u16 = 0x2007;
 pub const OAM_DMA_ADDR: u16 = 0x4014;
+
 //: Bus {{{
 pub struct Bus<'a> {
     ram: &'a mut Ram, // 2KB Internal RAM
