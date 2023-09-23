@@ -10,11 +10,15 @@ use nes_emulator::cpu::Cpu;
 use nes_emulator::graphics::window_conf;
 use nes_emulator::ppu::Ppu;
 use nes_emulator::ram::Ram;
+use std::env;
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    let args: Vec<String> = env::args().collect();
+
     let mut main_ram = Ram::new();
-    let main_cart = match Cart::new("./nestest.nes") {
+    //let main_cart = match Cart::new("./nestest.nes") {
+    let main_cart = match Cart::new(args[1].as_str()) {
         Ok(c) => c,
         Err(e) => {
             eprintln!("{e}");
@@ -26,9 +30,11 @@ async fn main() {
     let mut main_cpu = Cpu::new();
     let mut main_ppu = Ppu::new();
 
-    main_cpu.pc = 0x0C000;
-    main_cpu.cycl = 7;
-    main_cpu.next = 7;
+    //main_cpu.pc = 0x0C000; // Nestest.nes
+    //main_cpu.cycl = 7;
+    //main_cpu.next = 7;
+
+    main_cpu.reset(&mut main_bus);
 
     let mut clock = 0;
 
@@ -53,6 +59,9 @@ async fn main() {
             draw_texture(&texture, 0.0, 0.0, WHITE);
             next_frame().await;
             main_ppu.render_frame = false;
+            println!("render");
+            //println!("vaddr:{}", main_bus.ppu_data.vram_addr);
+            //println!("taddr:{}", main_bus.ppu_data.temp_vram_addr);
         }
     }
     //println!("Done");
