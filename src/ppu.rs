@@ -266,7 +266,33 @@ impl Ppu {
             self.cycle += 1;
         }
 
-        if self.scanline <= 239 {
+        if self.scanline <= 239 || self.scanline == 261 {
+            // Pre render scanline stuff
+
+            if self.scanline == 261 {
+                // pre-render scanline
+                if self.cycle == 1 {
+                    bus.ppu_data.nmi_occurred = false;
+                    self.set_vblank(bus, false);
+                    self.set_sprite_hit(bus, false);
+                    self.set_sprite_overflow(bus, false);
+
+                    if self.get_background_enable(bus) || self.get_sprite_enable(bus) {
+                        PpuData::set_fine_y_scroll(
+                            &mut bus.ppu_data.vram_addr,
+                            PpuData::get_fine_y_scroll(bus.ppu_data.temp_vram_addr),
+                        );
+                        PpuData::set_nametable_y(
+                            &mut bus.ppu_data.vram_addr,
+                            PpuData::get_nametable_y(bus.ppu_data.temp_vram_addr),
+                        );
+                        PpuData::set_coarse_y_scroll(
+                            &mut bus.ppu_data.vram_addr,
+                            PpuData::get_coarse_y_scroll(bus.ppu_data.temp_vram_addr),
+                        );
+                    }
+                }
+            }
             // rendering
             if self.cycle == 0 { // idle cycle
             } else if self.cycle <= 256 {
@@ -314,11 +340,21 @@ impl Ppu {
                             a: 0xff,
                         },
                     );
+                } else {
+                    self.put_pixel(
+                        self.scanline as u16,
+                        self.cycle as u16,
+                        RGBA {
+                            r: 0x00,
+                            g: 0x00,
+                            b: 0x00,
+                            a: 0x00,
+                        },
+                    );
                 }
 
                 if self.cycle == 256 {
                     if self.get_background_enable(bus) || self.get_sprite_enable(bus) {
-                        // println!("addr:{}", bus.ppu_data.vram_addr);
                         if PpuData::get_fine_y_scroll(bus.ppu_data.vram_addr) < 7 {
                             let tmp = PpuData::get_fine_y_scroll(bus.ppu_data.vram_addr) + 1;
                             PpuData::set_fine_y_scroll(&mut bus.ppu_data.vram_addr, tmp);
@@ -340,7 +376,9 @@ impl Ppu {
                             }
                         }
                     }
-                } else if self.cycle == 257 {
+                }
+            } else if self.cycle <= 320 {
+                if self.cycle == 257 {
                     if self.get_background_enable(bus) || self.get_sprite_enable(bus) {
                         PpuData::set_nametable_x(
                             &mut bus.ppu_data.vram_addr,
@@ -352,7 +390,39 @@ impl Ppu {
                         );
                     }
                 }
-            } else if self.cycle <= 320 { // next line first two tiles
+
+                // Technicaly this happens multiple times but we should only need to do it once.
+                if self.scanline == 261 && self.cycle == 280 {
+                    // I don't think we need to do the fine_y_scroll, but if stuff dosn't work try
+                    // that
+                    if self.get_background_enable(bus) || self.get_sprite_enable(bus) {
+                        PpuData::set_nametable_y(
+                            &mut bus.ppu_data.vram_addr,
+                            PpuData::get_nametable_y(bus.ppu_data.temp_vram_addr),
+                        );
+                        PpuData::set_coarse_y_scroll(
+                            &mut bus.ppu_data.vram_addr,
+                            PpuData::get_coarse_y_scroll(bus.ppu_data.temp_vram_addr),
+                        );
+                    }
+                }
+            } else if self.cycle <= 336 {
+                // next line first two tiles
+                if self.cycle == 328 || self.cycle == 336 {
+                    if self.get_background_enable(bus) || self.get_sprite_enable(bus) {
+                        if PpuData::get_coarse_x_scroll(bus.ppu_data.vram_addr) == 31 {
+                            PpuData::set_coarse_x_scroll(&mut bus.ppu_data.vram_addr, 0);
+                            if PpuData::get_nametable_x(bus.ppu_data.vram_addr) == 0 {
+                                PpuData::set_nametable_x(&mut bus.ppu_data.vram_addr, 0);
+                            } else {
+                                PpuData::set_nametable_x(&mut bus.ppu_data.vram_addr, 1);
+                            }
+                        } else {
+                            let tmp = PpuData::get_coarse_x_scroll(bus.ppu_data.vram_addr) + 1;
+                            PpuData::set_coarse_x_scroll(&mut bus.ppu_data.vram_addr, tmp);
+                        }
+                    }
+                }
             } else { // fetch two bytes for unknown reason
             }
         } else if self.scanline == 240 { // post render scanline
@@ -365,29 +435,6 @@ impl Ppu {
                 if self.get_nmi_enable(bus) {
                     bus.nmi_signal = true;
                 }
-            }
-        } else if self.scanline == 261 {
-            // pre-render scanline
-            if self.cycle == 1 {
-                bus.ppu_data.nmi_occurred = false;
-                self.set_vblank(bus, false);
-                self.set_sprite_hit(bus, false);
-                self.set_sprite_overflow(bus, false);
-                if self.get_background_enable(bus) || self.get_sprite_enable(bus) {
-                    PpuData::set_fine_y_scroll(
-                        &mut bus.ppu_data.vram_addr,
-                        PpuData::get_fine_y_scroll(bus.ppu_data.temp_vram_addr),
-                    );
-                    PpuData::set_nametable_y(
-                        &mut bus.ppu_data.vram_addr,
-                        PpuData::get_nametable_y(bus.ppu_data.temp_vram_addr),
-                    );
-                    PpuData::set_coarse_y_scroll(
-                        &mut bus.ppu_data.vram_addr,
-                        PpuData::get_coarse_y_scroll(bus.ppu_data.temp_vram_addr),
-                    );
-                }
-            } else if self.cycle <= 320 { // next line first two tiles
             }
         } else {
             // error

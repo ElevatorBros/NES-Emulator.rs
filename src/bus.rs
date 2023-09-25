@@ -114,7 +114,7 @@ impl<'a> Bus<'a> {
                 vram_addr: 0,
                 temp_vram_addr: 0,
             },
-            cpu_debug: true,
+            cpu_debug: false,
             oam_dma_cpu: false,
             oam_dma_ppu: false,
             oam_dma_addr: 0,
@@ -240,10 +240,12 @@ impl<'a> Bus<'a> {
                 }
                 PPU_ADDR_ADDR => {
                     if !self.ppu_data.addr_latch {
-                        self.ppu_data.temp_vram_addr = (value as u16) << 8;
+                        self.ppu_data.temp_vram_addr =
+                            ((value & 0x3F) as u16) << 8 | (self.ppu_data.temp_vram_addr & 0x00FF);
                         self.ppu_data.addr_latch = true;
                     } else {
-                        self.ppu_data.temp_vram_addr |= value as u16;
+                        self.ppu_data.temp_vram_addr =
+                            (self.ppu_data.temp_vram_addr & 0xFF00) | (value as u16);
                         self.ppu_data.vram_addr = self.ppu_data.temp_vram_addr;
                         self.ppu_data.addr_latch = false;
                     }
