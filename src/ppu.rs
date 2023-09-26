@@ -22,8 +22,8 @@ pub struct Ppu {
     //pub data: [u8; 0x4000], // All the data is placed in different parts here
 
     // Background
-    pub vram_addr: u16,
-    pub vram_addr_tmp: u16,
+    //pub vram_addr: u16,
+    //pub vram_addr_tmp: u16,
     // Two tiles, high is the data that is being loaded, low is the data that is being used
     //pub background_pattern_shift: [u16; 2],
     //pub background_pattern_shift_next: [u16; 2],
@@ -56,12 +56,403 @@ pub struct Ppu {
 }
 //: }}}
 
+//: RGBA {{{
+#[derive(Copy, Clone)]
 struct RGBA {
     r: u8,
     g: u8,
     b: u8,
     a: u8,
 }
+
+// Load from a .pal file in the future
+const PALLET_TO_RGBA: [RGBA; 64] = [
+    RGBA {
+        r: 0x62,
+        g: 0x62,
+        b: 0x62,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x1F,
+        b: 0xB2,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x24,
+        g: 0x04,
+        b: 0xC8,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x52,
+        g: 0x00,
+        b: 0xB2,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x73,
+        g: 0x00,
+        b: 0x76,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x80,
+        g: 0x00,
+        b: 0x24,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x73,
+        g: 0x0B,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x52,
+        g: 0x28,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x24,
+        g: 0x44,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x57,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x57,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x53,
+        b: 0x24,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x3C,
+        b: 0x76,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    }, // Blacker than Black
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xAB,
+        g: 0xAB,
+        b: 0xAB,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x0D,
+        g: 0x57,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x4B,
+        g: 0x30,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x8A,
+        g: 0x13,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xBC,
+        g: 0x08,
+        b: 0xD6,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xD2,
+        g: 0x12,
+        b: 0x69,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xC7,
+        g: 0x2E,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x9D,
+        g: 0x54,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x60,
+        g: 0x7B,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x20,
+        g: 0x98,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0xA3,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x99,
+        b: 0x42,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x7D,
+        b: 0xB4,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0xFF,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x53,
+        g: 0xAE,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x90,
+        g: 0x85,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xD3,
+        g: 0x65,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0x57,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0x5D,
+        b: 0xCF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0x77,
+        b: 0x57,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFA,
+        g: 0x9E,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xBD,
+        g: 0xC7,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x7A,
+        g: 0xE7,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x43,
+        g: 0xF6,
+        b: 0x11,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x26,
+        g: 0xEF,
+        b: 0x7E,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x2C,
+        g: 0xD5,
+        b: 0xF6,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x4E,
+        g: 0x4E,
+        b: 0x4E,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0xFF,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xB6,
+        g: 0xE1,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xCE,
+        g: 0xD1,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xE9,
+        g: 0xC3,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0xBC,
+        b: 0xFF,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0xBD,
+        b: 0xF4,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0xC6,
+        b: 0xC3,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xFF,
+        g: 0xD5,
+        b: 0x9A,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xE9,
+        g: 0xE6,
+        b: 0x81,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xCE,
+        g: 0xF4,
+        b: 0x81,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xB6,
+        g: 0xFB,
+        b: 0x9A,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xA9,
+        g: 0xFA,
+        b: 0xC3,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xA9,
+        g: 0xF0,
+        b: 0xF4,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0xB8,
+        g: 0xB8,
+        b: 0xB8,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xFF,
+    },
+];
+// }}}
 
 //: Ppu Functions {{{
 impl Ppu {
@@ -71,8 +462,8 @@ impl Ppu {
             //vram: [0; 0x800],
             //pallet: [0; 0x100],
             //data: [0; 0x4000],
-            vram_addr: 0,
-            vram_addr_tmp: 0,
+            //vram_addr: 0,
+            //vram_addr_tmp: 0,
 
             // background_pattern_shift: [0; 2],
             // background_pattern_shift_next: [0; 2],
@@ -121,11 +512,11 @@ impl Ppu {
         (bus.ppu_data.ctrl & (1 << 5)) != 0
     }
     // 0: $0000; 1: $1000
-    fn get_background_tile_select(&self, bus: &mut Bus) -> bool {
+    fn get_background_table_select(&self, bus: &mut Bus) -> bool {
         (bus.ppu_data.ctrl & (1 << 4)) != 0
     }
     // 0: $0000; 1: $1000
-    fn get_sprite_tile_select(&self, bus: &mut Bus) -> bool {
+    fn get_sprite_table_select(&self, bus: &mut Bus) -> bool {
         (bus.ppu_data.ctrl & (1 << 3)) != 0
     }
     // 0: horizontal; 1: vertical
@@ -236,6 +627,11 @@ impl Ppu {
         bus.oam_dma_ppu = false;
     }
 
+    fn get_rgba(&mut self, pixel: u8, pallet: u8, bus: &mut Bus) -> RGBA {
+        let addr = 0x3F00 + ((pallet as u16) << 2) + (pixel as u16);
+        PALLET_TO_RGBA[(bus.ppu_read(addr) & 0x3F) as usize]
+    }
+
     fn render(&mut self) {
         self.render_frame = true;
     }
@@ -267,7 +663,14 @@ impl Ppu {
         }
 
         if self.scanline <= 239 || self.scanline == 261 {
-            // Pre render scanline stuff
+            // Shift
+            if self.get_background_enable(bus) {
+                self.background_shift_pattern_low <<= 1;
+                self.background_shift_pattern_high <<= 1;
+
+                self.background_shift_attrib_low <<= 1;
+                self.background_shift_attrib_high <<= 1;
+            }
 
             if self.scanline == 261 {
                 // pre-render scanline
@@ -314,43 +717,80 @@ impl Ppu {
                         }
                     }
                     1 => {
-                        //shift
+                        //Load shift
+                        self.background_shift_pattern_low = (self.background_shift_pattern_low
+                            & 0xFF00)
+                            | (self.background_next_pattern_low as u16);
+                        self.background_shift_pattern_high = (self.background_shift_pattern_high
+                            & 0xFF00)
+                            | (self.background_next_pattern_high as u16);
 
+                        if self.background_next_attrib & 0x01 != 0 {
+                            self.background_shift_attrib_low |= 0x00FF;
+                        } else {
+                            self.background_shift_attrib_low &= 0xFF00;
+                        }
+                        if self.background_next_attrib & 0x02 != 0 {
+                            self.background_shift_attrib_high |= 0x00FF;
+                        } else {
+                            self.background_shift_attrib_high &= 0xFF00;
+                        }
                         // Nametable
                         self.background_next_nametable =
                             bus.ppu_read(0x2000 + (bus.ppu_data.vram_addr & 0x0FFF));
                     }
-                    3 => { // Attribute
+                    3 => {
+                        // Attribute
+                        let mut attrib_addr: u16 = 0x23C0;
+                        attrib_addr |=
+                            (PpuData::get_nametable_y(bus.ppu_data.temp_vram_addr) as u16) << 11;
+                        attrib_addr |=
+                            (PpuData::get_nametable_x(bus.ppu_data.temp_vram_addr) as u16) << 10;
+                        attrib_addr |= ((PpuData::get_coarse_y_scroll(bus.ppu_data.temp_vram_addr)
+                            as u16)
+                            << 1)
+                            & !0x03;
+                        attrib_addr |=
+                            (PpuData::get_coarse_x_scroll(bus.ppu_data.temp_vram_addr) as u16) >> 2;
+                        self.background_next_attrib = bus.ppu_read(attrib_addr);
+
+                        if PpuData::get_coarse_y_scroll(bus.ppu_data.vram_addr) & 0x02 != 0 {
+                            self.background_next_attrib >>= 4;
+                        }
+                        if PpuData::get_coarse_x_scroll(bus.ppu_data.vram_addr) & 0x02 != 0 {
+                            self.background_next_attrib >>= 2;
+                        }
+                        self.background_next_attrib &= 0x03;
                     }
-                    5 => { // Pattern low
+                    5 => {
+                        // Pattern low
+                        let mut pattern_addr: u16 =
+                            PpuData::get_fine_y_scroll(bus.ppu_data.vram_addr) as u16;
+
+                        pattern_addr += (self.background_next_nametable as u16) << 4;
+
+                        if self.get_background_table_select(bus) {
+                            pattern_addr += 0x1000;
+                        }
+
+                        self.background_next_pattern_low = bus.ppu_read(pattern_addr);
                     }
-                    7 => { // Pattern high
+                    7 => {
+                        // Pattern high
+                        let mut pattern_addr: u16 =
+                            PpuData::get_fine_y_scroll(bus.ppu_data.vram_addr) as u16;
+
+                        pattern_addr += (self.background_next_nametable as u16) << 4;
+
+                        if self.get_background_table_select(bus) {
+                            pattern_addr += 0x1000;
+                        }
+
+                        pattern_addr += 8;
+
+                        self.background_next_pattern_high = bus.ppu_read(pattern_addr);
                     }
                     _ => {}
-                }
-
-                if self.background_next_nametable != 0 && self.background_next_nametable != 0x24 {
-                    self.put_pixel(
-                        self.scanline as u16,
-                        self.cycle as u16,
-                        RGBA {
-                            r: 0xff,
-                            g: 0xff,
-                            b: 0xff,
-                            a: 0xff,
-                        },
-                    );
-                } else {
-                    self.put_pixel(
-                        self.scanline as u16,
-                        self.cycle as u16,
-                        RGBA {
-                            r: 0x00,
-                            g: 0x00,
-                            b: 0x00,
-                            a: 0x00,
-                        },
-                    );
                 }
 
                 if self.cycle == 256 {
@@ -379,6 +819,25 @@ impl Ppu {
                 }
             } else if self.cycle <= 320 {
                 if self.cycle == 257 {
+                    //Load shift
+                    self.background_shift_pattern_low = (self.background_shift_pattern_low
+                        & 0xFF00)
+                        | (self.background_next_pattern_low as u16);
+                    self.background_shift_pattern_high = (self.background_shift_pattern_high
+                        & 0xFF00)
+                        | (self.background_next_pattern_high as u16);
+
+                    if self.background_next_attrib & 0x01 != 0 {
+                        self.background_shift_attrib_low |= 0x00FF;
+                    } else {
+                        self.background_shift_attrib_low &= 0xFF00;
+                    }
+                    if self.background_next_attrib & 0x02 != 0 {
+                        self.background_shift_attrib_high |= 0x00FF;
+                    } else {
+                        self.background_shift_attrib_high &= 0xFF00;
+                    }
+
                     if self.get_background_enable(bus) || self.get_sprite_enable(bus) {
                         PpuData::set_nametable_x(
                             &mut bus.ppu_data.vram_addr,
@@ -425,6 +884,31 @@ impl Ppu {
                 }
             } else { // fetch two bytes for unknown reason
             }
+
+            let mut background_pixel = 0x00;
+            let mut background_palette = 0x00;
+
+            // Doing the pixel stuff
+            if self.get_background_enable(bus) {
+                let mux = 0x8000 >> bus.ppu_data.fine_x_scroll;
+
+                if self.background_shift_pattern_low & mux != 0 {
+                    background_pixel |= 0x01;
+                }
+                if self.background_shift_pattern_high & mux != 0 {
+                    background_pixel |= 0x02;
+                }
+
+                if self.background_shift_attrib_low & mux != 0 {
+                    background_palette |= 0x01;
+                }
+                if self.background_shift_attrib_high & mux != 0 {
+                    background_palette |= 0x02;
+                }
+            }
+            let true_pixel = self.get_rgba(background_pixel, background_palette, bus);
+            //let true_pixel = PALLET_TO_RGBA[(self.background_next_nametable % 64) as usize];
+            self.put_pixel(self.scanline as u16, self.cycle as u16, true_pixel);
         } else if self.scanline == 240 { // post render scanline
         } else if self.scanline <= 260 {
             // vblank

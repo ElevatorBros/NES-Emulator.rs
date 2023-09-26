@@ -278,7 +278,7 @@ impl<'a> Bus<'a> {
 
     pub fn ppu_read(&mut self, addr: u16) -> u8 {
         if addr <= 0x2000 {
-            return self.cart.read(addr);
+            return self.cart.read(addr + 0x8000);
         } else {
             let actual_addr = addr - 0x2000;
             return self.ram.get_ppu_memory(actual_addr);
