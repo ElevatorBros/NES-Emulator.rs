@@ -65,6 +65,7 @@ struct RGBA {
     a: u8,
 }
 
+/*
 // Load from a .pal file in the future
 const PALLET_TO_RGBA: [RGBA; 64] = [
     RGBA {
@@ -452,7 +453,395 @@ const PALLET_TO_RGBA: [RGBA; 64] = [
         a: 0xFF,
     },
 ];
+*/
 // }}}
+
+const PALLET_TO_RGBA: [RGBA; 64] = [
+    RGBA {
+        r: 0x59,
+        g: 0x59,
+        b: 0x5f,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x8f,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x18,
+        g: 0x00,
+        b: 0x8f,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x3f,
+        g: 0x00,
+        b: 0x77,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x50,
+        g: 0x00,
+        b: 0x50,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x50,
+        g: 0x00,
+        b: 0x10,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x50,
+        g: 0x00,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x40,
+        g: 0x20,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x30,
+        g: 0x30,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x10,
+        g: 0x30,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x30,
+        b: 0x10,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x40,
+        b: 0x40,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x40,
+        b: 0x60,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x00,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xa0,
+        g: 0xa0,
+        b: 0xa0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x40,
+        b: 0xd0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x50,
+        g: 0x10,
+        b: 0xe0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x70,
+        g: 0x00,
+        b: 0xe0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x90,
+        g: 0x00,
+        b: 0xb0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xa0,
+        g: 0x00,
+        b: 0x50,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x90,
+        g: 0x30,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x80,
+        g: 0x40,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x60,
+        g: 0x60,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x30,
+        g: 0x60,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x60,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x60,
+        b: 0x50,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x00,
+        g: 0x50,
+        b: 0x80,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xe0,
+        g: 0xe0,
+        b: 0xe0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x40,
+        g: 0x80,
+        b: 0xf0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x70,
+        g: 0x70,
+        b: 0xf0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x90,
+        g: 0x40,
+        b: 0xf0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xb0,
+        g: 0x40,
+        b: 0xe0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xc0,
+        g: 0x50,
+        b: 0x90,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xd0,
+        g: 0x60,
+        b: 0x40,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xc0,
+        g: 0x80,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xb0,
+        g: 0xa0,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x70,
+        g: 0xb0,
+        b: 0x00,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x20,
+        g: 0xb0,
+        b: 0x20,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x20,
+        g: 0xb0,
+        b: 0x70,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x20,
+        g: 0xb0,
+        b: 0xc0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x40,
+        g: 0x40,
+        b: 0x40,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xe0,
+        g: 0xe0,
+        b: 0xe0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x90,
+        g: 0xc0,
+        b: 0xf0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xa0,
+        g: 0xa0,
+        b: 0xf0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xb0,
+        g: 0x90,
+        b: 0xf0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xd0,
+        g: 0x90,
+        b: 0xf0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xe0,
+        g: 0x90,
+        b: 0xd0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xe0,
+        g: 0xa0,
+        b: 0xa0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xe0,
+        g: 0xb0,
+        b: 0x90,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xe0,
+        g: 0xd0,
+        b: 0x80,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xb0,
+        g: 0xd0,
+        b: 0x80,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x90,
+        g: 0xd0,
+        b: 0x90,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x90,
+        g: 0xd0,
+        b: 0xb0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x90,
+        g: 0xd0,
+        b: 0xe0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0xa0,
+        g: 0xa0,
+        b: 0xa0,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+    RGBA {
+        r: 0x08,
+        g: 0x08,
+        b: 0x08,
+        a: 0xff,
+    },
+];
 
 //: Ppu Functions {{{
 impl Ppu {
@@ -743,15 +1132,14 @@ impl Ppu {
                         // Attribute
                         let mut attrib_addr: u16 = 0x23C0;
                         attrib_addr |=
-                            (PpuData::get_nametable_y(bus.ppu_data.temp_vram_addr) as u16) << 11;
+                            (PpuData::get_nametable_y(bus.ppu_data.vram_addr) as u16) << 11;
                         attrib_addr |=
-                            (PpuData::get_nametable_x(bus.ppu_data.temp_vram_addr) as u16) << 10;
-                        attrib_addr |= ((PpuData::get_coarse_y_scroll(bus.ppu_data.temp_vram_addr)
-                            as u16)
-                            << 1)
-                            & !0x03;
+                            (PpuData::get_nametable_x(bus.ppu_data.vram_addr) as u16) << 10;
                         attrib_addr |=
-                            (PpuData::get_coarse_x_scroll(bus.ppu_data.temp_vram_addr) as u16) >> 2;
+                            ((PpuData::get_coarse_y_scroll(bus.ppu_data.vram_addr) as u16) >> 2)
+                                << 3;
+                        attrib_addr |=
+                            (PpuData::get_coarse_x_scroll(bus.ppu_data.vram_addr) as u16) >> 2;
                         self.background_next_attrib = bus.ppu_read(attrib_addr);
 
                         if PpuData::get_coarse_y_scroll(bus.ppu_data.vram_addr) & 0x02 != 0 {
