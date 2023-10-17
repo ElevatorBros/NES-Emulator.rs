@@ -7,6 +7,8 @@ use crate::bus::Bus;
 use crate::cpu::AddrM;
 use crate::cpu::Cpu;
 use crate::cpu::ADDRESSING_MODE_LOOKUP;
+use std::cell::{RefCell, RefMut};
+use std::rc::Rc;
 
 //: ASM_LOOKUP {{{
 static ASM_LOOKUP: [&str; 0x100] = [
@@ -36,9 +38,7 @@ static ASM_LOOKUP: [&str; 0x100] = [
 //: }}}
 
 //: get_asm {{{
-pub fn get_asm(cpu: &Cpu, bus: &mut Bus) -> String {
-    //let bus = bus;
-
+pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
     let mut asm_string: String;
     let opcode: u8 = bus.read(cpu.pc, true);
     //print!("{}", ASM_LOOKUP[opcode as usize]);
@@ -207,7 +207,8 @@ pub fn get_asm(cpu: &Cpu, bus: &mut Bus) -> String {
 //: }}}
 
 //: output_debug_info {{{
-pub fn output_debug_info(cpu: &Cpu, bus: &mut Bus) {
+pub fn output_debug_info(cpu: &Cpu) {
+    let mut bus = cpu.bus.borrow_mut();
     print!("{:04X}  ", cpu.pc);
     match ADDRESSING_MODE_LOOKUP[bus.read(cpu.pc, true) as usize] {
         AddrM::ACC | AddrM::IMP => {
