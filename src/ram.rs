@@ -22,7 +22,7 @@ impl Ram {
     }
 
     // Note addrs will come in -0x2000
-    pub fn get_ppu_memory(&mut self, addr: u16) -> u8 {
+    pub fn get_ppu_memory(&self, addr: u16) -> u8 {
         let mut actual_addr = addr;
         if actual_addr >= 0x1F00 && actual_addr < 0x1F20 {
             // Pallet

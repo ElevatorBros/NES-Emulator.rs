@@ -28,9 +28,10 @@ async fn main() {
         }
     };
 
-    let mut main_bus = Bus::new(&mut main_ram, &main_cart);
-    let mut main_cpu = Cpu::new(Rc::new(RefCell::new(main_bus)));
-    let mut main_ppu = Ppu::new(Rc::new(RefCell::new(main_bus)));
+    let main_bus = Bus::new(&mut main_ram, &main_cart);
+    let main_bus_ref = Rc::new(RefCell::new(main_bus));
+    let mut main_cpu = Cpu::new(Rc::clone(&main_bus_ref));
+    let mut main_ppu = Ppu::new(Rc::clone(&main_bus_ref));
 
     //main_cpu.pc = 0x0C000; // Nestest.nes
     //main_cpu.cycl = 7;
