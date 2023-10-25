@@ -69,7 +69,7 @@ impl<'a> Bus<'a> {
     pub fn read(&mut self, mut addr: u16, debug: bool) -> u8 {
         if addr < 0x2000 {
             // Internal RAM
-            addr = addr % 0x800;
+            //addr = addr % 0x800;
             //return self.ram.memory[addr as usize];
             return self.ram.get_cpu_memory(addr);
         } else if addr < 0x3FFF {
@@ -127,7 +127,7 @@ impl<'a> Bus<'a> {
                 // Cart RAM, todo
                 return 0;
             } else {
-                return self.cart.read(addr);
+                return self.cart.cpu_read(addr);
             }
         }
     }
@@ -153,7 +153,7 @@ impl<'a> Bus<'a> {
     pub fn write(&mut self, mut addr: u16, value: u8) {
         if addr < 0x2000 {
             // Internal RAM
-            addr = addr % 0x800;
+            //addr = addr % 0x800;
             self.ram.set_cpu_memory(addr, value);
         } else if addr < 0x3FFF {
             // PPU Registers
@@ -218,19 +218,20 @@ impl<'a> Bus<'a> {
     }
 
     pub fn ppu_read(&self, addr: u16) -> u8 {
-        if addr <= 0x2000 {
-            return self.cart.read(addr + 0x8000);
+        if addr < 0x2000 {
+            // return self.cart.read(addr + 0x8000);
+            return self.cart.ppu_read(addr);
         } else {
-            let actual_addr = addr - 0x2000;
-            return self.ram.get_ppu_memory(actual_addr);
+            // let actual_addr = addr - 0x2000;
+            return self.ram.get_ppu_memory(addr);
         }
     }
 
     pub fn ppu_write(&mut self, addr: u16, value: u8) {
-        if addr <= 0x2000 { // Cannot write chr rom
+        if addr < 0x2000 { // Cannot write chr rom
         } else {
-            let actual_addr = addr - 0x2000;
-            self.ram.set_ppu_memory(actual_addr, value);
+            // let actual_addr = addr - 0x2000;
+            self.ram.set_ppu_memory(addr, value);
         }
     }
 }

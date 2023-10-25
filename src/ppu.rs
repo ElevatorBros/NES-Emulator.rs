@@ -489,16 +489,16 @@ impl PpuData {
         ((self.temp_vram_addr >> 12) & 0x0007) as u8
     }
     pub fn get_nametable_x_v(&self) -> u8 {
-        ((self.vram_addr >> 10) & 0x0001) as u8
+        ((self.vram_addr >> 11) & 0x0001) as u8
     }
     pub fn get_nametable_x_t(&self) -> u8 {
-        ((self.temp_vram_addr >> 10) & 0x0001) as u8
+        ((self.temp_vram_addr >> 11) & 0x0001) as u8
     }
     pub fn get_nametable_y_v(&self) -> u8 {
-        ((self.vram_addr >> 9) & 0x0001) as u8
+        ((self.vram_addr >> 10) & 0x0001) as u8
     }
     pub fn get_nametable_y_t(&self) -> u8 {
-        ((self.temp_vram_addr >> 9) & 0x0001) as u8
+        ((self.temp_vram_addr >> 10) & 0x0001) as u8
     }
     pub fn get_coarse_y_scroll_v(&self) -> u8 {
         ((self.vram_addr >> 5) & 0x001F) as u8
@@ -520,22 +520,22 @@ impl PpuData {
         self.temp_vram_addr = (self.temp_vram_addr & 0x0FFF) | ((value as u16) << 12);
     }
     pub fn set_nametable_x_v(&mut self, value: u8) {
-        self.vram_addr = (self.vram_addr & 0x77FF) | ((value as u16) << 10);
+        self.vram_addr = (self.vram_addr & 0x77FF) | ((value as u16) << 11);
     }
     pub fn set_nametable_x_t(&mut self, value: u8) {
-        self.temp_vram_addr = (self.temp_vram_addr & 0x77FF) | ((value as u16) << 10);
+        self.temp_vram_addr = (self.temp_vram_addr & 0x77FF) | ((value as u16) << 11);
     }
     pub fn set_nametable_y_v(&mut self, value: u8) {
-        self.vram_addr = (self.vram_addr & 0x7BFF) | ((value as u16) << 9);
+        self.vram_addr = (self.vram_addr & 0x7BFF) | ((value as u16) << 10);
     }
     pub fn set_nametable_y_t(&mut self, value: u8) {
-        self.temp_vram_addr = (self.temp_vram_addr & 0x7BFF) | ((value as u16) << 9);
+        self.temp_vram_addr = (self.temp_vram_addr & 0x7BFF) | ((value as u16) << 10);
     }
     pub fn set_coarse_y_scroll_v(&mut self, value: u8) {
-        self.vram_addr = (self.vram_addr & 0x7C1C) | ((value as u16) << 5);
+        self.vram_addr = (self.vram_addr & 0x7C1F) | ((value as u16) << 5);
     }
     pub fn set_coarse_y_scroll_t(&mut self, value: u8) {
-        self.temp_vram_addr = (self.temp_vram_addr & 0x7C1C) | ((value as u16) << 5);
+        self.temp_vram_addr = (self.temp_vram_addr & 0x7C1F) | ((value as u16) << 5);
     }
     pub fn set_coarse_x_scroll_v(&mut self, value: u8) {
         self.vram_addr = (self.vram_addr & 0x7FE0) | (value as u16);
@@ -703,7 +703,7 @@ impl<'a> Ppu<'a> {
                 counter: 0,
             }; 8],
 
-            scanline: -1,
+            scanline: 0,
             cycle: 0,
             even: true,
 
@@ -764,16 +764,8 @@ impl<'a> Ppu<'a> {
             self.cycle += 1;
         }
 
+        // Visible scanlines + pre-render scanline
         if self.scanline <= 239 || self.scanline == 261 {
-            // Shift
-            if bus.ppu_data.get_background_enable() {
-                self.background_shift_pattern_low <<= 1;
-                self.background_shift_pattern_high <<= 1;
-
-                self.background_shift_attrib_low <<= 1;
-                self.background_shift_attrib_high <<= 1;
-            }
-
             if self.scanline == 261 {
                 // pre-render scanline
                 if self.cycle == 1 {
@@ -794,7 +786,16 @@ impl<'a> Ppu<'a> {
             }
             // rendering
             if self.cycle == 0 { // idle cycle
-            } else if self.cycle <= 256 {
+            } else if self.cycle <= 256 || (self.cycle > 320 && self.cycle <= 336) {
+                // Shift
+                if bus.ppu_data.get_background_enable() {
+                    self.background_shift_pattern_low <<= 1;
+                    self.background_shift_pattern_high <<= 1;
+
+                    self.background_shift_attrib_low <<= 1;
+                    self.background_shift_attrib_high <<= 1;
+                }
+
                 // current line tile data fetch
                 match self.cycle % 8 {
                     0 => {
@@ -802,11 +803,14 @@ impl<'a> Ppu<'a> {
                         {
                             if bus.ppu_data.get_coarse_x_scroll_v() == 31 {
                                 bus.ppu_data.set_coarse_x_scroll_v(0);
+
                                 if bus.ppu_data.get_nametable_x_v() == 0 {
-                                    bus.ppu_data.set_nametable_x_v(0);
-                                } else {
                                     bus.ppu_data.set_nametable_x_v(1);
+                                } else {
+                                    bus.ppu_data.set_nametable_x_v(0);
                                 }
+                                // let v = !bus.ppu_data.get_nametable_x_v();
+                                // bus.ppu_data.set_nametable_x_v(v);
                             } else {
                                 let v = bus.ppu_data.get_coarse_x_scroll_v() + 1;
                                 bus.ppu_data.set_coarse_x_scroll_v(v);
@@ -834,7 +838,23 @@ impl<'a> Ppu<'a> {
                         }
                         // Nametable
                         self.background_next_nametable =
-                            bus.ppu_read(0x2000 + (bus.ppu_data.vram_addr & 0x0FFF));
+                            bus.ppu_read(0x2000 | (bus.ppu_data.vram_addr & 0x0FFF));
+
+                        // if self.background_next_nametable == 0x24 {
+                        //     self.background_next_nametable = 0;
+                        // }
+                        // println!(
+                        //     "N:{:#x},S:{},C:{},V:{:#x},V_x:{},V_y:{},V_nx:{},V_ny:{},V_fy:{}",
+                        //     self.background_next_nametable,
+                        //     self.scanline,
+                        //     self.cycle,
+                        //     bus.ppu_data.vram_addr + 0x2000,
+                        //     bus.ppu_data.get_coarse_x_scroll_v(),
+                        //     bus.ppu_data.get_coarse_y_scroll_v(),
+                        //     bus.ppu_data.get_nametable_x_v(),
+                        //     bus.ppu_data.get_nametable_y_v(),
+                        //     bus.ppu_data.get_fine_y_scroll_v(),
+                        // );
                     }
                     3 => {
                         // Attribute
@@ -852,6 +872,8 @@ impl<'a> Ppu<'a> {
                             self.background_next_attrib >>= 2;
                         }
                         self.background_next_attrib &= 0x03;
+
+                        // self.background_next_nametable = self.background_next_attrib;
                     }
                     5 => {
                         // Pattern low
@@ -892,6 +914,10 @@ impl<'a> Ppu<'a> {
 
                             if bus.ppu_data.get_coarse_y_scroll_v() == 29 {
                                 bus.ppu_data.set_coarse_y_scroll_v(0);
+
+                                // let v = !bus.ppu_data.get_nametable_y_v();
+                                // bus.ppu_data.set_nametable_y_v(v);
+
                                 if bus.ppu_data.get_nametable_y_v() == 0 {
                                     bus.ppu_data.set_nametable_y_v(1);
                                 } else {
@@ -908,24 +934,25 @@ impl<'a> Ppu<'a> {
                 }
             } else if self.cycle <= 320 {
                 if self.cycle == 257 {
+                    // Might need the stuff below, uncoment if broken
                     //Load shift
-                    self.background_shift_pattern_low = (self.background_shift_pattern_low
-                        & 0xFF00)
-                        | (self.background_next_pattern_low as u16);
-                    self.background_shift_pattern_high = (self.background_shift_pattern_high
-                        & 0xFF00)
-                        | (self.background_next_pattern_high as u16);
-
-                    if self.background_next_attrib & 0x01 != 0 {
-                        self.background_shift_attrib_low |= 0x00FF;
-                    } else {
-                        self.background_shift_attrib_low &= 0xFF00;
-                    }
-                    if self.background_next_attrib & 0x02 != 0 {
-                        self.background_shift_attrib_high |= 0x00FF;
-                    } else {
-                        self.background_shift_attrib_high &= 0xFF00;
-                    }
+                    // self.background_shift_pattern_low = (self.background_shift_pattern_low
+                    //     & 0xFF00)
+                    //     | (self.background_next_pattern_low as u16);
+                    // self.background_shift_pattern_high = (self.background_shift_pattern_high
+                    //     & 0xFF00)
+                    //     | (self.background_next_pattern_high as u16);
+                    //
+                    // if self.background_next_attrib & 0x01 != 0 {
+                    //     self.background_shift_attrib_low |= 0x00FF;
+                    // } else {
+                    //     self.background_shift_attrib_low &= 0xFF00;
+                    // }
+                    // if self.background_next_attrib & 0x02 != 0 {
+                    //     self.background_shift_attrib_high |= 0x00FF;
+                    // } else {
+                    //     self.background_shift_attrib_high &= 0xFF00;
+                    // }
 
                     if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
                         let t = bus.ppu_data.get_nametable_x_t();
@@ -935,71 +962,82 @@ impl<'a> Ppu<'a> {
                     }
                 }
 
-                // Technicaly this happens multiple times but we should only need to do it once.
-                if self.scanline == 261 && self.cycle == 280 {
-                    // I don't think we need to do the fine_y_scroll, but if stuff dosn't work try
-                    // that
+                if self.scanline == 261 && self.cycle >= 280 && self.cycle < 305 {
                     if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
                         let t = bus.ppu_data.get_nametable_y_t();
                         bus.ppu_data.set_nametable_y_v(t);
                         let t = bus.ppu_data.get_coarse_y_scroll_t();
                         bus.ppu_data.set_coarse_y_scroll_v(t);
+                        let t = bus.ppu_data.get_fine_y_scroll_t();
+                        bus.ppu_data.set_fine_y_scroll_v(t);
                     }
                 }
-            } else if self.cycle <= 336 {
-                // next line first two tiles
-                if self.cycle == 328 || self.cycle == 336 {
-                    if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
-                        if bus.ppu_data.get_coarse_x_scroll_v() == 31 {
-                            bus.ppu_data.set_coarse_x_scroll_v(0);
-                            if bus.ppu_data.get_nametable_x_v() == 0 {
-                                bus.ppu_data.set_nametable_x_v(1);
-                            } else {
-                                bus.ppu_data.set_nametable_x_v(0);
-                            }
-                        } else {
-                            let v = bus.ppu_data.get_coarse_x_scroll_v() + 1;
-                            bus.ppu_data.set_coarse_x_scroll_v(v);
-                        }
-                    }
-                }
-            } else { // fetch two bytes for unknown reason
-            }
-
-            let mut background_pixel = 0x00;
-            let mut background_palette = 0x00;
-
-            // Doing the pixel stuff
-            if bus.ppu_data.get_background_enable() {
-                let mux = 0x8000 >> bus.ppu_data.fine_x_scroll;
-
-                if self.background_shift_pattern_low & mux != 0 {
-                    background_pixel |= 0x01;
-                }
-                if self.background_shift_pattern_high & mux != 0 {
-                    background_pixel |= 0x02;
-                }
-
-                if self.background_shift_attrib_low & mux != 0 {
-                    background_palette |= 0x01;
-                }
-                if self.background_shift_attrib_high & mux != 0 {
-                    background_palette |= 0x02;
+            // } else if self.cycle <= 336 {
+            //     // next line first two tiles
+            //     if self.cycle == 328 || self.cycle == 336 {
+            //         if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
+            //             if bus.ppu_data.get_coarse_x_scroll_v() == 31 {
+            //                 bus.ppu_data.set_coarse_x_scroll_v(0);
+            //
+            //                 // let v = !bus.ppu_data.get_nametable_x_v();
+            //                 // bus.ppu_data.set_nametable_x_v(v);
+            //
+            //                 if bus.ppu_data.get_nametable_x_v() == 0 {
+            //                     bus.ppu_data.set_nametable_x_v(1);
+            //                 } else {
+            //                     bus.ppu_data.set_nametable_x_v(0);
+            //                 }
+            //             } else {
+            //                 let v = bus.ppu_data.get_coarse_x_scroll_v() + 1;
+            //                 bus.ppu_data.set_coarse_x_scroll_v(v);
+            //             }
+            //         }
+            //     }
+            } else {
+                // fetch two bytes for unknown reason
+                if self.cycle == 338 || self.cycle == 340 {
+                    self.background_next_nametable =
+                        bus.ppu_read(0x2000 | (bus.ppu_data.vram_addr & 0x0FFF));
                 }
             }
 
-            //let true_pixel = self.get_rgba(background_pixel, background_palette, bus);
-            //self.put_pixel(self.scanline as u16, self.cycle as u16, true_pixel);
-            let true_pixel = PALLET_TO_RGBA[(bus
-                .ppu_read(0x3F00 + ((background_palette as u16) << 2) + (background_pixel as u16))
-                & 0x3F) as usize];
+            if self.scanline != 261 {
+                let mut background_pixel = 0x00;
+                let mut background_palette = 0x00;
 
-            let offset = 4 * ((self.scanline as usize) * 256 + (self.cycle as usize));
-            if offset < 4 * 256 * 240 {
-                self.screen[(offset + 0) as usize] = true_pixel.r;
-                self.screen[(offset + 1) as usize] = true_pixel.g;
-                self.screen[(offset + 2) as usize] = true_pixel.b;
-                self.screen[(offset + 3) as usize] = true_pixel.a;
+                // Doing the pixel stuff
+                if bus.ppu_data.get_background_enable() {
+                    let mux = 0x8000 >> bus.ppu_data.fine_x_scroll;
+
+                    if self.background_shift_pattern_low & mux != 0 {
+                        background_pixel |= 0x01;
+                    }
+                    if self.background_shift_pattern_high & mux != 0 {
+                        background_pixel |= 0x02;
+                    }
+
+                    if self.background_shift_attrib_low & mux != 0 {
+                        background_palette |= 0x01;
+                    }
+                    if self.background_shift_attrib_high & mux != 0 {
+                        background_palette |= 0x02;
+                    }
+                }
+
+                //let true_pixel = self.get_rgba(background_pixel, background_palette, bus);
+                //self.put_pixel(self.scanline as u16, self.cycle as u16, true_pixel);
+                let true_pixel = PALLET_TO_RGBA[(bus.ppu_read(
+                    0x3F00 + ((background_palette as u16) << 2) + (background_pixel as u16),
+                ) & 0x3F) as usize];
+
+                let offset =
+                    4 * (((self.scanline as u16) as usize) * 256 + ((self.cycle as u16) as usize));
+                if offset < 4 * 256 * 240 {
+                    self.screen[(offset + 0) as usize] = true_pixel.r;
+                    self.screen[(offset + 1) as usize] = true_pixel.g;
+                    self.screen[(offset + 2) as usize] = true_pixel.b;
+                    self.screen[(offset + 3) as usize] = true_pixel.a;
+                }
             }
         } else if self.scanline == 240 { // post render scanline
         } else if self.scanline <= 260 {

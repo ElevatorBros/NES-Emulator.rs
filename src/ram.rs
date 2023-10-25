@@ -8,36 +8,95 @@ pub struct Ram {
 impl Ram {
     pub fn new() -> Self {
         Self {
-            cpu_memory: [0; 0x800],
-            ppu_memory: [0; 0x2000],
+            cpu_memory: [0xFF; 0x800],
+            ppu_memory: [0xFF; 0x2000],
         }
     }
 
     pub fn get_cpu_memory(&mut self, addr: u16) -> u8 {
-        self.cpu_memory[addr as usize]
+        let actual_addr = addr % 0x800;
+        self.cpu_memory[actual_addr as usize]
     }
 
     pub fn set_cpu_memory(&mut self, addr: u16, value: u8) {
-        self.cpu_memory[addr as usize] = value;
+        let actual_addr = addr % 0x800;
+        self.cpu_memory[actual_addr as usize] = value;
     }
 
-    // Note addrs will come in -0x2000
     pub fn get_ppu_memory(&self, addr: u16) -> u8 {
         let mut actual_addr = addr;
-        if actual_addr >= 0x1F00 && actual_addr < 0x1F20 {
+        // Nametable
+        if actual_addr >= 0x2000 && actual_addr < 0x3F00 {
+            let vertical = true;
+            if vertical {
+                if actual_addr > 0x2800 {
+                    actual_addr -= 0x800;
+                }
+            } else {
+                if (actual_addr >= 0x2400 && actual_addr < 0x2800)
+                    || (actual_addr >= 0x2C00 && actual_addr < 0x3000)
+                {
+                    actual_addr -= 0x400;
+                }
+            }
+        } else if actual_addr >= 0x3F00 && actual_addr < 0x3F20 {
+            // println!("Pallet_read_at:{:#x}", actual_addr);
             // Pallet
-            if actual_addr == 0x1F10
-                || actual_addr == 0x1F14
-                || actual_addr == 0x1F18
-                || actual_addr == 0x1F1C
+            if actual_addr == 0x3F10
+                || actual_addr == 0x3F14
+                || actual_addr == 0x3F18
+                || actual_addr == 0x3F1C
             {
                 actual_addr -= 0x10;
             }
+
+            // if actual_addr == 0x3F00
+            //     || actual_addr == 0x3F04
+            //     || actual_addr == 0x3F08
+            //     || actual_addr == 0x3F0C
+            // {
+            //     actual_addr = 0x3F00;
+            // }
         }
+        actual_addr -= 0x2000;
         self.ppu_memory[actual_addr as usize]
     }
 
     pub fn set_ppu_memory(&mut self, addr: u16, value: u8) {
-        self.ppu_memory[addr as usize] = value;
+        let mut actual_addr = addr;
+        // Nametable
+        if actual_addr >= 0x2000 && actual_addr < 0x3F00 {
+            let vertical = true;
+            if vertical {
+                if actual_addr > 0x2800 {
+                    actual_addr -= 0x800;
+                }
+            } else {
+                if (actual_addr >= 0x2400 && actual_addr < 0x2800)
+                    || (actual_addr >= 0x2C00 && actual_addr < 0x3000)
+                {
+                    actual_addr -= 0x400;
+                }
+            }
+        } else if actual_addr >= 0x3F00 && actual_addr < 0x3F20 {
+            // Pallet
+            if actual_addr == 0x3F10
+                || actual_addr == 0x3F14
+                || actual_addr == 0x3F18
+                || actual_addr == 0x3F1C
+            {
+                actual_addr -= 0x10;
+            }
+
+            // if actual_addr == 0x3F00
+            //     || actual_addr == 0x3F04
+            //     || actual_addr == 0x3F08
+            //     || actual_addr == 0x3F0C
+            // {
+            //     actual_addr = 0x3F00;
+            // }
+        }
+        actual_addr -= 0x2000;
+        self.ppu_memory[actual_addr as usize] = value;
     }
 }
