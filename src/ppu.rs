@@ -17,21 +17,6 @@ pub struct SpriteData {
 
 //: Ppu {{{
 pub struct Ppu<'a> {
-    // General internal data
-    //pub chr_rom: [u8; 0x2000], // 8KB internal chr rom
-    //pub vram: [u8; 0x800],   // 2KB internal vram
-    //pub pallet: [u8; 0x100], // 256 bytes internal pallet ram
-    //pub data: [u8; 0x4000], // All the data is placed in different parts here
-
-    // Background
-    //pub vram_addr: u16,
-    //pub vram_addr_tmp: u16,
-    // Two tiles, high is the data that is being loaded, low is the data that is being used
-    //pub background_pattern_shift: [u16; 2],
-    //pub background_pattern_shift_next: [u16; 2],
-    // Pallet attributes for low data of the background pattern
-    //pub background_palette_shift: [u8; 2],
-    //pub background_palette_shift_next: [u8; 2],
     pub background_next_nametable: u8,
     pub background_next_attrib: u8,
     pub background_next_pattern_low: u8,
@@ -466,9 +451,7 @@ pub struct PpuData {
     pub status: u8,
     pub oam_addr: u8,
     pub oam_data: u8,
-    //pub scroll: u16,
     pub scroll_latch: bool,
-    //pub addr: u16,
     pub addr_latch: bool,
     pub data: u8,
     pub data_buffer: u8,
@@ -652,16 +635,6 @@ impl PpuData {
         self.oam_data = value
     }
 
-    // PPU_SCROLL
-    /*fn get_ppu_scroll(&self) -> u16 {
-        self.ppu_data.scroll
-    }*/
-
-    // PPU_ADDR
-    /*fn get_ppu_addr(&self) -> u16 {
-        self.addr
-    }*/
-
     // PPU_DATA
     fn get_ppu_data(&self) -> u8 {
         self.data
@@ -673,17 +646,6 @@ impl PpuData {
 impl<'a> Ppu<'a> {
     pub fn new(bus: Rc<RefCell<Bus<'a>>>) -> Self {
         Self {
-            //chr_rom: [0; 0x2000],
-            //vram: [0; 0x800],
-            //pallet: [0; 0x100],
-            //data: [0; 0x4000],
-            //vram_addr: 0,
-            //vram_addr_tmp: 0,
-
-            // background_pattern_shift: [0; 2],
-            // background_pattern_shift_next: [0; 2],
-            // background_palette_shift: [0; 2],
-            // background_palette_shift_next: [0; 2],
             background_next_nametable: 0,
             background_next_attrib: 0,
             background_next_pattern_low: 0,
@@ -709,7 +671,7 @@ impl<'a> Ppu<'a> {
 
             render_frame: false,
             screen: [0x00; 4 * 256 * 240],
-            bus: bus,
+            bus,
         }
     }
 
@@ -744,311 +706,300 @@ impl<'a> Ppu<'a> {
     }
     */
 
-    pub fn clock(&mut self) {
+    pub fn pre_render_setup(&mut self) {
         let mut bus = self.bus.borrow_mut();
-        // Check for oam dma
-        if bus.oam_dma_ppu {
-            for i in 0x0..0x100 {
-                let addr = bus.oam_dma_addr + (i as u16);
-                self.primary_oam[i] = bus.read(addr, false);
-            }
-            bus.oam_dma_ppu = false;
+        bus.ppu_data.nmi_occurred = false;
+        bus.ppu_data.set_vblank(false);
+        bus.ppu_data.set_sprite_hit(false);
+        bus.ppu_data.set_sprite_overflow(false);
+
+        if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
+            let t = bus.ppu_data.get_fine_y_scroll_t();
+            bus.ppu_data.set_fine_y_scroll_v(t);
+            let t = bus.ppu_data.get_nametable_y_t();
+            bus.ppu_data.set_nametable_y_v(t);
+            let t = bus.ppu_data.get_coarse_y_scroll_t();
+            bus.ppu_data.set_coarse_y_scroll_v(t);
+        }
+    }
+
+    pub fn set_vblank(&mut self) {
+        let mut bus = self.bus.borrow_mut();
+        // Set nmi
+        bus.ppu_data.set_vblank(true);
+        bus.ppu_data.nmi_occurred = true;
+        if bus.ppu_data.get_nmi_enable() {
+            bus.nmi_signal = true;
+        }
+    }
+
+    pub fn apply_shift(&mut self) {
+        if self.bus.borrow().ppu_data.get_background_enable() {
+            self.background_shift_pattern_low <<= 1;
+            self.background_shift_pattern_high <<= 1;
+
+            self.background_shift_attrib_low <<= 1;
+            self.background_shift_attrib_high <<= 1;
+        }
+    }
+
+    pub fn load_shift(&mut self) {
+        self.background_shift_pattern_low = (self.background_shift_pattern_low & 0xFF00)
+            | (self.background_next_pattern_low as u16);
+        self.background_shift_pattern_high = (self.background_shift_pattern_high & 0xFF00)
+            | (self.background_next_pattern_high as u16);
+
+        if self.background_next_attrib & 0x01 != 0 {
+            self.background_shift_attrib_low |= 0x00FF;
+        } else {
+            self.background_shift_attrib_low &= 0xFF00;
+        }
+        if self.background_next_attrib & 0x02 != 0 {
+            self.background_shift_attrib_high |= 0x00FF;
+        } else {
+            self.background_shift_attrib_high &= 0xFF00;
+        }
+    }
+
+    pub fn set_next_nametable(&mut self) {
+        let bus = self.bus.borrow();
+        self.background_next_nametable = bus.ppu_read(0x2000 | (bus.ppu_data.vram_addr & 0x0FFF));
+    }
+
+    pub fn set_next_attribute(&mut self) {
+        let bus = self.bus.borrow();
+        let mut attrib_addr: u16 = 0x23C0;
+        attrib_addr |= (bus.ppu_data.get_nametable_y_v() as u16) << 11;
+        attrib_addr |= (bus.ppu_data.get_nametable_x_v() as u16) << 10;
+        attrib_addr |= ((bus.ppu_data.get_coarse_y_scroll_v() as u16) >> 2) << 3;
+        attrib_addr |= (bus.ppu_data.get_coarse_x_scroll_v() as u16) >> 2;
+        self.background_next_attrib = bus.ppu_read(attrib_addr);
+
+        if bus.ppu_data.get_coarse_y_scroll_v() & 0x02 != 0 {
+            self.background_next_attrib >>= 4;
+        }
+        if bus.ppu_data.get_coarse_x_scroll_v() & 0x02 != 0 {
+            self.background_next_attrib >>= 2;
+        }
+        self.background_next_attrib &= 0x03;
+    }
+
+    pub fn set_next_pattern_low(&mut self) {
+        let bus = self.bus.borrow();
+        let mut pattern_addr: u16 = bus.ppu_data.get_fine_y_scroll_v() as u16;
+
+        pattern_addr += (self.background_next_nametable as u16) << 4;
+
+        if bus.ppu_data.get_background_table_select() {
+            pattern_addr += 0x1000;
         }
 
-        if self.scanline == 0
-            && self.cycle == 0
-            && !self.even
-            && (bus.ppu_data.get_sprite_enable() || bus.ppu_data.get_background_enable())
+        self.background_next_pattern_low = bus.ppu_read(pattern_addr);
+    }
+
+    pub fn set_next_pattern_high(&mut self) {
+        let bus = self.bus.borrow();
+        let mut pattern_addr: u16 = bus.ppu_data.get_fine_y_scroll_v() as u16;
+
+        pattern_addr += (self.background_next_nametable as u16) << 4;
+
+        if bus.ppu_data.get_background_table_select() {
+            pattern_addr += 0x1000;
+        }
+
+        pattern_addr += 8;
+
+        self.background_next_pattern_high = bus.ppu_read(pattern_addr);
+    }
+
+    pub fn scroll_horizontal(&mut self) {
+        let mut bus = self.bus.borrow_mut();
+        if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
+            if bus.ppu_data.get_coarse_x_scroll_v() == 31 {
+                bus.ppu_data.set_coarse_x_scroll_v(0);
+
+                if bus.ppu_data.get_nametable_x_v() == 0 {
+                    bus.ppu_data.set_nametable_x_v(1);
+                } else {
+                    bus.ppu_data.set_nametable_x_v(0);
+                }
+            } else {
+                let v = bus.ppu_data.get_coarse_x_scroll_v() + 1;
+                bus.ppu_data.set_coarse_x_scroll_v(v);
+            }
+        }
+    }
+
+    pub fn scroll_vertical(&mut self) {
+        let mut bus = self.bus.borrow_mut();
+        if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
+            if bus.ppu_data.get_fine_y_scroll_v() < 7 {
+                let v = bus.ppu_data.get_fine_y_scroll_v() + 1;
+                bus.ppu_data.set_fine_y_scroll_v(v);
+            } else {
+                bus.ppu_data.set_fine_y_scroll_v(0);
+
+                if bus.ppu_data.get_coarse_y_scroll_v() == 29 {
+                    bus.ppu_data.set_coarse_y_scroll_v(0);
+
+                    if bus.ppu_data.get_nametable_y_v() == 0 {
+                        bus.ppu_data.set_nametable_y_v(1);
+                    } else {
+                        bus.ppu_data.set_nametable_y_v(0);
+                    }
+                } else if bus.ppu_data.get_coarse_y_scroll_v() == 31 {
+                    bus.ppu_data.set_coarse_y_scroll_v(0);
+                } else {
+                    let v = bus.ppu_data.get_coarse_y_scroll_v() + 1;
+                    bus.ppu_data.set_coarse_y_scroll_v(v);
+                }
+            }
+        }
+    }
+
+    pub fn transfer_horizontal(&mut self) {
+        let mut bus = self.bus.borrow_mut();
+        if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
+            let t = bus.ppu_data.get_nametable_x_t();
+            bus.ppu_data.set_nametable_x_v(t);
+            let t = bus.ppu_data.get_coarse_x_scroll_t();
+            bus.ppu_data.set_coarse_x_scroll_v(t);
+        }
+    }
+
+    pub fn transfer_vertical(&mut self) {
+        let mut bus = self.bus.borrow_mut();
+        if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
+            let t = bus.ppu_data.get_nametable_y_t();
+            bus.ppu_data.set_nametable_y_v(t);
+            let t = bus.ppu_data.get_coarse_y_scroll_t();
+            bus.ppu_data.set_coarse_y_scroll_v(t);
+            let t = bus.ppu_data.get_fine_y_scroll_t();
+            bus.ppu_data.set_fine_y_scroll_v(t);
+        }
+    }
+
+    pub fn render_pixel(&mut self) {
+        let bus = self.bus.borrow();
+        let mut background_pixel = 0x00;
+        let mut background_palette = 0x00;
+
+        // Doing the pixel stuff
+        if bus.ppu_data.get_background_enable() {
+            let mux = 0x8000 >> bus.ppu_data.fine_x_scroll;
+
+            if self.background_shift_pattern_low & mux != 0 {
+                background_pixel |= 0x01;
+            }
+            if self.background_shift_pattern_high & mux != 0 {
+                background_pixel |= 0x02;
+            }
+
+            if self.background_shift_attrib_low & mux != 0 {
+                background_palette |= 0x01;
+            }
+            if self.background_shift_attrib_high & mux != 0 {
+                background_palette |= 0x02;
+            }
+        }
+
+        let true_pixel = PALLET_TO_RGBA[(bus
+            .ppu_read(0x3F00 + ((background_palette as u16) << 2) + (background_pixel as u16))
+            & 0x3F) as usize];
+
+        let offset =
+            4 * (((self.scanline as u16) as usize) * 256 + (((self.cycle - 1) as u16) as usize));
+
+        if offset < 4 * 256 * 240 {
+            self.screen[(offset + 0) as usize] = true_pixel.r;
+            self.screen[(offset + 1) as usize] = true_pixel.g;
+            self.screen[(offset + 2) as usize] = true_pixel.b;
+            self.screen[(offset + 3) as usize] = true_pixel.a;
+        }
+    }
+
+    pub fn clock(&mut self) {
         {
-            // Skip a clock cycle on cycle 0 scanline 0 if we are on an even frame and rendering
-            self.cycle += 1;
+            let mut bus = self.bus.borrow_mut();
+            // Check for oam dma
+            if bus.oam_dma_ppu {
+                for i in 0x0..0x100 {
+                    let addr = bus.oam_dma_addr + (i as u16);
+                    self.primary_oam[i] = bus.read(addr, false);
+                }
+                bus.oam_dma_ppu = false;
+            }
+
+            if self.scanline == 0
+                && self.cycle == 0
+                && !self.even
+                && (bus.ppu_data.get_sprite_enable() || bus.ppu_data.get_background_enable())
+            {
+                // Skip a clock cycle on cycle 0 scanline 0 if we are on an even frame and rendering
+                self.cycle += 1;
+            }
         }
 
         // Visible scanlines + pre-render scanline
-        if self.scanline <= 239 || self.scanline == 261 {
+        if self.scanline < 240 || self.scanline == 261 {
             if self.scanline == 261 {
                 // pre-render scanline
                 if self.cycle == 1 {
-                    bus.ppu_data.nmi_occurred = false;
-                    bus.ppu_data.set_vblank(false);
-                    bus.ppu_data.set_sprite_hit(false);
-                    bus.ppu_data.set_sprite_overflow(false);
-
-                    if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
-                        let t = bus.ppu_data.get_fine_y_scroll_t();
-                        bus.ppu_data.set_fine_y_scroll_v(t);
-                        let t = bus.ppu_data.get_nametable_y_t();
-                        bus.ppu_data.set_nametable_y_v(t);
-                        let t = bus.ppu_data.get_coarse_y_scroll_t();
-                        bus.ppu_data.set_coarse_y_scroll_v(t);
-                    }
+                    self.pre_render_setup();
                 }
             }
             // rendering
             if self.cycle == 0 { // idle cycle
             } else if self.cycle <= 256 || (self.cycle > 320 && self.cycle <= 336) {
                 // Shift
-                if bus.ppu_data.get_background_enable() {
-                    self.background_shift_pattern_low <<= 1;
-                    self.background_shift_pattern_high <<= 1;
+                self.apply_shift();
 
-                    self.background_shift_attrib_low <<= 1;
-                    self.background_shift_attrib_high <<= 1;
+                if self.cycle == 256 {
+                    self.scroll_vertical();
                 }
 
                 // current line tile data fetch
                 match self.cycle % 8 {
                     0 => {
-                        if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable()
-                        {
-                            if bus.ppu_data.get_coarse_x_scroll_v() == 31 {
-                                bus.ppu_data.set_coarse_x_scroll_v(0);
-
-                                if bus.ppu_data.get_nametable_x_v() == 0 {
-                                    bus.ppu_data.set_nametable_x_v(1);
-                                } else {
-                                    bus.ppu_data.set_nametable_x_v(0);
-                                }
-                                // let v = !bus.ppu_data.get_nametable_x_v();
-                                // bus.ppu_data.set_nametable_x_v(v);
-                            } else {
-                                let v = bus.ppu_data.get_coarse_x_scroll_v() + 1;
-                                bus.ppu_data.set_coarse_x_scroll_v(v);
-                            }
-                        }
+                        self.scroll_horizontal();
                     }
                     1 => {
-                        //Load shift
-                        self.background_shift_pattern_low = (self.background_shift_pattern_low
-                            & 0xFF00)
-                            | (self.background_next_pattern_low as u16);
-                        self.background_shift_pattern_high = (self.background_shift_pattern_high
-                            & 0xFF00)
-                            | (self.background_next_pattern_high as u16);
-
-                        if self.background_next_attrib & 0x01 != 0 {
-                            self.background_shift_attrib_low |= 0x00FF;
-                        } else {
-                            self.background_shift_attrib_low &= 0xFF00;
-                        }
-                        if self.background_next_attrib & 0x02 != 0 {
-                            self.background_shift_attrib_high |= 0x00FF;
-                        } else {
-                            self.background_shift_attrib_high &= 0xFF00;
-                        }
-                        // Nametable
-                        self.background_next_nametable =
-                            bus.ppu_read(0x2000 | (bus.ppu_data.vram_addr & 0x0FFF));
-
-                        // if self.background_next_nametable == 0x24 {
-                        //     self.background_next_nametable = 0;
-                        // }
-                        // println!(
-                        //     "N:{:#x},S:{},C:{},V:{:#x},V_x:{},V_y:{},V_nx:{},V_ny:{},V_fy:{}",
-                        //     self.background_next_nametable,
-                        //     self.scanline,
-                        //     self.cycle,
-                        //     bus.ppu_data.vram_addr + 0x2000,
-                        //     bus.ppu_data.get_coarse_x_scroll_v(),
-                        //     bus.ppu_data.get_coarse_y_scroll_v(),
-                        //     bus.ppu_data.get_nametable_x_v(),
-                        //     bus.ppu_data.get_nametable_y_v(),
-                        //     bus.ppu_data.get_fine_y_scroll_v(),
-                        // );
+                        self.load_shift();
+                        self.set_next_nametable();
                     }
                     3 => {
-                        // Attribute
-                        let mut attrib_addr: u16 = 0x23C0;
-                        attrib_addr |= (bus.ppu_data.get_nametable_y_v() as u16) << 11;
-                        attrib_addr |= (bus.ppu_data.get_nametable_x_v() as u16) << 10;
-                        attrib_addr |= ((bus.ppu_data.get_coarse_y_scroll_v() as u16) >> 2) << 3;
-                        attrib_addr |= (bus.ppu_data.get_coarse_x_scroll_v() as u16) >> 2;
-                        self.background_next_attrib = bus.ppu_read(attrib_addr);
-
-                        if bus.ppu_data.get_coarse_y_scroll_v() & 0x02 != 0 {
-                            self.background_next_attrib >>= 4;
-                        }
-                        if bus.ppu_data.get_coarse_x_scroll_v() & 0x02 != 0 {
-                            self.background_next_attrib >>= 2;
-                        }
-                        self.background_next_attrib &= 0x03;
-
-                        // self.background_next_nametable = self.background_next_attrib;
+                        self.set_next_attribute();
                     }
                     5 => {
-                        // Pattern low
-                        let mut pattern_addr: u16 = bus.ppu_data.get_fine_y_scroll_v() as u16;
-
-                        pattern_addr += (self.background_next_nametable as u16) << 4;
-
-                        if bus.ppu_data.get_background_table_select() {
-                            pattern_addr += 0x1000;
-                        }
-
-                        self.background_next_pattern_low = bus.ppu_read(pattern_addr);
+                        self.set_next_pattern_low();
                     }
                     7 => {
-                        // Pattern high
-                        let mut pattern_addr: u16 = bus.ppu_data.get_fine_y_scroll_v() as u16;
-
-                        pattern_addr += (self.background_next_nametable as u16) << 4;
-
-                        if bus.ppu_data.get_background_table_select() {
-                            pattern_addr += 0x1000;
-                        }
-
-                        pattern_addr += 8;
-
-                        self.background_next_pattern_high = bus.ppu_read(pattern_addr);
+                        self.set_next_pattern_high();
                     }
                     _ => {}
                 }
 
-                if self.cycle == 256 {
-                    if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
-                        if bus.ppu_data.get_fine_y_scroll_v() < 7 {
-                            let v = bus.ppu_data.get_fine_y_scroll_v() + 1;
-                            bus.ppu_data.set_fine_y_scroll_v(v);
-                        } else {
-                            bus.ppu_data.set_fine_y_scroll_v(0);
-
-                            if bus.ppu_data.get_coarse_y_scroll_v() == 29 {
-                                bus.ppu_data.set_coarse_y_scroll_v(0);
-
-                                // let v = !bus.ppu_data.get_nametable_y_v();
-                                // bus.ppu_data.set_nametable_y_v(v);
-
-                                if bus.ppu_data.get_nametable_y_v() == 0 {
-                                    bus.ppu_data.set_nametable_y_v(1);
-                                } else {
-                                    bus.ppu_data.set_nametable_y_v(0);
-                                }
-                            } else if bus.ppu_data.get_coarse_y_scroll_v() == 31 {
-                                bus.ppu_data.set_coarse_y_scroll_v(0);
-                            } else {
-                                let v = bus.ppu_data.get_coarse_y_scroll_v() + 1;
-                                bus.ppu_data.set_coarse_y_scroll_v(v);
-                            }
-                        }
-                    }
-                }
-            } else if self.cycle <= 320 {
-                if self.cycle == 257 {
-                    // Might need the stuff below, uncoment if broken
-                    //Load shift
-                    // self.background_shift_pattern_low = (self.background_shift_pattern_low
-                    //     & 0xFF00)
-                    //     | (self.background_next_pattern_low as u16);
-                    // self.background_shift_pattern_high = (self.background_shift_pattern_high
-                    //     & 0xFF00)
-                    //     | (self.background_next_pattern_high as u16);
-                    //
-                    // if self.background_next_attrib & 0x01 != 0 {
-                    //     self.background_shift_attrib_low |= 0x00FF;
-                    // } else {
-                    //     self.background_shift_attrib_low &= 0xFF00;
-                    // }
-                    // if self.background_next_attrib & 0x02 != 0 {
-                    //     self.background_shift_attrib_high |= 0x00FF;
-                    // } else {
-                    //     self.background_shift_attrib_high &= 0xFF00;
-                    // }
-
-                    if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
-                        let t = bus.ppu_data.get_nametable_x_t();
-                        bus.ppu_data.set_nametable_x_v(t);
-                        let t = bus.ppu_data.get_coarse_x_scroll_t();
-                        bus.ppu_data.set_coarse_x_scroll_v(t);
-                    }
-                }
-
-                if self.scanline == 261 && self.cycle >= 280 && self.cycle < 305 {
-                    if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
-                        let t = bus.ppu_data.get_nametable_y_t();
-                        bus.ppu_data.set_nametable_y_v(t);
-                        let t = bus.ppu_data.get_coarse_y_scroll_t();
-                        bus.ppu_data.set_coarse_y_scroll_v(t);
-                        let t = bus.ppu_data.get_fine_y_scroll_t();
-                        bus.ppu_data.set_fine_y_scroll_v(t);
-                    }
-                }
-            // } else if self.cycle <= 336 {
-            //     // next line first two tiles
-            //     if self.cycle == 328 || self.cycle == 336 {
-            //         if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
-            //             if bus.ppu_data.get_coarse_x_scroll_v() == 31 {
-            //                 bus.ppu_data.set_coarse_x_scroll_v(0);
-            //
-            //                 // let v = !bus.ppu_data.get_nametable_x_v();
-            //                 // bus.ppu_data.set_nametable_x_v(v);
-            //
-            //                 if bus.ppu_data.get_nametable_x_v() == 0 {
-            //                     bus.ppu_data.set_nametable_x_v(1);
-            //                 } else {
-            //                     bus.ppu_data.set_nametable_x_v(0);
-            //                 }
-            //             } else {
-            //                 let v = bus.ppu_data.get_coarse_x_scroll_v() + 1;
-            //                 bus.ppu_data.set_coarse_x_scroll_v(v);
-            //             }
-            //         }
-            //     }
-            } else {
-                // fetch two bytes for unknown reason
-                if self.cycle == 338 || self.cycle == 340 {
-                    self.background_next_nametable =
-                        bus.ppu_read(0x2000 | (bus.ppu_data.vram_addr & 0x0FFF));
+                if self.scanline < 240 && self.cycle <= 256 {
+                    self.render_pixel();
                 }
             }
 
-            if self.scanline != 261 {
-                let mut background_pixel = 0x00;
-                let mut background_palette = 0x00;
+            if self.cycle == 257 {
+                self.transfer_horizontal();
+            }
 
-                // Doing the pixel stuff
-                if bus.ppu_data.get_background_enable() {
-                    let mux = 0x8000 >> bus.ppu_data.fine_x_scroll;
-
-                    if self.background_shift_pattern_low & mux != 0 {
-                        background_pixel |= 0x01;
-                    }
-                    if self.background_shift_pattern_high & mux != 0 {
-                        background_pixel |= 0x02;
-                    }
-
-                    if self.background_shift_attrib_low & mux != 0 {
-                        background_palette |= 0x01;
-                    }
-                    if self.background_shift_attrib_high & mux != 0 {
-                        background_palette |= 0x02;
-                    }
-                }
-
-                //let true_pixel = self.get_rgba(background_pixel, background_palette, bus);
-                //self.put_pixel(self.scanline as u16, self.cycle as u16, true_pixel);
-                let true_pixel = PALLET_TO_RGBA[(bus.ppu_read(
-                    0x3F00 + ((background_palette as u16) << 2) + (background_pixel as u16),
-                ) & 0x3F) as usize];
-
-                let offset =
-                    4 * (((self.scanline as u16) as usize) * 256 + ((self.cycle as u16) as usize));
-                if offset < 4 * 256 * 240 {
-                    self.screen[(offset + 0) as usize] = true_pixel.r;
-                    self.screen[(offset + 1) as usize] = true_pixel.g;
-                    self.screen[(offset + 2) as usize] = true_pixel.b;
-                    self.screen[(offset + 3) as usize] = true_pixel.a;
-                }
+            if self.scanline == 261 && self.cycle >= 280 && self.cycle < 305 {
+                self.transfer_vertical();
+            }
+            // fetch two bytes for unknown reason
+            if self.cycle == 338 || self.cycle == 340 {
+                self.set_next_nametable();
             }
         } else if self.scanline == 240 { // post render scanline
         } else if self.scanline <= 260 {
             // vblank
             if self.scanline == 241 && self.cycle == 1 {
-                // Set nmi
-                bus.ppu_data.set_vblank(true);
-                bus.ppu_data.nmi_occurred = true;
-                if bus.ppu_data.get_nmi_enable() {
-                    bus.nmi_signal = true;
-                }
+                self.set_vblank();
             }
         } else {
             // error

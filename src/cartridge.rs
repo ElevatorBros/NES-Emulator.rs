@@ -32,7 +32,7 @@ impl NesHeader {
     /// Mirroring:
     /// 0: horizontal (vertical arrangement) (CIRAM A10 = PPU A11)
     /// 1: vertical (horizontal arrangement) (CIRAM A10 = PPU A10)
-    fn mirror(&self) -> bool {
+    pub fn mirror(&self) -> bool {
         (self.data[6] & 1) != 0
     }
     /// Returns true Cartridge contains battery-backed PRG RAM ($6000-7FFF) or other persistent memory

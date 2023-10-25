@@ -3,13 +3,15 @@
 pub struct Ram {
     pub cpu_memory: [u8; 0x800], // 2KB internal RAM
     pub ppu_memory: [u8; 0x2000],
+    pub vertical_mirroring: bool,
 }
 
 impl Ram {
-    pub fn new() -> Self {
+    pub fn new(vertical_mirroring: bool) -> Self {
         Self {
             cpu_memory: [0xFF; 0x800],
             ppu_memory: [0xFF; 0x2000],
+            vertical_mirroring,
         }
     }
 
@@ -23,12 +25,11 @@ impl Ram {
         self.cpu_memory[actual_addr as usize] = value;
     }
 
-    pub fn get_ppu_memory(&self, addr: u16) -> u8 {
+    fn ppu_address_mapping(&self, addr: u16) -> usize {
         let mut actual_addr = addr;
         // Nametable
         if actual_addr >= 0x2000 && actual_addr < 0x3F00 {
-            let vertical = true;
-            if vertical {
+            if self.vertical_mirroring {
                 if actual_addr > 0x2800 {
                     actual_addr -= 0x800;
                 }
@@ -59,44 +60,14 @@ impl Ram {
             // }
         }
         actual_addr -= 0x2000;
-        self.ppu_memory[actual_addr as usize]
+        actual_addr as usize
+    }
+
+    pub fn get_ppu_memory(&self, addr: u16) -> u8 {
+        self.ppu_memory[self.ppu_address_mapping(addr)]
     }
 
     pub fn set_ppu_memory(&mut self, addr: u16, value: u8) {
-        let mut actual_addr = addr;
-        // Nametable
-        if actual_addr >= 0x2000 && actual_addr < 0x3F00 {
-            let vertical = true;
-            if vertical {
-                if actual_addr > 0x2800 {
-                    actual_addr -= 0x800;
-                }
-            } else {
-                if (actual_addr >= 0x2400 && actual_addr < 0x2800)
-                    || (actual_addr >= 0x2C00 && actual_addr < 0x3000)
-                {
-                    actual_addr -= 0x400;
-                }
-            }
-        } else if actual_addr >= 0x3F00 && actual_addr < 0x3F20 {
-            // Pallet
-            if actual_addr == 0x3F10
-                || actual_addr == 0x3F14
-                || actual_addr == 0x3F18
-                || actual_addr == 0x3F1C
-            {
-                actual_addr -= 0x10;
-            }
-
-            // if actual_addr == 0x3F00
-            //     || actual_addr == 0x3F04
-            //     || actual_addr == 0x3F08
-            //     || actual_addr == 0x3F0C
-            // {
-            //     actual_addr = 0x3F00;
-            // }
-        }
-        actual_addr -= 0x2000;
-        self.ppu_memory[actual_addr as usize] = value;
+        self.ppu_memory[self.ppu_address_mapping(addr)] = value;
     }
 }

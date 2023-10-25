@@ -17,9 +17,6 @@ use std::rc::Rc;
 #[macroquad::main(window_conf)]
 async fn main() {
     let args: Vec<String> = env::args().collect();
-
-    let mut main_ram = Ram::new();
-    //let main_cart = match Cart::new("./nestest.nes") {
     let main_cart = match Cart::new(args[1].as_str()) {
         Ok(c) => c,
         Err(e) => {
@@ -27,6 +24,9 @@ async fn main() {
             return;
         }
     };
+
+    let mut main_ram = Ram::new(main_cart.header.mirror());
+    //let main_cart = match Cart::new("./nestest.nes") {
 
     let main_bus = Bus::new(&mut main_ram, &main_cart);
     let main_bus_ref = Rc::new(RefCell::new(main_bus));
