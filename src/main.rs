@@ -10,14 +10,13 @@ use nes_emulator::cpu::Cpu;
 use nes_emulator::graphics::window_conf;
 use nes_emulator::ppu::Ppu;
 use nes_emulator::ram::Ram;
+use std::cell::RefCell;
 use std::env;
+use std::rc::Rc;
 
 #[macroquad::main(window_conf)]
 async fn main() {
     let args: Vec<String> = env::args().collect();
-
-    let mut main_ram = Ram::new();
-    //let main_cart = match Cart::new("./nestest.nes") {
     let main_cart = match Cart::new(args[1].as_str()) {
         Ok(c) => c,
         Err(e) => {
@@ -26,24 +25,28 @@ async fn main() {
         }
     };
 
-    let mut main_bus = Bus::new(&mut main_ram, &main_cart);
-    let mut main_cpu = Cpu::new();
-    let mut main_ppu = Ppu::new();
+    let mut main_ram = Ram::new(main_cart.header.mirror());
+    //let main_cart = match Cart::new("./nestest.nes") {
+
+    let main_bus = Bus::new(&mut main_ram, &main_cart);
+    let main_bus_ref = Rc::new(RefCell::new(main_bus));
+    let mut main_cpu = Cpu::new(Rc::clone(&main_bus_ref));
+    let mut main_ppu = Ppu::new(Rc::clone(&main_bus_ref));
 
     //main_cpu.pc = 0x0C000; // Nestest.nes
     //main_cpu.cycl = 7;
     //main_cpu.next = 7;
 
-    main_cpu.reset(&mut main_bus);
+    main_cpu.reset();
 
     let mut clock = 0;
 
     loop {
         if clock % 12 == 0 {
-            main_cpu.clock(&mut main_bus);
+            main_cpu.clock();
         }
         if clock % 4 == 0 {
-            main_ppu.clock(&mut main_bus);
+            main_ppu.clock();
         }
 
         // 3840 = 16 * 12 * 5 * 4 (NTSC & PAL clock divides)

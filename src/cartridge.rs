@@ -32,7 +32,7 @@ impl NesHeader {
     /// Mirroring:
     /// 0: horizontal (vertical arrangement) (CIRAM A10 = PPU A11)
     /// 1: vertical (horizontal arrangement) (CIRAM A10 = PPU A10)
-    fn mirror(&self) -> bool {
+    pub fn mirror(&self) -> bool {
         (self.data[6] & 1) != 0
     }
     /// Returns true Cartridge contains battery-backed PRG RAM ($6000-7FFF) or other persistent memory
@@ -135,25 +135,24 @@ impl Cart {
         });
     }
 
-    pub fn read(&self, addr: u16) -> u8 {
+    pub fn cpu_read(&self, addr: u16) -> u8 {
         // mapper 0
         if addr < 0x8000 {
             // not dealt with
             return 0;
-        } else if addr < 0xC000 {
-            // CHR ROM
-            let mut raw_addr: u16 = addr;
-            raw_addr -= 0x8000;
-            raw_addr %= self.chr.len() as u16;
-            return self.chr[raw_addr as usize];
         } else {
-            // PRG ROM
             let mut raw_addr: u16 = addr;
-            raw_addr -= 0xC000;
+            // raw_addr -= 0x8000;
             raw_addr %= self.prg.len() as u16;
-            //raw_addr %= 0x2000; // Mirrored every 8kb
             return self.prg[raw_addr as usize];
         }
+    }
+
+    pub fn ppu_read(&self, addr: u16) -> u8 {
+        // mapper 0
+        let mut raw_addr: u16 = addr;
+        raw_addr %= self.chr.len() as u16;
+        return self.chr[raw_addr as usize];
     }
 }
 // }}}
