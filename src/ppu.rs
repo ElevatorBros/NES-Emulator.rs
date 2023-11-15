@@ -32,7 +32,7 @@ pub struct Ppu<'a> {
     pub oam: [u8; 0x100], // 256 bytes internal oam
 
     pub num_next_sprites_found: u8,
-    pub search_oam_index: u8,
+    pub search_oam_index: u16,
     pub search_current_sprite_byte: i8,
 
     pub next_scanline_sprites: [[u8; 4]; 9], // 4 bytes for each of the 8 sprites (+1 overflow)
@@ -1102,8 +1102,17 @@ impl<'a> Ppu<'a> {
             }
         }
 
-        let true_pixel = PALLET_TO_RGBA
+        let mut true_pixel = PALLET_TO_RGBA
             [(bus.ppu_read(0x3F00 + ((palette as u16) << 2) + (pixel as u16)) & 0x3F) as usize];
+
+        // if self.cycle == 255 {
+        //     true_pixel = RGBA {
+        //         r: 0xff,
+        //         g: 0xff,
+        //         b: 0xff,
+        //         a: 0xff,
+        //     };
+        // }
 
         let offset =
             4 * (((self.scanline as u16) as usize) * 256 + (((self.cycle - 1) as u16) as usize));
@@ -1199,64 +1208,63 @@ impl<'a> Ppu<'a> {
                 if self.scanline < 240
                     && self.bus.borrow().ppu_data.get_sprite_enable()
                     && self.cycle > 64
-                    && self.search_oam_index != 255
+                    && self.cycle <= 256
+                    && self.search_oam_index < 256
                 {
                     // Write on even cycles
                     // Read on odd cycles
 
                     // println!("oam[0]:{}, scanline:{}", self.oam[0], self.scanline);
-                    // if self.oam[0] == 127 && self.scanline == 127 {
+                    // if self.oam[0] == 199 && self.scanline == 24 {
                     //     println!("Got here");
                     // }
 
                     // Reads from oam happen on odd cycles, so we will only work on odd cycles
                     // Implement sprite overflow bug
-                    if self.cycle % 2 == 1 {
-                        if self.num_next_sprites_found < 8 {
-                            if self.search_current_sprite_byte == -1 {
-                                self.next_scanline_sprites[self.num_next_sprites_found as usize]
-                                    [0] = self.oam[self.search_oam_index as usize];
-                                self.search_oam_index += 1;
-                                self.search_current_sprite_byte = 0;
-                            } else if self.search_current_sprite_byte == 0 {
-                                // If Sprite in range
-                                let mut sprite_height = 8;
-                                if self.bus.borrow().ppu_data.get_sprite_size() {
-                                    sprite_height = 16;
-                                }
-                                if self.next_scanline_sprites[self.num_next_sprites_found as usize]
-                                    [0]
-                                    <= self.scanline as u8
-                                    && self.next_scanline_sprites
-                                        [self.num_next_sprites_found as usize][0]
-                                        + sprite_height
-                                        > self.scanline as u8
-                                {
-                                    if self.num_next_sprites_found == 7 {
-                                        self.num_next_sprites_found = 8;
-                                        self.bus.borrow_mut().ppu_data.set_sprite_overflow(true);
-                                    } else {
-                                        self.num_next_sprites_found += 1;
-                                        self.search_current_sprite_byte = 1;
-                                    }
-                                } else {
-                                    self.next_scanline_sprites
-                                        [self.num_next_sprites_found as usize][0] = 0xFF;
-                                    self.search_current_sprite_byte = -1;
-                                    self.search_oam_index += 3;
-                                }
-                            } else if self.search_current_sprite_byte < 4 {
-                                self.next_scanline_sprites
-                                    [self.num_next_sprites_found as usize - 1]
-                                    [self.search_current_sprite_byte as usize] =
-                                    self.oam[self.search_oam_index as usize];
-                                self.search_oam_index += 1;
-                                self.search_current_sprite_byte += 1;
-                            } else {
-                                self.search_current_sprite_byte = -1;
+                    // if self.cycle % 2 == 1 {
+                    if self.num_next_sprites_found < 8 {
+                        if self.search_current_sprite_byte == -1 {
+                            self.next_scanline_sprites[self.num_next_sprites_found as usize][0] =
+                                self.oam[self.search_oam_index as usize];
+                            self.search_oam_index += 1;
+                            self.search_current_sprite_byte = 0;
+                        } else if self.search_current_sprite_byte == 0 {
+                            // If Sprite in range
+                            let mut sprite_height = 8;
+                            if self.bus.borrow().ppu_data.get_sprite_size() {
+                                sprite_height = 16;
                             }
+                            if self.next_scanline_sprites[self.num_next_sprites_found as usize][0]
+                                <= self.scanline as u8
+                                && self.next_scanline_sprites[self.num_next_sprites_found as usize]
+                                    [0]
+                                    + sprite_height
+                                    > self.scanline as u8
+                            {
+                                if self.num_next_sprites_found == 7 {
+                                    self.num_next_sprites_found = 8;
+                                    self.bus.borrow_mut().ppu_data.set_sprite_overflow(true);
+                                } else {
+                                    self.num_next_sprites_found += 1;
+                                    self.search_current_sprite_byte = 1;
+                                }
+                            } else {
+                                self.next_scanline_sprites[self.num_next_sprites_found as usize]
+                                    [0] = 0xFF;
+                                self.search_current_sprite_byte = -1;
+                                self.search_oam_index += 3;
+                            }
+                        } else if self.search_current_sprite_byte < 4 {
+                            self.next_scanline_sprites[self.num_next_sprites_found as usize - 1]
+                                [self.search_current_sprite_byte as usize] =
+                                self.oam[self.search_oam_index as usize];
+                            self.search_oam_index += 1;
+                            self.search_current_sprite_byte += 1;
+                        } else {
+                            self.search_current_sprite_byte = -1;
                         }
                     }
+                    // }
 
                     // if self.cycle % 2 == 0 {
                     //     if self.sprite_data_to_copy == 1 {
@@ -1305,7 +1313,7 @@ impl<'a> Ppu<'a> {
                     // }
                 }
 
-                if self.scanline < 240 && self.cycle <= 256 {
+                if self.scanline < 240 && self.cycle < 256 {
                     self.render_pixel();
                 }
             }
