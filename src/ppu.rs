@@ -30,14 +30,17 @@ pub struct Ppu<'a> {
 
     // Sprites
     pub oam: [u8; 0x100], // 256 bytes internal oam
-    pub next_sprites_found: u8,
-    pub next_oam_index: u8,
-    pub next_sprite_copy_index: i8,
-    pub next_scanline_sprites: [[u8; 4]; 8], // 4 bytes for each of the 8 sprites (+1 overflow)
-    pub current_scanline_sprites: [[u8; 4]; 9],
+
+    pub num_next_sprites_found: u8,
+    pub search_oam_index: u8,
+    pub search_current_sprite_byte: i8,
+
+    pub next_scanline_sprites: [[u8; 4]; 9], // 4 bytes for each of the 8 sprites (+1 overflow)
+    pub current_scanline_sprites: [[u8; 4]; 8],
 
     pub scanline_sprite_patterns_low: [u8; 8],
     pub scanline_sprite_patterns_high: [u8; 8],
+    pub scanline_sprite_shift_counters: [u8; 8],
     // pub current_scanline_sprite_counters: [u8; 8]; // 8 sprites
     // pub secondary_oam: [u8; 0x20],
     // pub current_sprite_data: [SpriteData; 8],
@@ -667,13 +670,16 @@ impl<'a> Ppu<'a> {
             background_shift_pattern_high: 0,
 
             oam: [0; 0x100],
-            next_sprites_found: 0,
-            next_oam_index: 0,
-            next_sprite_copy_index: -1,
-            current_scanline_sprites: [[0; 4]; 9], // 4 bytes for each of the 8 sprites
-            next_scanline_sprites: [[0; 4]; 8],    // 4 bytes for each of the 8 sprites
+
+            num_next_sprites_found: 0,
+            search_oam_index: 0,
+            search_current_sprite_byte: -1,
+
+            current_scanline_sprites: [[0; 4]; 8], // 4 bytes for each of the 8 sprites
+            next_scanline_sprites: [[0; 4]; 9],    // 4 bytes for each of the 8 sprites
             scanline_sprite_patterns_low: [0; 8],
             scanline_sprite_patterns_high: [0; 8],
+            scanline_sprite_shift_counters: [0; 8],
 
             scanline: 0,
             cycle: 0,
@@ -739,13 +745,6 @@ impl<'a> Ppu<'a> {
         bus.ppu_data.set_sprite_hit(false);
         bus.ppu_data.set_sprite_overflow(false);
 
-        // Set secondary oam to 0xFF
-        // and coppy next to current
-        for i in 0..7 {
-            self.current_scanline_sprites[i] = self.next_scanline_sprites[i];
-            self.next_scanline_sprites[i] = [0xFF, 0xFF, 0xFF, 0xFF];
-        }
-
         if bus.ppu_data.get_background_enable() || bus.ppu_data.get_sprite_enable() {
             let t = bus.ppu_data.get_fine_y_scroll_t();
             bus.ppu_data.set_fine_y_scroll_v(t);
@@ -794,12 +793,12 @@ impl<'a> Ppu<'a> {
         }
     }
 
-    pub fn set_next_nametable(&mut self) {
+    pub fn set_background_next_nametable(&mut self) {
         let bus = self.bus.borrow();
         self.background_next_nametable = bus.ppu_read(0x2000 | (bus.ppu_data.vram_addr & 0x0FFF));
     }
 
-    pub fn set_next_attribute(&mut self) {
+    pub fn set_background_next_attribute(&mut self) {
         let bus = self.bus.borrow();
         let mut attrib_addr: u16 = 0x23C0;
         attrib_addr |= (bus.ppu_data.get_nametable_y_v() as u16) << 11;
@@ -817,7 +816,7 @@ impl<'a> Ppu<'a> {
         self.background_next_attrib &= 0x03;
     }
 
-    pub fn set_next_pattern_low(&mut self) {
+    pub fn set_background_next_pattern_low(&mut self) {
         let bus = self.bus.borrow();
         let mut pattern_addr: u16 = bus.ppu_data.get_fine_y_scroll_v() as u16;
 
@@ -830,7 +829,7 @@ impl<'a> Ppu<'a> {
         self.background_next_pattern_low = bus.ppu_read(pattern_addr);
     }
 
-    pub fn set_next_pattern_high(&mut self) {
+    pub fn set_background_next_pattern_high(&mut self) {
         let bus = self.bus.borrow();
         let mut pattern_addr: u16 = bus.ppu_data.get_fine_y_scroll_v() as u16;
 
@@ -843,6 +842,116 @@ impl<'a> Ppu<'a> {
         pattern_addr += 8;
 
         self.background_next_pattern_high = bus.ppu_read(pattern_addr);
+    }
+
+    pub fn set_sprite_next_pattern(&mut self, low: bool) {
+        let bus = self.bus.borrow();
+        let current_sprite: usize = ((self.cycle - 256) / 8) as usize;
+
+        // Checks for bad sprite data
+        if current_sprite >= self.num_next_sprites_found as usize
+        // || (self.scanline as i16 - self.next_scanline_sprites[current_sprite][0] as i16) > 7
+        {
+            return;
+        }
+        let mut pattern_addr: u16;
+
+        if !bus.ppu_data.get_sprite_size() {
+            // 8x8
+
+            if !bus.ppu_data.get_sprite_table_select() {
+                // 0x0000
+                pattern_addr = 0x0000;
+            } else {
+                // 0x1000
+                pattern_addr = 0x1000;
+            }
+
+            // Make sure this is floored
+            pattern_addr += (self.next_scanline_sprites[current_sprite][1] as u16) << 4;
+
+            // Handle vertical flip
+            if self.next_scanline_sprites[current_sprite][2] & 0x80 == 0 {
+                // No flip
+                pattern_addr +=
+                    (self.scanline as u16) - (self.next_scanline_sprites[current_sprite][0] as u16);
+            } else {
+                // Flip
+                pattern_addr += 7
+                    - ((self.scanline as u16)
+                        - (self.next_scanline_sprites[current_sprite][0] as u16));
+            }
+        } else {
+            // 8x16
+
+            if self.next_scanline_sprites[current_sprite][1] & 0x01 == 0 {
+                // 0x0000
+                pattern_addr = 0x0000;
+            } else {
+                // 0x1000
+                pattern_addr = 0x1000;
+            }
+
+            // Handle vertical flip
+            if self.next_scanline_sprites[current_sprite][2] & 0x80 == 0 {
+                // No flip
+
+                // Top or bottom tile
+                if (self.scanline as u16) - (self.next_scanline_sprites[current_sprite][0] as u16)
+                    < 8
+                {
+                    // Top
+                    pattern_addr += (self.next_scanline_sprites[current_sprite][1] as u16) << 4;
+                } else {
+                    // Bottom
+                    pattern_addr +=
+                        ((self.next_scanline_sprites[current_sprite][1] as u16) + 1) << 4;
+                }
+                pattern_addr +=
+                    (self.scanline as u16) - (self.next_scanline_sprites[current_sprite][0] as u16);
+            } else {
+                // Flip
+
+                // Top or bottom tile
+                if (self.scanline as u16) - (self.next_scanline_sprites[current_sprite][0] as u16)
+                    < 8
+                {
+                    // Top
+                    pattern_addr +=
+                        ((self.next_scanline_sprites[current_sprite][1] as u16) + 1) << 4;
+                } else {
+                    // Bottom
+                    pattern_addr += (self.next_scanline_sprites[current_sprite][1] as u16) << 4;
+                }
+
+                pattern_addr += 7
+                    - ((self.scanline as u16)
+                        - (self.next_scanline_sprites[current_sprite][0] as u16));
+            }
+        }
+
+        if !low {
+            pattern_addr += 8;
+        }
+
+        let mut tmp_pattern = bus.ppu_read(pattern_addr);
+
+        // Horizontal Flip
+        // Maybe should be on one not zero
+        if self.next_scanline_sprites[current_sprite][2] & 0x40 == 0 {
+            let mut flipped = 0;
+            for i in 0..8 {
+                flipped |= ((((tmp_pattern >> i) & 0x01) as u16) << (7 - i)) as u8;
+            }
+            tmp_pattern = flipped;
+        }
+
+        // println!("Pattern: {:#08b}", tmp_pattern);
+        if low {
+            self.scanline_sprite_patterns_low[current_sprite] = tmp_pattern;
+        } else {
+            self.scanline_sprite_patterns_high[current_sprite] = tmp_pattern;
+        }
     }
 
     pub fn scroll_horizontal(&mut self) {
@@ -917,6 +1026,10 @@ impl<'a> Ppu<'a> {
         let mut background_pixel = 0x00;
         let mut background_palette = 0x00;
 
+        let mut sprite_pixel = 0x00;
+        let mut sprite_palette = 0x00;
+        let mut sprite_priority = 0x00;
+
         // Doing the pixel stuff
         if bus.ppu_data.get_background_enable() {
             let mux = 0x8000 >> bus.ppu_data.fine_x_scroll;
@@ -936,9 +1049,61 @@ impl<'a> Ppu<'a> {
             }
         }
 
-        let true_pixel = PALLET_TO_RGBA[(bus
-            .ppu_read(0x3F00 + ((background_palette as u16) << 2) + (background_pixel as u16))
-            & 0x3F) as usize];
+        if bus.ppu_data.get_sprite_enable() {
+            let mut found_pixel = false;
+            for i in 0..8 {
+                if self.current_scanline_sprites[i][3] == 0 {
+                    if self.scanline_sprite_shift_counters[i] < 8 && !found_pixel {
+                        let mux =
+                            ((0x01 as u16) << self.scanline_sprite_shift_counters[i] as u16) as u8;
+
+                        if self.scanline_sprite_patterns_low[i] & mux != 0 {
+                            sprite_pixel |= 0x01;
+                        }
+                        if self.scanline_sprite_patterns_high[i] & mux != 0 {
+                            sprite_pixel |= 0x02;
+                        }
+
+                        // sprite_pixel = 0x01;
+
+                        sprite_palette = (self.current_scanline_sprites[i][2] & 0x03) + 4;
+                        sprite_priority = (self.current_scanline_sprites[i][2] >> 5) & 0x01;
+
+                        self.scanline_sprite_shift_counters[i] += 1;
+
+                        if sprite_pixel != 0 {
+                            found_pixel = true;
+                        }
+                    }
+                } else {
+                    self.current_scanline_sprites[i][3] -= 1;
+                }
+            }
+        }
+
+        let mut pixel = 0x00;
+        let mut palette = 0x00;
+
+        if background_pixel == 0 && sprite_pixel != 0 {
+            pixel = sprite_pixel;
+            palette = sprite_palette;
+        }
+        if background_pixel != 0 && sprite_pixel == 0 {
+            pixel = background_pixel;
+            palette = background_palette;
+        }
+        if background_pixel != 0 && sprite_pixel != 0 {
+            if sprite_priority == 0 {
+                pixel = sprite_pixel;
+                palette = sprite_palette;
+            } else {
+                pixel = background_pixel;
+                palette = background_palette;
+            }
+        }
+
+        let true_pixel = PALLET_TO_RGBA
+            [(bus.ppu_read(0x3F00 + ((palette as u16) << 2) + (pixel as u16)) & 0x3F) as usize];
 
         let offset =
             4 * (((self.scanline as u16) as usize) * 256 + (((self.cycle - 1) as u16) as usize));
@@ -983,7 +1148,23 @@ impl<'a> Ppu<'a> {
                 }
             }
             // rendering
-            if self.cycle == 0 { // idle cycle
+            if self.cycle == 0 {
+                // idle cycle
+
+                // Do some internal setup
+                // Set secondary oam to 0xFF
+                // and copy next to current
+                for i in 0..7 {
+                    self.current_scanline_sprites[i] = self.next_scanline_sprites[i];
+                    self.next_scanline_sprites[i] = [0xFF, 0xFF, 0xFF, 0xFF];
+                    // self.scanline_sprite_patterns_low[i] = 0;
+                    // self.scanline_sprite_patterns_high[i] = 0;
+                    self.scanline_sprite_shift_counters[i] = 0;
+                }
+
+                self.num_next_sprites_found = 0;
+                self.search_oam_index = 0;
+                self.search_current_sprite_byte = -1;
             } else if self.cycle <= 256 || (self.cycle > 320 && self.cycle <= 336) {
                 if self.cycle == 256 {
                     self.scroll_vertical();
@@ -1000,80 +1181,128 @@ impl<'a> Ppu<'a> {
                     }
                     1 => {
                         self.load_shift();
-                        self.set_next_nametable();
+                        self.set_background_next_nametable();
                     }
                     3 => {
-                        self.set_next_attribute();
+                        self.set_background_next_attribute();
                     }
                     5 => {
-                        self.set_next_pattern_low();
+                        self.set_background_next_pattern_low();
                     }
                     7 => {
-                        self.set_next_pattern_high();
+                        self.set_background_next_pattern_high();
                     }
                     _ => {}
                 }
 
                 // Sprites
-                if self.cycle > 64 {
-                    if self.next_oam_index < 64 {
-                        // Write on even cycles
-                        // Read on odd cycles
-                        if self.cycle % 2 == 0 {
-                            if self.next_sprite_copy_index == -1 {
+                if self.scanline < 240
+                    && self.bus.borrow().ppu_data.get_sprite_enable()
+                    && self.cycle > 64
+                    && self.search_oam_index != 255
+                {
+                    // Write on even cycles
+                    // Read on odd cycles
+
+                    // println!("oam[0]:{}, scanline:{}", self.oam[0], self.scanline);
+                    // if self.oam[0] == 127 && self.scanline == 127 {
+                    //     println!("Got here");
+                    // }
+
+                    // Reads from oam happen on odd cycles, so we will only work on odd cycles
+                    // Implement sprite overflow bug
+                    if self.cycle % 2 == 1 {
+                        if self.num_next_sprites_found < 8 {
+                            if self.search_current_sprite_byte == -1 {
+                                self.next_scanline_sprites[self.num_next_sprites_found as usize]
+                                    [0] = self.oam[self.search_oam_index as usize];
+                                self.search_oam_index += 1;
+                                self.search_current_sprite_byte = 0;
+                            } else if self.search_current_sprite_byte == 0 {
                                 // If Sprite in range
                                 let mut sprite_height = 8;
                                 if self.bus.borrow().ppu_data.get_sprite_size() {
                                     sprite_height = 16;
                                 }
-                                if self.next_scanline_sprites[self.next_sprites_found as usize][0]
+                                if self.next_scanline_sprites[self.num_next_sprites_found as usize]
+                                    [0]
                                     <= self.scanline as u8
-                                    && self.next_scanline_sprites[self.next_sprites_found as usize]
-                                        [0]
+                                    && self.next_scanline_sprites
+                                        [self.num_next_sprites_found as usize][0]
                                         + sprite_height
                                         > self.scanline as u8
                                 {
-                                    if self.next_sprites_found >= 7 {
-                                        self.next_sprites_found = 8;
+                                    if self.num_next_sprites_found == 7 {
+                                        self.num_next_sprites_found = 8;
                                         self.bus.borrow_mut().ppu_data.set_sprite_overflow(true);
-                                        self.next_sprite_copy_index = -1;
                                     } else {
-                                        self.next_sprite_copy_index = 1;
+                                        self.num_next_sprites_found += 1;
+                                        self.search_current_sprite_byte = 1;
                                     }
                                 } else {
-                                    if self.next_sprites_found == 7 {
-                                        self.next_oam_index += 5;
-                                    } else {
-                                        self.next_oam_index += 4;
-                                    }
+                                    self.next_scanline_sprites
+                                        [self.num_next_sprites_found as usize][0] = 0xFF;
+                                    self.search_current_sprite_byte = -1;
+                                    self.search_oam_index += 3;
                                 }
-                            }
-                        } else {
-                            if self.next_sprite_copy_index == -1 {
-                                // Copy the next sprite we are checking to secondary oam
-                                self.next_scanline_sprites[self.next_oam_index as usize][0] =
-                                    self.oam[self.next_oam_index as usize];
-                            } else if self.next_sprite_copy_index == 4 {
-                                self.next_sprites_found += 1;
-                                self.next_sprite_copy_index = -1;
-                                self.next_oam_index += 4;
+                            } else if self.search_current_sprite_byte < 4 {
+                                self.next_scanline_sprites
+                                    [self.num_next_sprites_found as usize - 1]
+                                    [self.search_current_sprite_byte as usize] =
+                                    self.oam[self.search_oam_index as usize];
+                                self.search_oam_index += 1;
+                                self.search_current_sprite_byte += 1;
                             } else {
-                                self.next_scanline_sprites[self.next_oam_index as usize]
-                                    [self.next_sprite_copy_index as usize] = self.oam[(self
-                                    .next_sprite_copy_index
-                                    + self.next_sprite_copy_index)
-                                    as usize];
-                                self.next_sprite_copy_index += 1;
+                                self.search_current_sprite_byte = -1;
                             }
                         }
                     }
-                }
 
-                for i in 0..7 {
-                    if self.current_scanline_sprites[i][0] == 0 {
-                    } else {
-                        self.current_scanline_sprites[i][0] -= 1;
-                    }
+                    // if self.cycle % 2 == 0 {
+                    //     if self.sprite_data_to_copy == 1 {
+                    //         // If Sprite in range
+                    //         let mut sprite_height = 8;
+                    //         if self.bus.borrow().ppu_data.get_sprite_size() {
+                    //             sprite_height = 16;
+                    //         }
+                    //         if self.next_scanline_sprites[self.next_sprites_found as usize][0]
+                    //             <= self.scanline as u8
+                    //             && self.next_scanline_sprites[self.next_sprites_found as usize]
+                    //                 [0]
+                    //                 + sprite_height
+                    //                 > self.scanline as u8
+                    //         {
+                    //             if self.next_sprites_found == 7 {
+                    //                 self.next_sprites_found = 8;
+                    //                 self.bus.borrow_mut().ppu_data.set_sprite_overflow(true);
+                    //             } else {
+                    //                 self.next_sprite_copy_index = 1;
+                    //             }
+                    //         } else {
+                    //             if self.next_sprites_found == 7 {
+                    //                 self.next_oam_index += 5;
+                    //             } else {
+                    //                 self.next_oam_index += 4;
+                    //             }
+                    //         }
+                    //     }
+                    // } else {
+                    //     if self.next_sprite_copy_index < 8 {
+                    //         if self.sprite_data_to_copy == -1 {
+                    //             // Copy the next sprite we are checking to secondary oam
+                    //             self.next_scanline_sprites[self.next_sprites_found as usize]
+                    //                 [0] = self.oam[self.next_oam_index as usize];
+                    //             self.sprite_data_to_copy = 1;
+                    //         } else if self.sprite_data_to_copy == 4 {
+                    //             self.sprite_data_to_copy = -1;
+                    //             self.next_sprites_found += 1;
+                    //             self.next_oam_index += 4;
+                    //         }
+                    //     } else {
+                    //         self.next_scanline_sprites[self.next_oam_index as usize][0] =
+                    //             self.oam[self.next_sprite_copy_index as usize];
+                    //     }
+                    // }
                 }
 
                 if self.scanline < 240 && self.cycle <= 256 {
@@ -1081,10 +1310,39 @@ impl<'a> Ppu<'a> {
                 }
             }
 
-            if self.cycle > 256 && self.cycle <= 320 {
+            if self.cycle == 256 && self.num_next_sprites_found > 1 {
+                // println!("Secondary OAM");
+                // for i in 0..8 {
+                //     println!(
+                //         "Y:{},T:{},A:{},X:{}",
+                //         self.next_scanline_sprites[i][0],
+                //         self.next_scanline_sprites[i][1],
+                //         self.next_scanline_sprites[i][2],
+                //         self.next_scanline_sprites[i][3],
+                //     );
+                // }
+                // println!("OAM");
+                // for i in 0..64 {
+                //     println!(
+                //         "Y:{},T:{},A:{},X:{}",
+                //         self.oam[i * 4 + 0],
+                //         self.oam[i * 4 + 1],
+                //         self.oam[i * 4 + 2],
+                //         self.oam[i * 4 + 3],
+                //     );
+                // }
+            }
+
+            if self.cycle > 256 && self.cycle <= 320 && self.scanline != 261 {
                 match self.cycle % 8 {
-                    5 => {}
-                    7 => {}
+                    // Low bits
+                    5 => {
+                        self.set_sprite_next_pattern(true);
+                    }
+                    // High bits
+                    7 => {
+                        self.set_sprite_next_pattern(false);
+                    }
                     _ => {}
                 }
             }
@@ -1098,7 +1356,7 @@ impl<'a> Ppu<'a> {
             }
             // fetch two bytes for unknown reason
             if self.cycle == 338 || self.cycle == 340 {
-                self.set_next_nametable();
+                self.set_background_next_nametable();
             }
         } else if self.scanline == 240 { // post render scanline
         } else if self.scanline <= 260 {
