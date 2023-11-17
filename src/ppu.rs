@@ -29,8 +29,6 @@ pub struct Ppu<'a> {
     pub background_shift_pattern_high: u16,
 
     // Sprites
-    pub oam: [u8; 0x100], // 256 bytes internal oam
-
     pub num_next_sprites_found: u8,
     pub search_oam_index: u16,
     pub search_current_sprite_byte: i8,
@@ -463,7 +461,6 @@ pub struct PpuData {
     pub mask: u8,
     pub status: u8,
     pub oam_addr: u8,
-    pub oam_data: u8,
     pub scroll_latch: bool,
     pub addr_latch: bool,
     pub data: u8,
@@ -472,6 +469,8 @@ pub struct PpuData {
     pub fine_x_scroll: u8,
     pub vram_addr: u16,
     pub temp_vram_addr: u16,
+
+    pub oam: [u8; 0x100], // 256 bytes internal oam
 }
 // }}}
 
@@ -642,10 +641,10 @@ impl PpuData {
 
     // OAM_DATA
     fn get_oam_data(&self) -> u8 {
-        self.oam_data
+        self.oam[self.oam_addr as usize]
     }
     fn set_oam_data(&mut self, value: u8) {
-        self.oam_data = value
+        self.oam[self.oam_addr as usize] = value
     }
 
     // PPU_DATA
@@ -670,8 +669,6 @@ impl<'a> Ppu<'a> {
             background_shift_pattern_low: 0,
             background_shift_pattern_high: 0,
 
-            oam: [0; 0x100],
-
             num_next_sprites_found: 0,
             search_oam_index: 0,
             search_current_sprite_byte: -1,
@@ -695,19 +692,19 @@ impl<'a> Ppu<'a> {
     }
 
     fn get_oam_sprite_y(&self, index: u8) -> u8 {
-        self.oam[(index * 16) as usize]
+        self.bus.borrow().ppu_data.oam[(index * 16 + 0) as usize]
     }
 
     fn get_oam_sprite_tile(&self, index: u8) -> u8 {
-        self.oam[(index * 16 + 1) as usize]
+        self.bus.borrow().ppu_data.oam[(index * 16 + 1) as usize]
     }
 
     fn get_oam_sprite_attr(&self, index: u8) -> u8 {
-        self.oam[(index * 16 + 2) as usize]
+        self.bus.borrow().ppu_data.oam[(index * 16 + 2) as usize]
     }
 
     fn get_oam_sprite_x(&self, index: u8) -> u8 {
-        self.oam[(index * 16 + 3) as usize]
+        self.bus.borrow().ppu_data.oam[(index * 16 + 3) as usize]
     }
 
     // OAM_DMA
@@ -1155,7 +1152,7 @@ impl<'a> Ppu<'a> {
                 for i in 0x0..0x100 {
                     let addr = bus.oam_dma_addr + (i as u16);
                     // self.primary_oam[i] = bus.read(addr, false);
-                    self.oam[i] = bus.read(addr, false);
+                    bus.ppu_data.oam[i] = bus.read(addr, false);
                 }
                 bus.oam_dma_ppu = false;
             }
@@ -1248,7 +1245,7 @@ impl<'a> Ppu<'a> {
                     if self.num_next_sprites_found < 8 {
                         if self.search_current_sprite_byte == -1 {
                             self.next_scanline_sprites[self.num_next_sprites_found as usize][0] =
-                                self.oam[self.search_oam_index as usize];
+                                self.bus.borrow_mut().ppu_data.oam[self.search_oam_index as usize];
                             self.search_oam_index += 1;
                             self.search_current_sprite_byte = 0;
                         } else if self.search_current_sprite_byte == 0 {
@@ -1284,7 +1281,7 @@ impl<'a> Ppu<'a> {
                         } else if self.search_current_sprite_byte < 4 {
                             self.next_scanline_sprites[self.num_next_sprites_found as usize - 1]
                                 [self.search_current_sprite_byte as usize] =
-                                self.oam[self.search_oam_index as usize];
+                                self.bus.borrow_mut().ppu_data.oam[self.search_oam_index as usize];
                             self.search_oam_index += 1;
                             self.search_current_sprite_byte += 1;
                         } else {
