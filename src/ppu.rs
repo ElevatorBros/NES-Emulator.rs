@@ -34,6 +34,7 @@ pub struct Ppu<'a> {
     pub num_next_sprites_found: u8,
     pub search_oam_index: u16,
     pub search_current_sprite_byte: i8,
+    pub sprite_zero_on_scanline: bool,
 
     pub next_scanline_sprites: [[u8; 4]; 9], // 4 bytes for each of the 8 sprites (+1 overflow)
     pub current_scanline_sprites: [[u8; 4]; 8],
@@ -675,6 +676,8 @@ impl<'a> Ppu<'a> {
             search_oam_index: 0,
             search_current_sprite_byte: -1,
 
+            sprite_zero_on_scanline: false,
+
             current_scanline_sprites: [[0; 4]; 8], // 4 bytes for each of the 8 sprites
             next_scanline_sprites: [[0; 4]; 9],    // 4 bytes for each of the 8 sprites
             scanline_sprite_patterns_low: [0; 8],
@@ -1022,7 +1025,12 @@ impl<'a> Ppu<'a> {
     }
 
     pub fn render_pixel(&mut self) {
-        let bus = self.bus.borrow();
+        let mut bus = self.bus.borrow_mut();
+
+        if !bus.ppu_data.get_sprite_left_column_enable() && self.cycle < 8 {
+            return;
+        }
+
         let mut background_pixel = 0x00;
         let mut background_palette = 0x00;
 
@@ -1031,7 +1039,9 @@ impl<'a> Ppu<'a> {
         let mut sprite_priority = 0x00;
 
         // Doing the pixel stuff
-        if bus.ppu_data.get_background_enable() {
+        if bus.ppu_data.get_background_enable()
+            && (bus.ppu_data.get_background_left_column_enable() || self.cycle >= 8)
+        {
             let mux = 0x8000 >> bus.ppu_data.fine_x_scroll;
 
             if self.background_shift_pattern_low & mux != 0 {
@@ -1049,7 +1059,11 @@ impl<'a> Ppu<'a> {
             }
         }
 
-        if bus.ppu_data.get_sprite_enable() {
+        let mut scanline_sprite_zero = false;
+
+        if bus.ppu_data.get_sprite_enable()
+            && (bus.ppu_data.get_sprite_left_column_enable() || self.cycle >= 8)
+        {
             let mut found_pixel = false;
             for i in 0..8 {
                 if self.current_scanline_sprites[i][3] == 0 {
@@ -1073,6 +1087,9 @@ impl<'a> Ppu<'a> {
 
                         if sprite_pixel != 0 {
                             found_pixel = true;
+                            if i == 0 {
+                                scanline_sprite_zero = true;
+                            }
                         }
                     }
                 } else {
@@ -1100,9 +1117,14 @@ impl<'a> Ppu<'a> {
                 pixel = background_pixel;
                 palette = background_palette;
             }
+
+            // Sprite 0 hit
+            if self.sprite_zero_on_scanline && scanline_sprite_zero {
+                bus.ppu_data.set_sprite_hit(true);
+            }
         }
 
-        let mut true_pixel = PALLET_TO_RGBA
+        let true_pixel = PALLET_TO_RGBA
             [(bus.ppu_read(0x3F00 + ((palette as u16) << 2) + (pixel as u16)) & 0x3F) as usize];
 
         // if self.cycle == 255 {
@@ -1174,6 +1196,7 @@ impl<'a> Ppu<'a> {
                 self.num_next_sprites_found = 0;
                 self.search_oam_index = 0;
                 self.search_current_sprite_byte = -1;
+                self.sprite_zero_on_scanline = false;
             } else if self.cycle <= 256 || (self.cycle > 320 && self.cycle <= 336) {
                 if self.cycle == 256 {
                     self.scroll_vertical();
@@ -1247,6 +1270,10 @@ impl<'a> Ppu<'a> {
                                 } else {
                                     self.num_next_sprites_found += 1;
                                     self.search_current_sprite_byte = 1;
+
+                                    if self.search_oam_index < 4 {
+                                        self.sprite_zero_on_scanline = true;
+                                    }
                                 }
                             } else {
                                 self.next_scanline_sprites[self.num_next_sprites_found as usize]
