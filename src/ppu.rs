@@ -578,19 +578,19 @@ impl PpuData {
     }
     // 0: hide; 1: show
     fn get_background_left_column_enable(&self) -> bool {
-        (self.mask & (1 << 2)) != 0
+        (self.mask & (1 << 1)) != 0
     }
     // 0: hide, 1: show sprites in leftmost 8 pixels of screen
     fn get_sprite_left_column_enable(&self) -> bool {
-        (self.mask & (1 << 1)) != 0
+        (self.mask & (1 << 2)) != 0
     }
     // 0: hide; 1: show
     fn get_background_enable(&self) -> bool {
-        (self.mask & (1 << 4)) != 0
+        (self.mask & (1 << 3)) != 0
     }
     // 0: hide, 1: show background in leftmost 8 pixels of screen
     fn get_sprite_enable(&self) -> bool {
-        (self.mask & (1 << 3)) != 0
+        (self.mask & (1 << 4)) != 0
     }
     // 0: none; 1: emphasize
     fn get_emphasize_red(&self) -> bool {
@@ -1147,6 +1147,7 @@ impl<'a> Ppu<'a> {
     pub fn clock(&mut self) {
         {
             let mut bus = self.bus.borrow_mut();
+            // println!("set_nmi:{}", bus.ppu_data.nmi_occurred);
             // Check for oam dma
             if bus.oam_dma_ppu {
                 for i in 0x0..0x100 {

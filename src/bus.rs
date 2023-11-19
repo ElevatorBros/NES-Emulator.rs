@@ -59,7 +59,7 @@ impl<'a> Bus<'a> {
 
                 oam: [0; 0x100],
             },
-            cpu_debug: false,
+            cpu_debug: true,
             oam_dma_cpu: false,
             oam_dma_ppu: false,
             oam_dma_addr: 0,
@@ -87,14 +87,16 @@ impl<'a> Bus<'a> {
                         self.ppu_data.addr_latch = false;
                         let old_nmi;
                         if self.ppu_data.nmi_occurred {
-                            old_nmi = 0xFF;
+                            old_nmi = 0x80 | self.ppu_data.status;
                         } else {
-                            old_nmi = 0x7F;
+                            old_nmi = 0x7F & self.ppu_data.status;
                         }
 
                         self.ppu_data.nmi_occurred = false;
+                        //IDK if this should be here
+                        self.ppu_data.status &= 0x7F;
 
-                        self.ppu_data.status & old_nmi
+                        old_nmi
                     }
                 }
                 OAM_ADDR_ADDR => return 0, // Write only
