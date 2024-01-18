@@ -1098,6 +1098,8 @@ impl<'a> Ppu<'a> {
         let mut pixel = 0x00;
         let mut palette = 0x00;
 
+        // background_pixel = 0x00;
+
         if background_pixel == 0 && sprite_pixel != 0 {
             pixel = sprite_pixel;
             palette = sprite_palette;

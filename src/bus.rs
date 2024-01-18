@@ -59,7 +59,7 @@ impl<'a> Bus<'a> {
 
                 oam: [0; 0x100],
             },
-            cpu_debug: true,
+            cpu_debug: false,
             oam_dma_cpu: false,
             oam_dma_ppu: false,
             oam_dma_addr: 0,

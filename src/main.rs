@@ -41,22 +41,45 @@ async fn main() {
 
     let mut clock = 0;
 
+    let mut pause = false;
+
     loop {
-        if clock % 12 == 0 {
-            main_cpu.clock();
-        }
-        if clock % 4 == 0 {
-            main_ppu.clock();
+        if !pause {
+            use std::time::Instant;
+            let now = Instant::now();
+            while !main_ppu.render_frame {
+                if clock % 12 == 0 {
+                    main_cpu.clock();
+                }
+                if clock % 4 == 0 {
+                    main_ppu.clock();
+                }
+
+                // 3840 = 16 * 12 * 5 * 4 (NTSC & PAL clock divides)
+                if clock == 3840 {
+                    clock = 0;
+                } else {
+                    clock += 1;
+                }
+            }
+            let elapsed = now.elapsed();
+            // println!("Frame_time_calc_only: {:.2?}", elapsed);
         }
 
-        // 3840 = 16 * 12 * 5 * 4 (NTSC & PAL clock divides)
-        if clock == 3840 {
-            clock = 0;
-        } else {
-            clock += 1;
-        }
+        if main_ppu.render_frame || pause {
+            if is_key_pressed(KeyCode::Space) {
+                pause = !pause;
 
-        if main_ppu.render_frame {
+                if pause {
+                    println!("Pause");
+                } else {
+                    println!("Play");
+                }
+            }
+
+            let delta = get_frame_time();
+            // println!("{}", delta);
+
             let texture = Texture2D::from_rgba8(WINDOW_WIDTH, WINDOW_HEIGHT, &main_ppu.screen);
 
             //draw_texture(&texture, 0.0, 0.0, WHITE);
