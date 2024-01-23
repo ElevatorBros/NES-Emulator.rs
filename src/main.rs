@@ -100,6 +100,49 @@ async fn main() {
                     pivot: None,
                 },
             );
+
+            // pattern table debug start
+            main_ppu.fill_pattern_tables();
+            let plane_left = Texture2D::from_rgba8(128, 128, &main_ppu.pattern_table_left);
+            let plane_right = Texture2D::from_rgba8(128, 128, &main_ppu.pattern_table_right);
+
+            draw_texture_ex(
+                &plane_left,
+                WINDOW_WIDTH as f32 * 3.0,
+                0.0,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(Vec2 {
+                        x: (128 * 3) as f32,
+                        y: (128 * 3) as f32,
+                    }),
+                    source: None,
+                    rotation: 0.0,
+                    flip_x: false,
+                    flip_y: false,
+                    pivot: None,
+                },
+            );
+
+            draw_texture_ex(
+                &plane_right,
+                WINDOW_WIDTH as f32 * 3.0 + (128 * 3) as f32,
+                0.0,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(Vec2 {
+                        x: (128 * 3) as f32,
+                        y: (128 * 3) as f32,
+                    }),
+                    source: None,
+                    rotation: 0.0,
+                    flip_x: false,
+                    flip_y: false,
+                    pivot: None,
+                },
+            );
+
+            // pattern table debug end
             next_frame().await;
             main_ppu.render_frame = false;
             //println!("render");

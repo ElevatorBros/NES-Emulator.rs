@@ -52,6 +52,10 @@ pub struct Ppu<'a> {
     pub render_frame: bool,
     pub screen: [u8; 4 * 256 * 240], // screen pixel buffer
 
+    // Debug Stuff Start
+    pub pattern_table_right: [u8; 4 * 128 * 128],
+    pub pattern_table_left: [u8; 4 * 128 * 128],
+    // Debug Stuff End
     pub bus: Rc<RefCell<Bus<'a>>>, // Reference to main bus
 }
 //: }}}
@@ -687,6 +691,10 @@ impl<'a> Ppu<'a> {
 
             render_frame: false,
             screen: [0x00; 4 * 256 * 240],
+
+            pattern_table_right: [0x00; 4 * 128 * 128],
+            pattern_table_left: [0x00; 4 * 128 * 128],
+
             bus,
         }
     }
@@ -737,6 +745,61 @@ impl<'a> Ppu<'a> {
         self.screen[(offset + 3) as usize] = rgba.a;
     }
     */
+
+    pub fn fill_pattern_tables(&mut self) {
+        let bus = self.bus.borrow();
+        for tile_y in 0..16 {
+            for tile_x in 0..16 {
+                for pixel_y in 0..8 {
+                    for pixel_x in 0..8 {
+                        for side in 0..2 {
+                            let mut bit_plane_addr = 0;
+                            if side == 1 {
+                                bit_plane_addr = 0x1000;
+                            }
+                            bit_plane_addr += (tile_y * 256) + (tile_x * 16) + pixel_y;
+
+                            let pixel_low = bus.ppu_read(bit_plane_addr) & (1 << pixel_x);
+                            let pixel_high = bus.ppu_read(bit_plane_addr + 8) & (1 << pixel_x);
+
+                            let mut pixel = 0x00;
+
+                            if pixel_low != 0 {
+                                pixel |= 0x01;
+                            }
+
+                            if pixel_high != 0 {
+                                pixel |= 0x02;
+                            }
+
+                            let pixel_loc =
+                                (((tile_y * 1024) + (tile_x * 8) + (pixel_y * 128) + (7 - pixel_x))
+                                    * 4) as usize;
+
+                            let palette = 0;
+
+                            let true_pixel = PALLET_TO_RGBA[(bus
+                                .ppu_read(0x3F00 + ((palette as u16) << 2) + (pixel as u16))
+                                & 0x3F)
+                                as usize];
+
+                            if side == 0 {
+                                self.pattern_table_left[pixel_loc + 0] = true_pixel.r;
+                                self.pattern_table_left[pixel_loc + 1] = true_pixel.g;
+                                self.pattern_table_left[pixel_loc + 2] = true_pixel.b;
+                                self.pattern_table_left[pixel_loc + 3] = true_pixel.a;
+                            } else {
+                                self.pattern_table_right[pixel_loc + 0] = true_pixel.r;
+                                self.pattern_table_right[pixel_loc + 1] = true_pixel.g;
+                                self.pattern_table_right[pixel_loc + 2] = true_pixel.b;
+                                self.pattern_table_right[pixel_loc + 3] = true_pixel.a;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     pub fn pre_render_setup(&mut self) {
         let mut bus = self.bus.borrow_mut();
@@ -1058,6 +1121,8 @@ impl<'a> Ppu<'a> {
 
         let mut scanline_sprite_zero = false;
 
+        let mut rendering_sprite = false;
+
         if bus.ppu_data.get_sprite_enable()
             && (bus.ppu_data.get_sprite_left_column_enable() || self.cycle >= 8)
         {
@@ -1065,6 +1130,7 @@ impl<'a> Ppu<'a> {
             for i in 0..8 {
                 if self.current_scanline_sprites[i][3] == 0 {
                     if self.scanline_sprite_shift_counters[i] < 8 && !found_pixel {
+                        rendering_sprite = true;
                         let mux =
                             ((0x01 as u16) << self.scanline_sprite_shift_counters[i] as u16) as u8;
 
@@ -1123,10 +1189,10 @@ impl<'a> Ppu<'a> {
             }
         }
 
-        let true_pixel = PALLET_TO_RGBA
+        let mut true_pixel = PALLET_TO_RGBA
             [(bus.ppu_read(0x3F00 + ((palette as u16) << 2) + (pixel as u16)) & 0x3F) as usize];
 
-        // if self.cycle == 255 {
+        // if rendering_sprite {
         //     true_pixel = RGBA {
         //         r: 0xff,
         //         g: 0xff,

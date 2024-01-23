@@ -145,8 +145,10 @@ impl Cart {
             if self.prg.len() == 0 {
                 return 0;
             }
-            // raw_addr -= 0x8000;
-            raw_addr %= self.prg.len() as u16;
+            raw_addr -= 0x8000;
+            if raw_addr as usize >= self.prg.len() {
+                raw_addr %= self.prg.len() as u16;
+            }
             return self.prg[raw_addr as usize];
         }
     }
@@ -157,7 +159,9 @@ impl Cart {
         if self.chr.len() == 0 {
             return 0;
         }
-        raw_addr %= self.chr.len() as u16;
+        if raw_addr as usize >= self.prg.len() {
+            raw_addr %= self.prg.len() as u16;
+        }
         return self.chr[raw_addr as usize];
     }
 }
