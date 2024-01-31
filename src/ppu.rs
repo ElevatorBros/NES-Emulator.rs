@@ -1121,39 +1121,36 @@ impl<'a> Ppu<'a> {
 
         let mut scanline_sprite_zero = false;
 
-        let mut rendering_sprite = false;
-
         if bus.ppu_data.get_sprite_enable()
             && (bus.ppu_data.get_sprite_left_column_enable() || self.cycle >= 8)
         {
             let mut found_pixel = false;
             for i in 0..8 {
                 if self.current_scanline_sprites[i][3] == 0 {
-                    if self.scanline_sprite_shift_counters[i] < 8 && !found_pixel {
-                        rendering_sprite = true;
-                        let mux =
-                            ((0x01 as u16) << self.scanline_sprite_shift_counters[i] as u16) as u8;
+                    if self.scanline_sprite_shift_counters[i] < 8 {
+                        if !found_pixel {
+                            let mux = ((0x01 as u16)
+                                << self.scanline_sprite_shift_counters[i] as u16)
+                                as u8;
 
-                        if self.scanline_sprite_patterns_low[i] & mux != 0 {
-                            sprite_pixel |= 0x01;
-                        }
-                        if self.scanline_sprite_patterns_high[i] & mux != 0 {
-                            sprite_pixel |= 0x02;
-                        }
+                            if self.scanline_sprite_patterns_low[i] & mux != 0 {
+                                sprite_pixel |= 0x01;
+                            }
+                            if self.scanline_sprite_patterns_high[i] & mux != 0 {
+                                sprite_pixel |= 0x02;
+                            }
 
-                        // sprite_pixel = 0x01;
+                            sprite_palette = (self.current_scanline_sprites[i][2] & 0x03) + 4;
+                            sprite_priority = (self.current_scanline_sprites[i][2] >> 5) & 0x01;
 
-                        sprite_palette = (self.current_scanline_sprites[i][2] & 0x03) + 4;
-                        sprite_priority = (self.current_scanline_sprites[i][2] >> 5) & 0x01;
-
-                        self.scanline_sprite_shift_counters[i] += 1;
-
-                        if sprite_pixel != 0 {
-                            found_pixel = true;
-                            if i == 0 {
-                                scanline_sprite_zero = true;
+                            if sprite_pixel != 0 {
+                                found_pixel = true;
+                                if i == 0 {
+                                    scanline_sprite_zero = true;
+                                }
                             }
                         }
+                        self.scanline_sprite_shift_counters[i] += 1;
                     }
                 } else {
                     self.current_scanline_sprites[i][3] -= 1;
@@ -1163,8 +1160,6 @@ impl<'a> Ppu<'a> {
 
         let mut pixel = 0x00;
         let mut palette = 0x00;
-
-        // background_pixel = 0x00;
 
         if background_pixel == 0 && sprite_pixel != 0 {
             pixel = sprite_pixel;
@@ -1189,17 +1184,8 @@ impl<'a> Ppu<'a> {
             }
         }
 
-        let mut true_pixel = PALLET_TO_RGBA
+        let true_pixel = PALLET_TO_RGBA
             [(bus.ppu_read(0x3F00 + ((palette as u16) << 2) + (pixel as u16)) & 0x3F) as usize];
-
-        // if rendering_sprite {
-        //     true_pixel = RGBA {
-        //         r: 0xff,
-        //         g: 0xff,
-        //         b: 0xff,
-        //         a: 0xff,
-        //     };
-        // }
 
         let offset =
             4 * (((self.scanline as u16) as usize) * 256 + (((self.cycle - 1) as u16) as usize));
