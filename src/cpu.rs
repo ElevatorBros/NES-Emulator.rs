@@ -918,16 +918,16 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::CA, self.get_flag(Flags::NG) != 0);
             }
             0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
+                let read_val = self.read(real_address);
                 // ADC (Add With Carry)
                 let tmp: u16 = (self.a as u16)
-                    .wrapping_add(self.read(real_address) as u16)
+                    .wrapping_add(read_val as u16)
                     .wrapping_add(self.get_flag(Flags::CA) as u16);
 
                 // Overflow flag, I probably messed this up
                 self.set_flag(
                     Flags::OV,
-                    ((self.a ^ self.read(real_address)) & 0x80 == 0)
-                        && ((self.a ^ tmp as u8) & 0x80 == 0x80),
+                    ((self.a ^ read_val) & 0x80 == 0) && ((self.a ^ tmp as u8) & 0x80 == 0x80),
                 );
 
                 self.a = tmp as u8;
@@ -1020,9 +1020,10 @@ impl<'a> Cpu<'a> {
             0x24 | 0x2C => {
                 // BIT (Bit test)
                 // if zero flag is clear
-                self.set_flag(Flags::ZE, self.a & self.read(real_address) == 0);
-                self.set_flag(Flags::OV, self.read(real_address) & 0x70 != 0);
-                self.set_flag(Flags::NG, self.read(real_address) & 0x80 != 0);
+                let read_val = self.read(real_address);
+                self.set_flag(Flags::ZE, self.a & read_val == 0);
+                self.set_flag(Flags::OV, read_val & 0x70 != 0);
+                self.set_flag(Flags::NG, read_val & 0x80 != 0);
             }
             0x30 => {
                 // BMI (Branch if Minus)
@@ -1320,9 +1321,10 @@ impl<'a> Cpu<'a> {
             0x23 | 0x27 | 0x2F | 0x33 | 0x37 | 0x3B | 0x3F => {
                 // *RLA (ROL + AND)
                 let low_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.read(real_address) & 0x80) != 0);
+                let read_val = self.read(real_address);
+                self.set_flag(Flags::CA, (read_val & 0x80) != 0);
 
-                let tmp: u8 = (self.read(real_address) << 1) + low_bit;
+                let tmp: u8 = (read_val << 1) + low_bit;
 
                 self.a &= tmp;
 
@@ -1335,9 +1337,10 @@ impl<'a> Cpu<'a> {
             0x26 | 0x36 | 0x2E | 0x3E => {
                 // ROL (Rotate Left)
                 let low_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.read(real_address) & 0x80) != 0);
+                let read_val = self.read(real_address);
+                self.set_flag(Flags::CA, (read_val & 0x80) != 0);
 
-                let tmp: u8 = (self.read(real_address) << 1) + low_bit;
+                let tmp: u8 = (read_val << 1) + low_bit;
                 self.write(real_address, tmp);
 
                 self.set_flag(Flags::ZE, self.a == 0x00);
@@ -1357,9 +1360,10 @@ impl<'a> Cpu<'a> {
             0x66 | 0x76 | 0x6E | 0x7E => {
                 // ROR (Rotate Right)
                 let high_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.read(real_address) & 0x01) != 0);
+                let read_val = self.read(real_address);
+                self.set_flag(Flags::CA, (read_val & 0x01) != 0);
 
-                let tmp: u8 = (self.read(real_address) >> 1) + (high_bit << 7);
+                let tmp: u8 = (read_val >> 1) + (high_bit << 7);
                 self.write(real_address, tmp);
 
                 self.set_flag(Flags::ZE, self.a == 0x00);
@@ -1379,9 +1383,10 @@ impl<'a> Cpu<'a> {
             0x63 | 0x67 | 0x6F | 0x73 | 0x77 | 0x7B | 0x7F => {
                 // *RRA (ROR + ADC)
                 let high_bit: u8 = self.get_flag(Flags::CA);
-                self.set_flag(Flags::CA, (self.read(real_address) & 0x01) != 0);
+                let read_val = self.read(real_address);
+                self.set_flag(Flags::CA, (read_val & 0x01) != 0);
 
-                let tmp: u8 = (self.read(real_address) >> 1) + (high_bit << 7);
+                let tmp: u8 = (read_val >> 1) + (high_bit << 7);
                 self.write(real_address, tmp);
 
                 let sum: u16 = (self.a as u16)
@@ -1430,16 +1435,16 @@ impl<'a> Cpu<'a> {
             }
             0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 | 0xEB => {
                 // SBC (Subtract with carry)
+                let read_val = self.read(real_address);
                 let tmp: u16 = (self.a as u16)
-                    .wrapping_sub(self.read(real_address) as u16)
+                    .wrapping_sub(read_val as u16)
                     .wrapping_sub((1 as u16).wrapping_sub(self.get_flag(Flags::CA) as u16));
 
                 // Overflow flag, I probably messed this up
                 //self.set_flag(Flags::OV, (((self.a ^ self.read(real_address)) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
                 self.set_flag(
                     Flags::OV,
-                    (((self.a as u16) ^ tmp) & ((!self.read(real_address) as u16) ^ tmp) & 0x80)
-                        != 0x00,
+                    (((self.a as u16) ^ tmp) & ((!read_val as u16) ^ tmp) & 0x80) != 0x00,
                 );
 
                 self.a = tmp as u8;

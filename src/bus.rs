@@ -48,7 +48,6 @@ impl<'a> Bus<'a> {
                 mask: 0,
                 status: 0,
                 oam_addr: 0,
-                oam_data: 0,
                 scroll_latch: false,
                 //addr: 0,
                 addr_latch: false,
@@ -57,6 +56,8 @@ impl<'a> Bus<'a> {
                 fine_x_scroll: 0,
                 vram_addr: 0,
                 temp_vram_addr: 0,
+
+                oam: [0; 0x100],
             },
             cpu_debug: false,
             oam_dma_cpu: false,
@@ -86,18 +87,24 @@ impl<'a> Bus<'a> {
                         self.ppu_data.addr_latch = false;
                         let old_nmi;
                         if self.ppu_data.nmi_occurred {
-                            old_nmi = 0xFF;
+                            old_nmi = 0x80 | self.ppu_data.status;
                         } else {
-                            old_nmi = 0x7F;
+                            old_nmi = 0x7F & self.ppu_data.status;
                         }
 
                         self.ppu_data.nmi_occurred = false;
+                        //IDK if this should be here
+                        self.ppu_data.status &= 0x7F;
 
-                        self.ppu_data.status & old_nmi
+                        old_nmi
                     }
                 }
                 OAM_ADDR_ADDR => return 0, // Write only
-                OAM_DATA_ADDR => return self.ppu_data.oam_data,
+                OAM_DATA_ADDR => {
+                    let tmp = self.ppu_data.oam_addr as usize;
+                    self.ppu_data.oam_addr = self.ppu_data.oam_addr.wrapping_add(1);
+                    return self.ppu_data.oam[tmp];
+                }
                 PPU_SCROLL_ADDR => return 0, // Write only
                 PPU_ADDR_ADDR => return 0,   // Write only
                 PPU_DATA_ADDR => {
@@ -167,7 +174,7 @@ impl<'a> Bus<'a> {
                 PPU_MASK_ADDR => self.ppu_data.mask = value,
                 PPU_STATUS_ADDR => return, // Read only
                 OAM_ADDR_ADDR => self.ppu_data.oam_addr = value,
-                OAM_DATA_ADDR => self.ppu_data.oam_data = value,
+                OAM_DATA_ADDR => self.ppu_data.oam[self.ppu_data.oam_addr as usize] = value,
                 PPU_SCROLL_ADDR => {
                     if !self.ppu_data.scroll_latch {
                         self.ppu_data.fine_x_scroll = value & 0x07;

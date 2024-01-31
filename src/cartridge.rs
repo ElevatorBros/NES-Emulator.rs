@@ -142,8 +142,13 @@ impl Cart {
             return 0;
         } else {
             let mut raw_addr: u16 = addr;
-            // raw_addr -= 0x8000;
-            raw_addr %= self.prg.len() as u16;
+            if self.prg.len() == 0 {
+                return 0;
+            }
+            raw_addr -= 0x8000;
+            if raw_addr as usize >= self.prg.len() {
+                raw_addr %= self.prg.len() as u16;
+            }
             return self.prg[raw_addr as usize];
         }
     }
@@ -151,7 +156,12 @@ impl Cart {
     pub fn ppu_read(&self, addr: u16) -> u8 {
         // mapper 0
         let mut raw_addr: u16 = addr;
-        raw_addr %= self.chr.len() as u16;
+        if self.chr.len() == 0 {
+            return 0;
+        }
+        if raw_addr as usize >= self.prg.len() {
+            raw_addr %= self.prg.len() as u16;
+        }
         return self.chr[raw_addr as usize];
     }
 }

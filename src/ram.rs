@@ -30,7 +30,7 @@ impl Ram {
         // Nametable
         if actual_addr >= 0x2000 && actual_addr < 0x3F00 {
             if self.vertical_mirroring {
-                if actual_addr > 0x2800 {
+                if actual_addr >= 0x2800 {
                     actual_addr -= 0x800;
                 }
             } else {
