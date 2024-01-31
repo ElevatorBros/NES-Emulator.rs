@@ -487,16 +487,16 @@ impl PpuData {
     pub fn get_fine_y_scroll_t(&self) -> u8 {
         ((self.temp_vram_addr >> 12) & 0x0007) as u8
     }
-    pub fn get_nametable_x_v(&self) -> u8 {
+    pub fn get_nametable_y_v(&self) -> u8 {
         ((self.vram_addr >> 11) & 0x0001) as u8
     }
-    pub fn get_nametable_x_t(&self) -> u8 {
+    pub fn get_nametable_y_t(&self) -> u8 {
         ((self.temp_vram_addr >> 11) & 0x0001) as u8
     }
-    pub fn get_nametable_y_v(&self) -> u8 {
+    pub fn get_nametable_x_v(&self) -> u8 {
         ((self.vram_addr >> 10) & 0x0001) as u8
     }
-    pub fn get_nametable_y_t(&self) -> u8 {
+    pub fn get_nametable_x_t(&self) -> u8 {
         ((self.temp_vram_addr >> 10) & 0x0001) as u8
     }
     pub fn get_coarse_y_scroll_v(&self) -> u8 {
@@ -518,16 +518,16 @@ impl PpuData {
     pub fn set_fine_y_scroll_t(&mut self, value: u8) {
         self.temp_vram_addr = (self.temp_vram_addr & 0x0FFF) | ((value as u16) << 12);
     }
-    pub fn set_nametable_x_v(&mut self, value: u8) {
+    pub fn set_nametable_y_v(&mut self, value: u8) {
         self.vram_addr = (self.vram_addr & 0x77FF) | ((value as u16) << 11);
     }
-    pub fn set_nametable_x_t(&mut self, value: u8) {
+    pub fn set_nametable_y_t(&mut self, value: u8) {
         self.temp_vram_addr = (self.temp_vram_addr & 0x77FF) | ((value as u16) << 11);
     }
-    pub fn set_nametable_y_v(&mut self, value: u8) {
+    pub fn set_nametable_x_v(&mut self, value: u8) {
         self.vram_addr = (self.vram_addr & 0x7BFF) | ((value as u16) << 10);
     }
-    pub fn set_nametable_y_t(&mut self, value: u8) {
+    pub fn set_nametable_x_t(&mut self, value: u8) {
         self.temp_vram_addr = (self.temp_vram_addr & 0x7BFF) | ((value as u16) << 10);
     }
     pub fn set_coarse_y_scroll_v(&mut self, value: u8) {
