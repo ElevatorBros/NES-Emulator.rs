@@ -8,6 +8,7 @@ use nes_emulator::bus::{WINDOW_HEIGHT, WINDOW_WIDTH};
 use nes_emulator::cartridge::Cart;
 use nes_emulator::cpu::Cpu;
 use nes_emulator::graphics::window_conf;
+use nes_emulator::input::Input;
 use nes_emulator::ppu::Ppu;
 use nes_emulator::ram::Ram;
 use std::cell::RefCell;
@@ -27,8 +28,9 @@ async fn main() {
 
     let mut main_ram = Ram::new(main_cart.header.mirror());
     //let main_cart = match Cart::new("./nestest.nes") {
+    let mut input = Input::new();
 
-    let main_bus = Bus::new(&mut main_ram, &main_cart);
+    let main_bus = Bus::new(&mut main_ram, &main_cart, &mut input);
     let main_bus_ref = Rc::new(RefCell::new(main_bus));
     let mut main_cpu = Cpu::new(Rc::clone(&main_bus_ref));
     let mut main_ppu = Ppu::new(Rc::clone(&main_bus_ref));
@@ -42,6 +44,8 @@ async fn main() {
     let mut clock = 0;
 
     let mut pause = false;
+
+    let pattern_table_debug_veiw = false;
 
     loop {
         if !pause {
@@ -102,46 +106,47 @@ async fn main() {
             );
 
             // pattern table debug start
-            main_ppu.fill_pattern_tables();
-            let plane_left = Texture2D::from_rgba8(128, 128, &main_ppu.pattern_table_left);
-            let plane_right = Texture2D::from_rgba8(128, 128, &main_ppu.pattern_table_right);
+            if pattern_table_debug_veiw {
+                main_ppu.fill_pattern_tables();
+                let plane_left = Texture2D::from_rgba8(128, 128, &main_ppu.pattern_table_left);
+                let plane_right = Texture2D::from_rgba8(128, 128, &main_ppu.pattern_table_right);
 
-            draw_texture_ex(
-                &plane_left,
-                WINDOW_WIDTH as f32 * 3.0,
-                0.0,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(Vec2 {
-                        x: (128 * 3) as f32,
-                        y: (128 * 3) as f32,
-                    }),
-                    source: None,
-                    rotation: 0.0,
-                    flip_x: false,
-                    flip_y: false,
-                    pivot: None,
-                },
-            );
+                draw_texture_ex(
+                    &plane_left,
+                    WINDOW_WIDTH as f32 * 3.0,
+                    0.0,
+                    WHITE,
+                    DrawTextureParams {
+                        dest_size: Some(Vec2 {
+                            x: (128 * 3) as f32,
+                            y: (128 * 3) as f32,
+                        }),
+                        source: None,
+                        rotation: 0.0,
+                        flip_x: false,
+                        flip_y: false,
+                        pivot: None,
+                    },
+                );
 
-            draw_texture_ex(
-                &plane_right,
-                WINDOW_WIDTH as f32 * 3.0 + (128 * 3) as f32,
-                0.0,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(Vec2 {
-                        x: (128 * 3) as f32,
-                        y: (128 * 3) as f32,
-                    }),
-                    source: None,
-                    rotation: 0.0,
-                    flip_x: false,
-                    flip_y: false,
-                    pivot: None,
-                },
-            );
-
+                draw_texture_ex(
+                    &plane_right,
+                    WINDOW_WIDTH as f32 * 3.0 + (128 * 3) as f32,
+                    0.0,
+                    WHITE,
+                    DrawTextureParams {
+                        dest_size: Some(Vec2 {
+                            x: (128 * 3) as f32,
+                            y: (128 * 3) as f32,
+                        }),
+                        source: None,
+                        rotation: 0.0,
+                        flip_x: false,
+                        flip_y: false,
+                        pivot: None,
+                    },
+                );
+            }
             // pattern table debug end
             next_frame().await;
             main_ppu.render_frame = false;

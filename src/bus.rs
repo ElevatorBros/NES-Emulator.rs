@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 use crate::cartridge::Cart;
+use crate::input::Input;
 use crate::ppu::PpuData;
 use crate::ram::Ram;
 
@@ -18,11 +19,13 @@ pub const PPU_SCROLL_ADDR: u16 = 0x2005;
 pub const PPU_ADDR_ADDR: u16 = 0x2006;
 pub const PPU_DATA_ADDR: u16 = 0x2007;
 pub const OAM_DMA_ADDR: u16 = 0x4014;
+pub const JOYPAD_ONE_ADDR: u16 = 0x4016;
 
 //: Bus {{{
 pub struct Bus<'a> {
     ram: &'a mut Ram, // 2KB Internal RAM
     cart: &'a Cart,
+    input: &'a mut Input,
 
     pub nmi_signal: bool,
     pub ppu_data: PpuData,
@@ -37,10 +40,11 @@ pub struct Bus<'a> {
 //: Bus Functions {{{
 impl<'a> Bus<'a> {
     // Setup Functions
-    pub fn new(ram: &'a mut Ram, cart: &'a Cart) -> Self {
+    pub fn new(ram: &'a mut Ram, cart: &'a Cart, input: &'a mut Input) -> Self {
         Self {
             ram,
             cart,
+            input,
             nmi_signal: false,
             ppu_data: PpuData {
                 nmi_occurred: false,
@@ -123,13 +127,17 @@ impl<'a> Bus<'a> {
                     }
                     self.ppu_data.data
                 }
+                JOYPAD_ONE_ADDR => self.input.read_and_shift_joypad_one(),
                 _ => return 0, // catch all
             }
         } else {
             // Cartridge space
             if addr < 0x4020 {
-                // stuff
-                return 0;
+                if addr == JOYPAD_ONE_ADDR {
+                    return self.input.read_and_shift_joypad_one();
+                } else {
+                    return 0;
+                }
             } else if addr < 0x8000 {
                 // Cart RAM, todo
                 return 0;
@@ -213,6 +221,13 @@ impl<'a> Bus<'a> {
             self.oam_dma_cpu = true;
             self.oam_dma_ppu = true;
             self.oam_dma_addr = (value as u16) << 8;
+        } else if addr == JOYPAD_ONE_ADDR {
+            if value & 1 != 0 {
+                self.input.set_latch(true);
+            } else {
+                self.input.update_input();
+                self.input.set_latch(false);
+            }
         }
         /* else if addr < 0x3FFF { // PPU Registers
             //return self.ppu.write(addr, value);
