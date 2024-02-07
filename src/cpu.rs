@@ -22,8 +22,7 @@ pub struct Cpu<'a> {
     pub cycl: u32, // CPU Ticks
     pub next: u32, // Tick of next instruction
 
-    pub irq_siginal: bool,
-    //pub nmi_siginal: bool,
+    pub irq_siginal: bool, // IRQ Flag 
     pub bus: Rc<RefCell<Bus<'a>>>, // Reference to main bus
 }
 //: }}}
@@ -61,557 +60,57 @@ pub enum AddrM {
 }
 //: }}}
 
-//: addressingModesFull6502 {{{
-/*
-let addressingModesFull6502: [u8, 0xFF] = [
-   IMP, IIX, NUL, NUL, NUL, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, NUL, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   ABS, IIX, NUL, NUL, ZPG, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   IMP, IIX, NUL, NUL, NUL, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   IMP, IIX, NUL, NUL, NUL, ZPG, ZPG, NUL, IMP, IMD, ACC, NUL, IND, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   NUL, IIX, NUL, NUL, ZPG, ZPG, ZPG, NUL, IMP, NUL, IMP, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, ZIX, ZIX, ZIY, NUL, IMP, AIY, IMP, NUL, NUL, AIX, NUL, NUL,
-   IMD, IIX, IMD, NUL, ZPG, ZPG, ZPG, NUL, IMP, IMD, IMP, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, ZIX, ZIX, ZIY, NUL, IMP, AIY, IMP, NUL, AIX, AIX, AIY, NUL,
-   IMD, IIX, NUL, NUL, ZPG, ZPG, ZPG, NUL, IMP, IMD, IMP, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-   IMD, IIX, NUL, NUL, ZPG, ZPG, ZPG, NUL, IMP, IMD, IMP, NUL, ABS, ABS, ABS, NUL,
-   REL, IIY, NUL, NUL, NUL, ZIX, ZIX, NUL, IMP, AIY, NUL, NUL, NUL, AIX, AIX, NUL,
-
-]*/
-//: }}}
 
 //: ADDRESSING_MODE_LOOKUP {{{
 pub static ADDRESSING_MODE_LOOKUP: [AddrM; 0x100] = [
-    AddrM::IMP,
-    AddrM::IIX,
-    AddrM::NUL,
-    AddrM::IIX,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::ACC,
-    AddrM::IMD,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::REL,
-    AddrM::IIY,
-    AddrM::NUL,
-    AddrM::IIY,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::ADR,
-    AddrM::IIX,
-    AddrM::NUL,
-    AddrM::IIX,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::ACC,
-    AddrM::IMD,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::REL,
-    AddrM::IIY,
-    AddrM::NUL,
-    AddrM::IIY,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::IMP,
-    AddrM::IIX,
-    AddrM::NUL,
-    AddrM::IIX,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::ACC,
-    AddrM::IMD,
-    AddrM::ADR,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::REL,
-    AddrM::IIY,
-    AddrM::NUL,
-    AddrM::IIY,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::IMP,
-    AddrM::IIX,
-    AddrM::NUL,
-    AddrM::IIX,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::ACC,
-    AddrM::IMD,
-    AddrM::IND,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::REL,
-    AddrM::IIY,
-    AddrM::NUL,
-    AddrM::IIY,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::IMD,
-    AddrM::IIX,
-    AddrM::IMD,
-    AddrM::IIX,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::IMP,
-    AddrM::NUL,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::REL,
-    AddrM::IIY,
-    AddrM::NUL,
-    AddrM::NUL,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIY,
-    AddrM::ZIY,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::IMP,
-    AddrM::NUL,
-    AddrM::NUL,
-    AddrM::AIX,
-    AddrM::NUL,
-    AddrM::NUL,
-    AddrM::IMD,
-    AddrM::IIX,
-    AddrM::IMD,
-    AddrM::IIX,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::IMP,
-    AddrM::NUL,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::REL,
-    AddrM::IIY,
-    AddrM::NUL,
-    AddrM::IIY,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIY,
-    AddrM::ZIY,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::IMP,
-    AddrM::NUL,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIY,
-    AddrM::AIY,
-    AddrM::IMD,
-    AddrM::IIX,
-    AddrM::IMD,
-    AddrM::IIX,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::REL,
-    AddrM::IIY,
-    AddrM::NUL,
-    AddrM::IIY,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::IMD,
-    AddrM::IIX,
-    AddrM::IMD,
-    AddrM::IIX,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::ZPG,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::IMP,
-    AddrM::IMD,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::ABS,
-    AddrM::REL,
-    AddrM::IIY,
-    AddrM::NUL,
-    AddrM::IIY,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::ZIX,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::IMP,
-    AddrM::AIY,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
-    AddrM::AIX,
+    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+    AddrM::ADR, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::ADR, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+    AddrM::IMP, AddrM::IIX, AddrM::NUL, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::ACC, AddrM::IMD, AddrM::IND, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+    AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::NUL, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::NUL, AddrM::AIX, AddrM::NUL, AddrM::NUL,
+    AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::NUL, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIY, AddrM::ZIY, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::NUL, AddrM::AIX, AddrM::AIX, AddrM::AIY, AddrM::AIY,
+    AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
+    AddrM::IMD, AddrM::IIX, AddrM::IMD, AddrM::IIX, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::ZPG, AddrM::IMP, AddrM::IMD, AddrM::IMP, AddrM::IMD, AddrM::ABS, AddrM::ABS, AddrM::ABS, AddrM::ABS,
+    AddrM::REL, AddrM::IIY, AddrM::NUL, AddrM::IIY, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::ZIX, AddrM::IMP, AddrM::AIY, AddrM::IMP, AddrM::AIY, AddrM::AIX, AddrM::AIX, AddrM::AIX, AddrM::AIX,
 ];
 //: }}}
 
-// PAGE_BOUNDARY_ADDITION
-const PBA: u8 = 0x80;
-// BRANCH_ADDITION
-const BA: u8 = 0x40;
 
 //: CYCLE_COUNTS {{{
+
+// PAGE_BOUNDARY_ADDITION (used to denate additional cycles on page crossing)
+const PBA: u8 = 0x80;
+// BRANCH_ADDITION (used to denote additional cycles on branch)
+const BA: u8 = 0x40;
+
 static CYCLE_COUNTS: [u8; 0x100] = [
-    7,
-    6,
-    0,
-    8,
-    3,
-    3,
-    5,
-    5,
-    3,
-    2,
-    2,
-    2,
-    4,
-    4,
-    6,
-    6,
-    2 | BA,
-    5 | PBA,
-    0,
-    8,
-    4,
-    4,
-    6,
-    6,
-    2,
-    4 | PBA,
-    2,
-    7,
-    4 | PBA,
-    4 | PBA,
-    7,
-    7,
-    6,
-    6,
-    0,
-    8,
-    3,
-    3,
-    5,
-    5,
-    4,
-    2,
-    2,
-    2,
-    4,
-    4,
-    6,
-    6,
-    2 | BA,
-    5 | PBA,
-    0,
-    8,
-    4,
-    4,
-    6,
-    6,
-    2,
-    4 | PBA,
-    2,
-    7,
-    4 | PBA,
-    4 | PBA,
-    7,
-    7,
-    6,
-    6,
-    0,
-    8,
-    3,
-    3,
-    5,
-    5,
-    3,
-    2,
-    2,
-    2,
-    3,
-    4,
-    6,
-    6,
-    2 | BA,
-    5 | PBA,
-    0,
-    8,
-    4,
-    4,
-    6,
-    6,
-    2,
-    4 | PBA,
-    2,
-    7,
-    4 | PBA,
-    4 | PBA,
-    7,
-    7,
-    6,
-    6,
-    0,
-    8,
-    3,
-    3,
-    5,
-    5,
-    4,
-    2,
-    2,
-    2,
-    5,
-    4,
-    6,
-    6,
-    2 | BA,
-    5 | PBA,
-    0,
-    8,
-    4,
-    4,
-    6,
-    6,
-    2,
-    4 | PBA,
-    2,
-    7,
-    4 | PBA,
-    4 | PBA,
-    7,
-    7,
-    2,
-    6,
-    2,
-    6,
-    3,
-    3,
-    3,
-    3,
-    2,
-    2,
-    2,
-    0,
-    4,
-    4,
-    4,
-    4,
-    2 | BA,
-    6,
-    2,
-    0,
-    4,
-    4,
-    4,
-    4,
-    2,
-    5,
-    2,
-    0,
-    4,
-    5,
-    4,
-    0,
-    2,
-    6,
-    2,
-    6,
-    3,
-    3,
-    3,
-    3,
-    2,
-    2,
-    2,
-    0,
-    4,
-    4,
-    4,
-    4,
-    2 | BA,
-    5 | PBA,
-    0,
-    5 | PBA,
-    4,
-    4,
-    4,
-    4,
-    2,
-    4 | PBA,
-    2,
-    0,
-    4 | PBA,
-    4 | PBA,
-    4 | PBA,
-    4,
-    2,
-    6,
-    2,
-    8,
-    3,
-    3,
-    5,
-    5,
-    2,
-    2,
-    2,
-    2,
-    4,
-    4,
-    6,
-    6,
-    2 | BA,
-    5 | PBA,
-    0,
-    8,
-    4,
-    4,
-    6,
-    6,
-    2,
-    4 | PBA,
-    2,
-    7,
-    4 | PBA,
-    4 | PBA,
-    7,
-    7,
-    2,
-    6,
-    2,
-    8,
-    3,
-    3,
-    5,
-    5,
-    2,
-    2,
-    2,
-    2,
-    4,
-    4,
-    6,
-    6,
-    2 | BA,
-    5 | PBA,
-    0,
-    8,
-    4,
-    4,
-    6,
-    6,
-    2,
-    4 | PBA,
-    2,
-    7,
-    4 | PBA,
-    4 | PBA,
-    7,
-    7,
+    7    ,6    ,0    ,8    ,3    ,3    ,5    ,5    ,3    ,2    ,2    ,2    ,4    ,4    ,6    ,6    ,
+    2|BA ,5|PBA,0    ,8    ,4    ,4    ,6    ,6    ,2    ,4|PBA,2    ,7    ,4|PBA,4|PBA,7    ,7    ,
+    6    ,6    ,0    ,8    ,3    ,3    ,5    ,5    ,4    ,2    ,2    ,2    ,4    ,4    ,6    ,6    ,
+    2|BA ,5|PBA,0    ,8    ,4    ,4    ,6    ,6    ,2    ,4|PBA,2    ,7    ,4|PBA,4|PBA,7    ,7    ,
+    6    ,6    ,0    ,8    ,3    ,3    ,5    ,5    ,3    ,2    ,2    ,2    ,3    ,4    ,6    ,6    ,
+    2|BA ,5|PBA,0    ,8    ,4    ,4    ,6    ,6    ,2    ,4|PBA,2    ,7    ,4|PBA,4|PBA,7    ,7    ,
+    6    ,6    ,0    ,8    ,3    ,3    ,5    ,5    ,4    ,2    ,2    ,2    ,5    ,4    ,6    ,6    ,
+    2|BA ,5|PBA,0    ,8    ,4    ,4    ,6    ,6    ,2    ,4|PBA,2    ,7    ,4|PBA,4|PBA,7    ,7    ,
+    2    ,6    ,2    ,6    ,3    ,3    ,3    ,3    ,2    ,2    ,2    ,0    ,4    ,4    ,4    ,4    ,
+    2|BA ,6    ,2    ,0    ,4    ,4    ,4    ,4    ,2    ,5    ,2    ,0    ,4    ,5    ,4    ,0    ,
+    2    ,6    ,2    ,6    ,3    ,3    ,3    ,3    ,2    ,2    ,2    ,0    ,4    ,4    ,4    ,4    ,
+    2|BA ,5|PBA,0    ,5|PBA,4    ,4    ,4    ,4    ,2    ,4|PBA,2    ,0    ,4|PBA,4|PBA,4|PBA,4    ,
+    2    ,6    ,2    ,8    ,3    ,3    ,5    ,5    ,2    ,2    ,2    ,2    ,4    ,4    ,6    ,6    ,
+    2|BA ,5|PBA,0    ,8    ,4    ,4    ,6    ,6    ,2    ,4|PBA,2    ,7    ,4|PBA,4|PBA,7    ,7    ,
+    2    ,6    ,2    ,8    ,3    ,3    ,5    ,5    ,2    ,2    ,2    ,2    ,4    ,4    ,6    ,6    ,
+    2|BA ,5|PBA,0    ,8    ,4    ,4    ,6    ,6    ,2    ,4|PBA,2    ,7    ,4|PBA,4|PBA,7    ,7    ,
 ];
+
 //: }}}
 
-// const addressingModesRefrence: [u8, 0xFF] = []
 
 //: CPU_DEBUG {{{
 impl std::fmt::Debug for Cpu<'_> {
@@ -633,43 +132,49 @@ impl std::fmt::Debug for Cpu<'_> {
 //: Cpu Funtions {{{
 impl<'a> Cpu<'a> {
     // Setup functions
-    //pub fn new(bus: &'a mut Bus<'a>) -> Self {
     pub fn new(bus: Rc<RefCell<Bus<'a>>>) -> Self {
+        // Non zero are known startup values
         Self {
             a: 0u8,
             x: 0u8,
             y: 0u8,
             pc: 0x8000,
             stp: 0xFD,
-            //stat: 0x34,
             stat: 0x24,
             cycl: 0u32,
             next: 0u32,
             irq_siginal: false,
-            //nmi_siginal: false,
             bus: bus,
         }
     }
 
     // Bus functions
+
+    // Read byte 
     pub fn read(&self, addr: u16) -> u8 {
         self.bus.borrow_mut().read(addr, false)
     }
 
+    // Read word little endian
     pub fn read_word_little(&mut self, addr: u16) -> u16 {
         self.bus.borrow_mut().read_word_little(addr, false)
     }
 
+    // Read world little endian with wrap
+    // Basicly some reads will wrap if on a page boundry,
+    // so we handle that with this function
     pub fn read_word_little_wrap(&mut self, addr: u16) -> u16 {
         self.bus.borrow_mut().read_word_little_wrap(addr, false)
     }
 
+    // Write byte
     pub fn write(&mut self, addr: u16, val: u8) {
         self.bus.borrow_mut().write(addr, val);
     }
 
     // Interface functions
     pub fn clock(&mut self) {
+        // CPU is paused during oam copy
         if self.bus.borrow_mut().oam_dma_cpu {
             self.next += 513;
             if self.cycl % 2 == 1 {
@@ -686,12 +191,17 @@ impl<'a> Cpu<'a> {
             self.next -= 60000;
         }
 
+        // We are not cycle accurate, opcodes all get run in one cycle 
+        // However we want them to overall take the correct amount of time,
+        // so we use cycl and next
         if self.cycl == self.next {
             if self.irq_siginal && self.get_flag(Flags::ID) == 0 {
+                // Handle an interrupt request
                 self.interrupt(IRQ_VECTOR);
                 self.irq_siginal = false;
                 self.next = self.cycl + 7;
             } else if self.bus.borrow().nmi_signal {
+                // Handle a non maskable interrupt request
                 self.interrupt(NMI_VECTOR);
                 self.bus.borrow_mut().nmi_signal = false;
                 self.next = self.cycl + 8;
@@ -700,21 +210,32 @@ impl<'a> Cpu<'a> {
                     output_debug_info(self);
                 }
 
+                // Read opcode from memory
                 let opcode: u8 = self.read(self.pc);
                 self.pc += 1;
 
+                // Calculate base cycle time
                 let opcode_cycles: u8 = CYCLE_COUNTS[opcode as usize] & 0x0F;
+
+                // Handle addressing modes
                 let (real_address, mut cycle_addition) = self.set_address_mode(opcode);
+
+                // Execute the opcode
                 cycle_addition += self.execute(opcode, real_address);
+
+                // Find total instruction time
                 self.next = self.cycl + (opcode_cycles as u32) + (cycle_addition as u32);
             }
         }
 
+        // Increment internal counter every clock
         self.cycl += 1;
     }
 
     pub fn reset(&mut self) {
+        // Reset changes several valse, and runs from wherever the reset vector points to
         self.set_flag(Flags::ID, true);
+        self.stp = self.stp.wrapping_sub(3);
 
         let pc_one = self.read(RESET_VECTOR);
         let pc_two = self.read(RESET_VECTOR + 1);
@@ -724,17 +245,13 @@ impl<'a> Cpu<'a> {
     }
 
     pub fn irq(&mut self) {
+        // Set an interrupt request
         self.irq_siginal = true;
     }
 
-    /*
-    pub fn nmi(&mut self) {
-        self.nmi_siginal = true;
-    }
-    */
-
     // Internal functions
     fn interrupt(&mut self, addr: u16) {
+        // Push pc to stack
         self.bus
             .borrow_mut()
             .write(0x100 + self.stp as u16, (self.pc >> 8) as u8);
@@ -745,16 +262,19 @@ impl<'a> Cpu<'a> {
             .write(0x100 + self.stp as u16, self.pc as u8);
         self.stp = self.stp.wrapping_sub(1);
 
+        // Push the status register to stack 
         self.bus
             .borrow_mut()
-            .write(0x0100 + self.stp as u16, self.stp);
+            .write(0x0100 + self.stp as u16, self.stat);
         self.stp = self.stp.wrapping_sub(1);
 
+        // Move execution to the interrupt location
         let pc_one = self.read(addr);
         let pc_two = self.read(addr + 1);
         self.pc = ((pc_two as u16) << 8) + pc_one as u16;
     }
 
+    // Set a bit in the status register
     fn set_flag(&mut self, flag: Flags, value: bool) {
         let bit: u8 = flag as u8;
         if value {
@@ -764,6 +284,7 @@ impl<'a> Cpu<'a> {
         }
     }
 
+    // Get a bit in the status register
     fn get_flag(&self, flag: Flags) -> u8 {
         let bit: u8 = flag as u8;
         let value: u8 = self.stat & bit;
@@ -775,21 +296,26 @@ impl<'a> Cpu<'a> {
     }
 
     //: set_address_mode {{{
+    // Different addressing modes will either give and address or an operand.
+    // To make things easier, we always return an address, either the direct address
+    // or one pointing to the specified operand. We also return any additional cycles taken.
     fn set_address_mode(&mut self, opcode: u8) -> (u16, u8) {
         let check_for_page_boundary: bool = (CYCLE_COUNTS[opcode as usize] & PBA) != 0x00;
 
         let mut real_address: u16;
         let mut cycle_addition: u8 = 0;
         match ADDRESSING_MODE_LOOKUP[opcode as usize] {
+            // Absolute and debugging addressing modes
+            // Address is in the instruction
             AddrM::ABS | AddrM::ADR => {
                 real_address = self.read_word_little(self.pc);
 
                 self.pc += 2;
             }
+            // Absolute Indexed X
+            // PEEK(arg) + X
             AddrM::AIX => {
-                let low_byte: u8 = self.read(self.pc);
-                let high_byte: u8 = self.read(self.pc + 1);
-                real_address = ((high_byte as u16) << 8) + low_byte as u16;
+                real_address = self.read_word_little(self.pc);
 
                 real_address = real_address.wrapping_add(self.x as u16);
 
@@ -799,10 +325,10 @@ impl<'a> Cpu<'a> {
 
                 self.pc += 2;
             }
+            // Absolute Indexed Y
+            // PEEK(arg) + Y
             AddrM::AIY => {
-                let low_byte: u8 = self.read(self.pc);
-                let high_byte: u8 = self.read(self.pc + 1);
-                real_address = ((high_byte as u16) << 8) + low_byte as u16;
+                real_address = self.read_word_little(self.pc);
 
                 real_address = real_address.wrapping_add(self.y as u16);
 
@@ -812,10 +338,15 @@ impl<'a> Cpu<'a> {
 
                 self.pc += 2;
             }
+            // Immediate
+            // Opcode is in the instruction
             AddrM::IMD => {
                 real_address = self.pc;
                 self.pc += 1;
             }
+            // Indirect 
+            // Only used by JMP instruction. 
+            // PEEK(PEEK(arg))
             AddrM::IND => {
                 let low_byte: u8 = self.read(self.pc);
                 let high_byte: u8 = self.read(self.pc + 1);
@@ -826,6 +357,8 @@ impl<'a> Cpu<'a> {
 
                 self.pc += 2;
             }
+            // Indexed Indirect
+            // PEEK(PEEK(arg + X))
             AddrM::IIX => {
                 let loc: u8 = self.read(self.pc);
                 let low_byte: u8 = self.read(loc.wrapping_add(self.x) as u16);
@@ -835,6 +368,8 @@ impl<'a> Cpu<'a> {
 
                 self.pc += 1;
             }
+            // Indirect Indexed
+            // PEEK(PEEK(arg) + Y)
             AddrM::IIY => {
                 let loc: u8 = self.read(self.pc);
                 let low_byte: u8 = self.read(loc as u16);
@@ -849,24 +384,34 @@ impl<'a> Cpu<'a> {
 
                 self.pc += 1;
             }
+            // Relative
+            // Offset used in branching instructions
             AddrM::REL => {
                 real_address = self.pc;
                 self.pc += 1;
             }
+            // Zero Page
+            // Value is in the zero page so we only specify the low order byte
             AddrM::ZPG => {
                 real_address = self.read(self.pc) as u16;
                 self.pc += 1;
             }
+            // Zero Page Indexed X
+            // PEEK(00_arg + X)
             AddrM::ZIX => {
                 real_address = (self.read(self.pc) as u16).wrapping_add(self.x as u16);
                 real_address &= 0xFF;
                 self.pc += 1;
             }
+            // Zero Page Indexed Y
+            // PEEK(00_arg + Y)
             AddrM::ZIY => {
                 real_address = (self.read(self.pc) as u16).wrapping_add(self.y as u16);
                 real_address &= 0xFF;
                 self.pc += 1;
             }
+            // Accumulator and Implicit
+            // Value is implied or in the accumulator
             _ => {
                 // ACC / IMP
                 return (0, 0);
@@ -876,33 +421,39 @@ impl<'a> Cpu<'a> {
     }
     //: }}}
 
-    //: execute helpers {{{
+    //: Execute helpers {{{
+    // Common code used by branching instructions
     fn branch(&mut self, real_address: u16) -> u8 {
+        // Note that the original 6502 does not correctly fetch target addresses if it
+        // falls on a page boundary when branching. We do not currently implement this bug, but perhaps we
+        // should.
+                
         let old_pc = self.pc;
-        //self.pc = (self.pc as i32 + bus.read(real_address) as i32) as u16;
-        //self.pc = (self.pc as i32).wrapping_add(bus.read(real_address) as i32) as u16;
-        //self.pc = (self.pc as u32).wrapping_add(bus.read(real_address) as u32) as u16;
-        //self.pc = self.pc.wrapping_add_signed(bus.read(real_address) as i16);
         let mut offset: u8 = self.read(real_address);
 
         if offset <= 0x7F {
+            // Positive offset (forwards)
             self.pc = self.pc.wrapping_add(offset as u16);
         } else {
+            // Negative offset (backwards)
+            // Undo two's complement and sub
             offset = !offset;
             offset += 1;
             self.pc = self.pc.wrapping_sub(offset as u16);
         }
 
         if self.pc & 0xFF00 != old_pc & 0xFF00 {
-            return 2; // Page Boundry
+            // Page Boundary + Branch Taken Cycle additions
+            return 2; 
         }
 
-        return 1; // Branch Taken
+        // Branch Taken Cycle Addition
+        return 1; 
     }
     //: }}}
 
     //: execute {{{
-    // Given an opcode, finds the amount of consecutive bits in memory to read,
+    // Execute an opcode given a real_address to the operand (real_address is like a pointer)
     fn execute(&mut self, opcode: u8, real_address: u16) -> u8 {
         let mut cycle_addition = 0;
 
@@ -914,17 +465,16 @@ impl<'a> Cpu<'a> {
 
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
-
                 self.set_flag(Flags::CA, self.get_flag(Flags::NG) != 0);
             }
             0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
-                let read_val = self.read(real_address);
                 // ADC (Add With Carry)
+                let read_val = self.read(real_address);
                 let tmp: u16 = (self.a as u16)
                     .wrapping_add(read_val as u16)
                     .wrapping_add(self.get_flag(Flags::CA) as u16);
 
-                // Overflow flag, I probably messed this up
+                // Overflow flag
                 self.set_flag(
                     Flags::OV,
                     ((self.a ^ read_val) & 0x80 == 0) && ((self.a ^ tmp as u8) & 0x80 == 0x80),
@@ -944,7 +494,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
             0x0A => {
-                // ASL (Shift Left One Bit) Accumulator
+                // ASL (Arithmetic Shift Left) Accumulator
                 self.set_flag(Flags::CA, (self.a & 0x80) != 0);
 
                 self.a = self.a << 1;
@@ -953,7 +503,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
             0x06 | 0x16 | 0x0E | 0x1E => {
-                // ASL (Shift Left One Bit)
+                // ASL (Arithmetic Shift Left)
                 let mut operand = self.read(real_address);
                 self.set_flag(Flags::CA, (operand & 0x80) != 0);
 
@@ -990,7 +540,6 @@ impl<'a> Cpu<'a> {
             }
             0xCB => {
                 // *AXS (A and X Subtract)
-                // I'm not sure about this, ask ronan
                 let tmp: u16 =
                     ((self.a & self.x) as u16).wrapping_sub(self.read(real_address) as u16);
                 self.x = tmp as u8;
@@ -1006,7 +555,7 @@ impl<'a> Cpu<'a> {
                 }
             }
             0xB0 => {
-                // BCS (Branch if Carry set)
+                // BCS (Branch if Carry Set)
                 if self.get_flag(Flags::CA) != 0 {
                     cycle_addition += self.branch(real_address);
                 }
@@ -1019,7 +568,6 @@ impl<'a> Cpu<'a> {
             }
             0x24 | 0x2C => {
                 // BIT (Bit test)
-                // if zero flag is clear
                 let read_val = self.read(real_address);
                 self.set_flag(Flags::ZE, self.a & read_val == 0);
                 self.set_flag(Flags::OV, read_val & 0x70 != 0);
@@ -1033,7 +581,6 @@ impl<'a> Cpu<'a> {
             }
             0xD0 => {
                 // BNE (Branch if Not Equal)
-                // If zero flag is clear
                 if self.get_flag(Flags::ZE) == 0 {
                     cycle_addition += self.branch(real_address);
                 }
@@ -1064,7 +611,7 @@ impl<'a> Cpu<'a> {
                 }
             }
             0x70 => {
-                // BVS (Branch if Overflowe set)
+                // BVS (Branch if Overflow Set)
                 if self.get_flag(Flags::OV) != 0 {
                     cycle_addition += self.branch(real_address);
                 }
@@ -1086,7 +633,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::OV, false);
             }
             0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => {
-                // CMP (Compare)
+                // CMP (Compare Accumulator)
                 let m: u8 = self.read(real_address);
                 let res: u8 = self.a.wrapping_sub(m);
                 self.set_flag(Flags::CA, self.a >= m);
@@ -1094,7 +641,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (res & 0x80) != 0);
             }
             0xE0 | 0xE4 | 0xEC => {
-                // CPX (Compare X register)
+                // CPX (Compare X Register)
                 let m = self.read(real_address);
                 let res: u8 = self.x.wrapping_sub(m);
                 self.set_flag(Flags::CA, self.x >= m);
@@ -1102,7 +649,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (res & 0x80) != 0);
             }
             0xC0 | 0xC4 | 0xCC => {
-                // CPY (Compare Y register)
+                // CPY (Compare Y Register)
                 let m = self.read(real_address);
                 let res: u8 = self.y.wrapping_sub(m);
                 self.set_flag(Flags::CA, self.y >= m);
@@ -1125,7 +672,6 @@ impl<'a> Cpu<'a> {
                 let m: u8 = self.read(real_address);
                 let res: u8 = m.wrapping_sub(1);
 
-                // TODO: Check this over. I'm not sure if this is correct
                 self.write(real_address, res);
 
                 self.set_flag(Flags::ZE, res == 0);
@@ -1189,8 +735,6 @@ impl<'a> Cpu<'a> {
                     .wrapping_sub(res as u16)
                     .wrapping_sub((1 as u16).wrapping_sub(self.get_flag(Flags::CA) as u16));
 
-                // Overflow flag, I probably messed this up
-                //self.set_flag(Flags::OV, (((self.a ^ self.read(real_address)) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
                 self.set_flag(
                     Flags::OV,
                     (((self.a as u16) ^ tmp) & ((!self.read(real_address) as u16) ^ tmp) & 0x80)
@@ -1206,36 +750,31 @@ impl<'a> Cpu<'a> {
 
             0x4C | 0x6C => {
                 // JMP (Jump)
-                // TODO: This function needs work
-                //  "An original 6502 has does not correctly fetch the target address if the indirect vector falls on a page boundary (e.g. $xxFF where xx is any value from $00 to $FF). In this case fetches the LSB from $xxFF as expected but takes the MSB from $xx00. This is fixed in some later chips like the 65SC02 so for compatibility always ensure the indirect vector is not at the end of the page."
-                // -- https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP
-
-                //let operand = self.read(real_address);
-                //self.pc = self.read_word_little(real_address);
                 self.pc = real_address;
             }
             0x20 => {
                 // JSR (Jump to Subroutine)
                 let return_point: u16 = self.pc - 1;
+
                 self.write(0x100 + self.stp as u16, (return_point >> 8) as u8);
                 self.stp = self.stp.wrapping_sub(1);
+
                 self.write(0x100 + self.stp as u16, return_point as u8);
                 self.stp = self.stp.wrapping_sub(1);
-                //self.pc = self.read_word_little(real_address);
+
                 self.pc = real_address;
             }
 
             0x02 | 0x12 | 0x22 | 0x32 | 0x42 | 0x52 | 0x62 | 0x72 | 0x92 | 0xB2 | 0xD2 | 0xF2 => {
                 // *KIL Crash
-                println!("Crash encounted.");
-                std::process::exit(0);
+                println!("Crash (KIL Opcode) Encountered. Ignoring");
+                // std::process::exit(0);
             }
 
             0xA3 | 0xA7 | 0xAF | 0xB3 | 0xB7 | 0xBF => {
                 // LAX (Load Accumulator and X)
                 self.a = self.read(real_address);
                 self.x = self.a;
-
                 self.set_flag(Flags::ZE, self.a == 0x00);
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
@@ -1299,7 +838,7 @@ impl<'a> Cpu<'a> {
                 self.stp = self.stp.wrapping_sub(1);
             }
             0x08 => {
-                // PHP (Push Processer Status)
+                // PHP (Push Processor Status)
                 self.write(0x100 + self.stp as u16, self.stat | (Flags::B1 as u8));
                 self.stp = self.stp.wrapping_sub(1);
             }
@@ -1312,10 +851,9 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
             0x28 => {
-                // PLP (Pull Processer Status)
+                // PLP (Pull Processor Status)
                 self.stp = self.stp.wrapping_add(1);
                 self.stat = self.read(0x0100 + self.stp as u16) & 0b11101111 | (Flags::B2 as u8);
-                // B flag
             }
 
             0x23 | 0x27 | 0x2F | 0x33 | 0x37 | 0x3B | 0x3F => {
@@ -1393,7 +931,6 @@ impl<'a> Cpu<'a> {
                     .wrapping_add(tmp as u16)
                     .wrapping_add(self.get_flag(Flags::CA) as u16);
 
-                // Overflow flag, I probably messed this up
                 self.set_flag(
                     Flags::OV,
                     ((self.a ^ self.read(real_address)) & 0x80 == 0)
@@ -1421,7 +958,7 @@ impl<'a> Cpu<'a> {
                 self.pc = ((stack_two as u16) << 8) + stack_one as u16;
             }
             0x60 => {
-                // RTS (Return from subroutine)
+                // RTS (Return From Subroutine)
                 self.stp = self.stp.wrapping_add(1);
                 let stack_one = self.read(0x0100 + self.stp as u16);
                 self.stp = self.stp.wrapping_add(1);
@@ -1440,8 +977,6 @@ impl<'a> Cpu<'a> {
                     .wrapping_sub(read_val as u16)
                     .wrapping_sub((1 as u16).wrapping_sub(self.get_flag(Flags::CA) as u16));
 
-                // Overflow flag, I probably messed this up
-                //self.set_flag(Flags::OV, (((self.a ^ self.read(real_address)) & 0x80 == 0)) && ((self.a ^ tmp as u8) & 0x80 == 0x80));
                 self.set_flag(
                     Flags::OV,
                     (((self.a as u16) ^ tmp) & ((!read_val as u16) ^ tmp) & 0x80) != 0x00,
@@ -1520,7 +1055,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.y & 0x80) != 0);
             }
             0xBA => {
-                // TSX (Transfer stack pointer to X)
+                // TSX (Transfer Stack Pointer to X)
                 self.x = self.stp;
                 self.set_flag(Flags::ZE, self.x == 0x00);
                 self.set_flag(Flags::NG, (self.x & 0x80) != 0);
@@ -1532,7 +1067,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
             0x9A => {
-                // TXS (Transfer X to stack pointer)
+                // TXS (Transfer X to Stack Pointer)
                 self.stp = self.x;
             }
             0x98 => {
@@ -1542,7 +1077,7 @@ impl<'a> Cpu<'a> {
                 self.set_flag(Flags::NG, (self.a & 0x80) != 0);
             }
             _ => {
-                return 2; // Treat as nop
+                return 0; // Treat as nop
             }
         }
         return cycle_addition;

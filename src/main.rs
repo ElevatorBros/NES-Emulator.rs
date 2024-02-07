@@ -18,6 +18,8 @@ use std::rc::Rc;
 #[macroquad::main(window_conf)]
 async fn main() {
     let args: Vec<String> = env::args().collect();
+
+    // Catridge loaded, currently the path is provided as the first argument
     let main_cart = match Cart::new(args[1].as_str()) {
         Ok(c) => c,
         Err(e) => {
@@ -26,25 +28,32 @@ async fn main() {
         }
     };
 
+    // Random Access Memory (both on nes and cart)
     let mut main_ram = Ram::new(main_cart.header.mirror());
-    //let main_cart = match Cart::new("./nestest.nes") {
+
+    // User input handler
     let mut input = Input::new();
 
+    // Bus which links everything together
     let main_bus = Bus::new(&mut main_ram, &main_cart, &mut input);
     let main_bus_ref = Rc::new(RefCell::new(main_bus));
+
+    // Central Processing Unit (6502)
     let mut main_cpu = Cpu::new(Rc::clone(&main_bus_ref));
+
+    // Pixel Processing Unit (2C02)
     let mut main_ppu = Ppu::new(Rc::clone(&main_bus_ref));
 
-    //main_cpu.pc = 0x0C000; // Nestest.nes
-    //main_cpu.cycl = 7;
-    //main_cpu.next = 7;
-
+    // Move CPU into reset start to start the program
     main_cpu.reset();
 
+    // Track clock for timings
     let mut clock = 0;
 
+    // Flag to pause the game
     let mut pause = false;
 
+    // Enable to view pattern table while playing
     let pattern_table_debug_veiw = false;
 
     loop {
@@ -52,6 +61,8 @@ async fn main() {
             use std::time::Instant;
             let now = Instant::now();
             while !main_ppu.render_frame {
+                // Clock cpu and ppu at their respective clock divides
+                // Currently NTSC
                 if clock % 12 == 0 {
                     main_cpu.clock();
                 }
@@ -67,13 +78,13 @@ async fn main() {
                 }
             }
             let elapsed = now.elapsed();
-            // println!("Frame_time_calc_only: {:.2?}", elapsed);
         }
 
+        // If the ppu has finished drawing to the frame buffer, allow macroquad to render a frame
         if main_ppu.render_frame || pause {
+            // Pausing logic
             if is_key_pressed(KeyCode::Space) {
                 pause = !pause;
-
                 if pause {
                     println!("Pause");
                 } else {
@@ -82,11 +93,9 @@ async fn main() {
             }
 
             let delta = get_frame_time();
-            // println!("{}", delta);
 
+            // Drawe from main_ppu.screen
             let texture = Texture2D::from_rgba8(WINDOW_WIDTH, WINDOW_HEIGHT, &main_ppu.screen);
-
-            //draw_texture(&texture, 0.0, 0.0, WHITE);
             draw_texture_ex(
                 &texture,
                 0.0,
@@ -148,12 +157,12 @@ async fn main() {
                 );
             }
             // pattern table debug end
+
+            // Let macroquad render
             next_frame().await;
+
+            // Unset render ready flag
             main_ppu.render_frame = false;
-            //println!("render");
-            //println!("vaddr:{}", main_bus.ppu_data.vram_addr);
-            //println!("taddr:{}", main_bus.ppu_data.temp_vram_addr);
         }
     }
-    //println!("Done");
 }
