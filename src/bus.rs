@@ -23,17 +23,18 @@ pub const JOYPAD_ONE_ADDR: u16 = 0x4016;
 
 //: Bus {{{
 pub struct Bus<'a> {
-    ram: &'a mut Ram, // 2KB Internal RAM
+    ram: &'a mut Ram, 
     cart: &'a Cart,
     input: &'a mut Input,
 
-    pub nmi_signal: bool,
-    pub ppu_data: PpuData,
-
-    pub cpu_debug: bool,
-    pub oam_dma_cpu: bool,
-    pub oam_dma_ppu: bool,
-    pub oam_dma_addr: u16,
+    pub nmi_signal: bool,  // Non Maskable Interrupt Signal, flag is here 
+                           // because it goes from PPU to CPU 
+    pub ppu_data: PpuData, // PPU Data that must be accessed by other 
+                           // parts of the code. Defined in ppu.rs
+    pub cpu_debug: bool,   // Flag to display assembled instructions as they execute 
+    pub oam_dma_cpu: bool, // Flag for CPU to halt during OAM DMA 
+    pub oam_dma_ppu: bool, // Flag for PPU to perform OAM DMA
+    pub oam_dma_addr: u16, // Address of the OAM DMA
 }
 //}}}
 
@@ -53,7 +54,6 @@ impl<'a> Bus<'a> {
                 status: 0,
                 oam_addr: 0,
                 scroll_latch: false,
-                //addr: 0,
                 addr_latch: false,
                 data: 0,
                 data_buffer: 0,
@@ -71,11 +71,10 @@ impl<'a> Bus<'a> {
     }
 
     // Interface Functions
+    // Read a byte
     pub fn read(&mut self, mut addr: u16, debug: bool) -> u8 {
         if addr < 0x2000 {
             // Internal RAM
-            //addr = addr % 0x800;
-            //return self.ram.memory[addr as usize];
             return self.ram.get_cpu_memory(addr);
         } else if addr < 0x3FFF {
             // PPU Registers
@@ -83,6 +82,7 @@ impl<'a> Bus<'a> {
             match addr {
                 PPU_CTRL_ADDR => return 0, // Write only
                 PPU_MASK_ADDR => return 0, // Write only
+                // Status of the PPU 
                 PPU_STATUS_ADDR => {
                     if debug {
                         self.ppu_data.status
@@ -97,13 +97,13 @@ impl<'a> Bus<'a> {
                         }
 
                         self.ppu_data.nmi_occurred = false;
-                        //IDK if this should be here
                         self.ppu_data.status &= 0x7F;
 
                         old_nmi
                     }
                 }
                 OAM_ADDR_ADDR => return 0, // Write only
+                // Data at specified OAM Address
                 OAM_DATA_ADDR => {
                     let tmp = self.ppu_data.oam_addr as usize;
                     self.ppu_data.oam_addr = self.ppu_data.oam_addr.wrapping_add(1);
@@ -111,6 +111,7 @@ impl<'a> Bus<'a> {
                 }
                 PPU_SCROLL_ADDR => return 0, // Write only
                 PPU_ADDR_ADDR => return 0,   // Write only
+                // Data at specified PPU Vram Address
                 PPU_DATA_ADDR => {
                     if debug {
                         return self.ppu_read(self.ppu_data.vram_addr);
@@ -127,12 +128,12 @@ impl<'a> Bus<'a> {
                     }
                     self.ppu_data.data
                 }
-                JOYPAD_ONE_ADDR => self.input.read_and_shift_joypad_one(),
                 _ => return 0, // catch all
             }
         } else {
             // Cartridge space
             if addr < 0x4020 {
+                // Read joypad one input one bit at a time
                 if addr == JOYPAD_ONE_ADDR {
                     return self.input.read_and_shift_joypad_one();
                 } else {
@@ -147,6 +148,7 @@ impl<'a> Bus<'a> {
         }
     }
 
+    // Read word (2 bytes) little endian
     pub fn read_word_little(&mut self, addr: u16, debug: bool) -> u16 {
         let low: u16 = self.read(addr, debug) as u16;
 
@@ -155,10 +157,10 @@ impl<'a> Bus<'a> {
         return (high << 8) + low;
     }
 
+    // Read word (2 bytes) little endian with boundary wrap
     pub fn read_word_little_wrap(&mut self, addr: u16, debug: bool) -> u16 {
         let low: u16 = self.read(addr, debug) as u16;
 
-        //let high: u16 = self.read(addr + 1) as u16;
         let low_addr: u8 = (addr as u8).wrapping_add(1);
         let high: u16 = self.read((addr & 0xFF00) + low_addr as u16, debug) as u16;
 
@@ -168,21 +170,25 @@ impl<'a> Bus<'a> {
     pub fn write(&mut self, mut addr: u16, value: u8) {
         if addr < 0x2000 {
             // Internal RAM
-            //addr = addr % 0x800;
             self.ram.set_cpu_memory(addr, value);
         } else if addr < 0x3FFF {
             // PPU Registers
             addr = (addr % 8) + 0x2000; // Mirrored every 8 bytes
             match addr {
+                // PPU Controller 
                 PPU_CTRL_ADDR => {
                     self.ppu_data.ctrl = value;
                     self.ppu_data.set_nametable_x_t(value & 0x01);
                     self.ppu_data.set_nametable_y_t((value >> 1) & 0x01);
                 }
+                // PPU Masking Controller
                 PPU_MASK_ADDR => self.ppu_data.mask = value,
                 PPU_STATUS_ADDR => return, // Read only
+                // Address for oam read / write
                 OAM_ADDR_ADDR => self.ppu_data.oam_addr = value,
+                // Value to write to oam at address specified
                 OAM_DATA_ADDR => self.ppu_data.oam[self.ppu_data.oam_addr as usize] = value,
+                // Value of scroll position
                 PPU_SCROLL_ADDR => {
                     if !self.ppu_data.scroll_latch {
                         self.ppu_data.fine_x_scroll = value & 0x07;
@@ -194,6 +200,7 @@ impl<'a> Bus<'a> {
                         self.ppu_data.scroll_latch = false;
                     }
                 }
+                // Address into PPU Vram
                 PPU_ADDR_ADDR => {
                     if !self.ppu_data.addr_latch {
                         self.ppu_data.temp_vram_addr =
@@ -206,6 +213,7 @@ impl<'a> Bus<'a> {
                         self.ppu_data.addr_latch = false;
                     }
                 }
+                // Value to write to ppu vram at address specified
                 PPU_DATA_ADDR => {
                     self.ppu_write(self.ppu_data.vram_addr, value);
                     if self.ppu_data.ctrl & 0x04 != 0 {
@@ -217,38 +225,34 @@ impl<'a> Bus<'a> {
                 _ => return, // catch all
             }
         } else if addr == OAM_DMA_ADDR {
-            // 0x4014
+            // Setup OAM DMA
             self.oam_dma_cpu = true;
             self.oam_dma_ppu = true;
             self.oam_dma_addr = (value as u16) << 8;
         } else if addr == JOYPAD_ONE_ADDR {
+            // Latch joypad one read
             if value & 1 != 0 {
                 self.input.set_latch(true);
             } else {
+                // Do the actual input reading here
+                // On actual hardware it happens continually,
+                // but there is no point as only A could be read
                 self.input.update_input();
                 self.input.set_latch(false);
             }
         }
-        /* else if addr < 0x3FFF { // PPU Registers
-            //return self.ppu.write(addr, value);
-        //}  else { // Cartridge space
-            if addr >= 0x8000 {
-                addr -= 0x8000;
-                self.cart.ROM[addr as usize] = value;
-            }
-        }*/
     }
 
+    // Read from PPU Vram
     pub fn ppu_read(&self, addr: u16) -> u8 {
         if addr < 0x2000 {
-            // return self.cart.read(addr + 0x8000);
             return self.cart.ppu_read(addr);
         } else {
-            // let actual_addr = addr - 0x2000;
             return self.ram.get_ppu_memory(addr);
         }
     }
 
+    // Write to PPU Vram
     pub fn ppu_write(&mut self, addr: u16, value: u8) {
         if addr < 0x2000 { // Cannot write chr rom
         } else {
