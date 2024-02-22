@@ -30,71 +30,18 @@ impl Input {
         }
     }
 
-    pub fn set_a_input(&mut self, val: bool) {
-        if val {
-            self.joypad_one |= 0b00000001;
-        } else {
-            self.joypad_one &= 0b11111110;
-        }
-    }
-
-    pub fn set_b_input(&mut self, val: bool) {
-        if val {
-            self.joypad_one |= 0b00000010;
-        } else {
-            self.joypad_one &= 0b11111101;
-        }
-    }
-
-    pub fn set_select_input(&mut self, val: bool) {
-        if val {
-            self.joypad_one |= 0b00000100;
-        } else {
-            self.joypad_one &= 0b11111011;
-        }
-    }
-
-    pub fn set_start_input(&mut self, val: bool) {
-        if val {
-            self.joypad_one |= 0b00001000;
-        } else {
-            self.joypad_one &= 0b11110111;
-        }
-    }
-
-    pub fn set_up_input(&mut self, val: bool) {
-        if val {
-            self.joypad_one |= 0b00010000;
-        } else {
-            self.joypad_one &= 0b11101111;
-        }
-    }
-
-    pub fn set_down_input(&mut self, val: bool) {
-        if val {
-            self.joypad_one |= 0b00100000;
-        } else {
-            self.joypad_one &= 0b11011111;
-        }
-    }
-
-    pub fn set_left_input(&mut self, val: bool) {
-        if val {
-            self.joypad_one |= 0b01000000;
-        } else {
-            self.joypad_one &= 0b10111111;
-        }
-    }
-
-    pub fn set_right_input(&mut self, val: bool) {
-        if val {
-            self.joypad_one |= 0b10000000;
-        } else {
-            self.joypad_one &= 0b01111111;
-        }
-    }
+    // Helper functions to set the right bits
+    pub fn set_a_input(&mut self, val: bool) { if val { self.joypad_one |= 0b00000001; } else { self.joypad_one &= 0b11111110; } }
+    pub fn set_b_input(&mut self, val: bool) { if val { self.joypad_one |= 0b00000010; } else { self.joypad_one &= 0b11111101; } }
+    pub fn set_select_input(&mut self, val: bool) { if val { self.joypad_one |= 0b00000100; } else { self.joypad_one &= 0b11111011; } }
+    pub fn set_start_input(&mut self, val: bool) { if val { self.joypad_one |= 0b00001000; } else { self.joypad_one &= 0b11110111; } }
+    pub fn set_up_input(&mut self, val: bool) { if val { self.joypad_one |= 0b00010000; } else { self.joypad_one &= 0b11101111; } }
+    pub fn set_down_input(&mut self, val: bool) { if val { self.joypad_one |= 0b00100000; } else { self.joypad_one &= 0b11011111; } }
+    pub fn set_left_input(&mut self, val: bool) { if val { self.joypad_one |= 0b01000000; } else { self.joypad_one &= 0b10111111; } }
+    pub fn set_right_input(&mut self, val: bool) { if val { self.joypad_one |= 0b10000000; } else { self.joypad_one &= 0b01111111; } }
 
     pub fn update_input(&mut self) {
+        // Note: do something better he for keybinding
         if self.read_latch {
             self.set_a_input(is_key_down(macroquad::prelude::KeyCode::A));
             self.set_b_input(is_key_down(macroquad::prelude::KeyCode::O));
@@ -107,10 +54,12 @@ impl Input {
         }
     }
 
+    // Latch input
     pub fn set_latch(&mut self, val: bool) {
         self.read_latch = val;
     }
 
+    // NES is setup so input is read one bit at a time
     pub fn read_and_shift_joypad_one(&mut self) -> u8 {
         let bit = self.joypad_one & 1;
         self.joypad_one >>= 1;

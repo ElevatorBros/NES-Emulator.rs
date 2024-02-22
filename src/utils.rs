@@ -7,8 +7,7 @@ use crate::bus::Bus;
 use crate::cpu::AddrM;
 use crate::cpu::Cpu;
 use crate::cpu::ADDRESSING_MODE_LOOKUP;
-use std::cell::{RefCell, RefMut};
-use std::rc::Rc;
+use std::cell::RefMut;
 
 //: ASM_LOOKUP {{{
 static ASM_LOOKUP: [&str; 0x100] = [
@@ -41,17 +40,16 @@ static ASM_LOOKUP: [&str; 0x100] = [
 pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
     let mut asm_string: String;
     let opcode: u8 = bus.read(cpu.pc, true);
-    //print!("{}", ASM_LOOKUP[opcode as usize]);
-    //print!(" ");
-    //asm_string +=
+
+    // Assembling cases for each addressing mode
+    // Pulls from ASM_LOOKUP for instruction mnemonic, * is unofficial
+
     asm_string = format!("{}", ASM_LOOKUP[opcode as usize]);
     match ADDRESSING_MODE_LOOKUP[opcode as usize] {
         AddrM::ACC => {
-            //print!("A");
             asm_string = format!("{} A                         ", asm_string);
         }
         AddrM::ABS => {
-            //print!("${:X}", bus.read_word_little(pc+1));
             let operand: u16 = bus.read_word_little(cpu.pc + 1, true);
             asm_string = format!(
                 "{} ${:04X} = {:02X}                ",
@@ -61,12 +59,10 @@ pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
             );
         }
         AddrM::ADR => {
-            //print!("${:X}", bus.read_word_little(pc+1));
             let operand: u16 = bus.read_word_little(cpu.pc + 1, true);
             asm_string = format!("{} ${:04X}                     ", asm_string, operand);
         }
         AddrM::AIX => {
-            //print!("${:X},X", bus.read_word_little(pc+1));
             let operand: u16 = bus.read_word_little(cpu.pc + 1, true);
             let effective_address: u16 = operand + cpu.x as u16;
             asm_string = format!(
@@ -78,7 +74,6 @@ pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
             );
         }
         AddrM::AIY => {
-            //print!("${:X},Y", bus.read_word_little(pc+1));
             let operand: u16 = bus.read_word_little(cpu.pc + 1, true);
             let effective_address: u16 = operand.wrapping_add(cpu.y as u16);
             asm_string = format!(
@@ -90,16 +85,13 @@ pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
             );
         }
         AddrM::IMD => {
-            //print!("#${:X}", bus.read(pc+1));
             let operand: u8 = bus.read(cpu.pc + 1, true);
             asm_string = format!("{} #${:02X}                      ", asm_string, operand);
         }
         AddrM::IMP => {
-            //print!("");
             asm_string = format!("{}                           ", asm_string);
         }
         AddrM::IND => {
-            //print!("$({:X})", bus.read_word_little(pc+1));
             let operand: u16 = bus.read_word_little(cpu.pc + 1, true);
             let effective_address: u16 = bus.read_word_little_wrap(operand, true);
             asm_string = format!(
@@ -108,7 +100,6 @@ pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
             );
         }
         AddrM::IIX => {
-            //print!("$({:X},X)", bus.read(pc+1));
             let operand: u8 = bus.read(cpu.pc + 1, true);
             let mid_address: u8 = operand.wrapping_add(cpu.x);
             let low_byte: u8 = bus.read(mid_address as u16, true);
@@ -126,7 +117,6 @@ pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
             );
         }
         AddrM::IIY => {
-            //print!("$({:X}),Y", bus.read(pc+1));
             let operand: u8 = bus.read(cpu.pc + 1, true);
             let low_byte: u8 = bus.read(operand as u16, true);
             let high_byte: u8 = bus.read(operand.wrapping_add(1) as u16, true);
@@ -144,7 +134,6 @@ pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
             );
         }
         AddrM::REL => {
-            //print!("${:X}", bus.read(pc+1));
             let mut offset: u8 = bus.read(cpu.pc + 1, true);
 
             let effective_address: u16;
@@ -157,7 +146,6 @@ pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
             }
 
             // Plus 2 because the the program counter will be incremented twice before the jump actually happens
-            //asm_string = format!("{} ${:04X}                     ", asm_string, ((cpu.pc as i32) + (bus.read(cpu.pc+1) as i32) + 2) as u16);
             asm_string = format!(
                 "{} ${:04X}                     ",
                 asm_string,
@@ -199,29 +187,23 @@ pub fn get_asm(cpu: &Cpu, mut bus: RefMut<Bus<'_>>) -> String {
             asm_string = format!("Invalid Opcode                ");
         }
     }
-    //print!("\n");
-    //print!(" ");
-    //format!("{}|", asm_string)
     asm_string
 }
 //: }}}
 
 //: output_debug_info {{{
+// CPU debug info, prints current instruction and internal state
 pub fn output_debug_info(cpu: &Cpu) {
     let mut bus = cpu.bus.borrow_mut();
+    // Program counter
     print!("{:04X}  ", cpu.pc);
+    // Print out the hex of the current instruction
     match ADDRESSING_MODE_LOOKUP[bus.read(cpu.pc, true) as usize] {
         AddrM::ACC | AddrM::IMP => {
             // One Byte
             print!("{:02X}       ", bus.read(cpu.pc, true));
         }
-        AddrM::IMD
-        | AddrM::ZPG
-        | AddrM::REL
-        | AddrM::ZIX
-        | AddrM::ZIY
-        | AddrM::IIX
-        | AddrM::IIY => {
+        AddrM::IMD | AddrM::ZPG | AddrM::REL | AddrM::ZIX | AddrM::ZIY | AddrM::IIX | AddrM::IIY => {
             // Two Bytes
             print!(
                 "{:02X} {:02X}    ",
@@ -242,12 +224,15 @@ pub fn output_debug_info(cpu: &Cpu) {
             print!("INVLD: {:02X}", bus.read(cpu.pc, true));
         }
     }
+    // Print assembled instruction
     print!("{}  ", get_asm(cpu, bus));
-    println! {"A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} PPU:{:>3},{:>3} CYC:{}", cpu.a, cpu.x, cpu.y, cpu.stat, cpu.stp, 0, 0, cpu.cycl};
+    // Print status registers and such
+    println! {"A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CYC:{}", cpu.a, cpu.x, cpu.y, cpu.stat, cpu.stp, cpu.cycl};
 }
 //: }}}
 
 //: readbuf_vec {{{
+// Vec copy utility function
 pub fn readbuf_vec(to: &mut Vec<u8>, from: &mut Vec<u8>, start: &mut usize, size: usize) {
     for i in 0..size {
         to[i] = from[i + *start];

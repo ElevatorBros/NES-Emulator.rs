@@ -2,8 +2,8 @@
 #![allow(unused_variables)]
 pub struct Ram {
     pub cpu_memory: [u8; 0x800], // 2KB internal RAM
-    pub ppu_memory: [u8; 0x2000],
-    pub vertical_mirroring: bool,
+    pub ppu_memory: [u8; 0x2000], // 8KB, pattern tables on cart 
+    pub vertical_mirroring: bool, // Nametable mirroring
 }
 
 impl Ram {
@@ -41,7 +41,6 @@ impl Ram {
                 }
             }
         } else if actual_addr >= 0x3F00 && actual_addr < 0x3F20 {
-            // println!("Pallet_read_at:{:#x}", actual_addr);
             // Pallet
             if actual_addr == 0x3F10
                 || actual_addr == 0x3F14
@@ -50,15 +49,8 @@ impl Ram {
             {
                 actual_addr -= 0x10;
             }
-
-            // if actual_addr == 0x3F00
-            //     || actual_addr == 0x3F04
-            //     || actual_addr == 0x3F08
-            //     || actual_addr == 0x3F0C
-            // {
-            //     actual_addr = 0x3F00;
-            // }
         }
+        // We are only handling nametables here, so shift that address down
         actual_addr -= 0x2000;
         actual_addr as usize
     }
